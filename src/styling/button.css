@@ -1,0 +1,10 @@
+.Button {  
+    background-color: transparent;
+    margin-right: 10px;
+    margin-left: 10px;    
+    border-color: transparent;
+    font-family: "Seaweed Script";
+    color: white;
+    cursor: pointer;
+    font-size: large;
+}
