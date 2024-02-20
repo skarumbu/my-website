@@ -35,18 +35,21 @@ function Digits() {
             if (!signs.some(sign => sign.selected) || id == 3 ? numbers[id] % selectedNumbers.value != 0 : false) {
                 return;
             }
+            setSigns(signs.map((sign) => {
+                return {...sign, selected:false};
+            }))
             setNumbers(numbers.map((number) => {
                 if (number.selected) {
                     return {...number, selected: !number.selected, shown: false};
                 } else if (number.id === id) {
                     if (signs[0].selected) {
-                        return {...number, value: number.value + selectedNumbers.value};
+                        return {...number, value: selectedNumbers.value + number.value};
                     } else if (signs[1].selected) {
-                        return {...number, value: number.value - selectedNumbers.value};
+                        return {...number, value: selectedNumbers.value -  number.value};
                     } else if (signs[2].selected) {
-                        return {...number, value: number.value * selectedNumbers.value};
+                        return {...number, value: selectedNumbers.value * number.value};
                     } else if (signs[3].selected) {
-                        return {...number, value: number.value / selectedNumbers.value};
+                        return {...number, value: selectedNumbers.value / number.value};
                     }
                 }
                 return number;
