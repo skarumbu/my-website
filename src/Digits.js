@@ -6,12 +6,12 @@ import './Row.css'
 
 function Digits() {
     const [numbers, setNumbers] = useState([
-        {id: 0, value: 8, shown: true, selected: false}, 
-        {id: 1, value: 9, shown: true, selected: false}, 
-        {id: 2, value: 13, shown: true, selected: false}, 
-        {id: 3, value: 4, shown: true, selected: false}, 
-        {id: 4, value: 58, shown: true, selected: false}, 
-        {id: 5, value: 92, shown: true, selected: false}, 
+        {id: 0, value: 51, shown: true, selected: false}, 
+        {id: 1, value: 86, shown: true, selected: false}, 
+        {id: 2, value: 21, shown: true, selected: false}, 
+        {id: 3, value: 87, shown: true, selected: false}, 
+        {id: 4, value: 18, shown: true, selected: false}, 
+        {id: 5, value: 32, shown: true, selected: false}, 
     ]);
 
     const [signs, setSigns] = useState(
@@ -25,7 +25,7 @@ function Digits() {
 
     const [win, setWin] = useState(false);
 
-    const target = 30;
+    const target = 649;
 
     function selectNumber(numbers, id) {
         var selectedNumbers = numbers.find(number => number.selected)
