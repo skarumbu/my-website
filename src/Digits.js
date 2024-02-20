@@ -25,7 +25,7 @@ function Digits() {
 
     const [win, setWin] = useState(false);
 
-    const target = 649;
+    const target = 234;
 
     function selectNumber(numbers, id) {
         var selectedNumbers = numbers.find(number => number.selected)
