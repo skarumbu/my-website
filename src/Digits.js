@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import axios from 'axios';
 
 import './styling/circle.css'
 import './App.css';
@@ -27,12 +28,52 @@ function Digits() {
 
     const target = 234;
 
+
+    useEffect(() => {
+        let data = JSON.stringify({
+            "TableName": "digits",
+            "Key": {
+              "date": {
+                "S": "2024-07-10"
+              }
+            }
+          });
+          
+          let config = {
+            method: 'post',
+            maxBodyLength: Infinity,
+            url: 'https://t1w5b1fiz4.execute-api.us-east-1.amazonaws.com/default/DigitsGetter',
+            headers: { 
+              'X-API-KEY': process.env.REACT_APP_API_GATEWAY_KEY, 
+              'Content-Type': 'application/json'
+            },
+            data : data
+          };
+          console.log(config)
+          axios.request(config)
+          .then((response) => {
+            console.log(JSON.stringify(response.data));
+          })
+          .catch((error) => {
+            console.log(error);
+          });
+    })
+
+    function getDate() {
+        const today = new Date();
+        const month = today.getMonth() + 1;
+        const year = today.getFullYear();
+        const date = today.getDate();
+        return `${month}-${date}-${year}`;
+      }
+      
+
     function selectNumber(numbers, id) {
         var selectedNumbers = numbers.find(number => number.selected)
         if (selectedNumbers != undefined && selectedNumbers.value + numbers[id].value === target) {
             setWin(true);
         } else if (selectedNumbers != undefined && selectedNumbers.id != id) {
-            if (!signs.some(sign => sign.selected) || id == 3 ? numbers[id] % selectedNumbers.value != 0 : false) {
+            if (!signs.some(sign => sign.selected) || id == 3 ? numbers[id].value % selectedNumbers.value != 0 : false) {
                 return;
             }
             setSigns(signs.map((sign) => {
