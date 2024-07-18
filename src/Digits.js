@@ -26,7 +26,7 @@ function Digits() {
 
     const [win, setWin] = useState(false);
 
-    const target = 234;
+    const [target, setTarget] = useState(234);
 
     const getDate = () => {
         const today = new Date();
@@ -42,7 +42,7 @@ function Digits() {
                 "TableName": "digits",
                 "Key": {
                 "date": {
-                    "S": getDate()
+                    "S": getFormattedDate()
                 }
                 }
             });
@@ -63,14 +63,18 @@ function Digits() {
                 const response = await axios.request(config);
                 const responseData = JSON.parse(response.data.body);
                 console.log(responseData);
-                
-                // Assuming responseData contains an array of numbers
-                setNumbers(responseData.Items.map((item, index) => ({
+
+                const matrix = JSON.parse(responseData.Item.matrix.S);
+                const goal = parseInt(responseData.Item.goal.N);
+
+                setNumbers(matrix.map((value, index) => ({
                     id: index,
-                    value: item.value.N,
+                    value: value,
                     shown: true,
                     selected: false
                 })));
+
+                setTarget(goal);
             } catch (error) {
                 console.log(error);
             }
@@ -79,7 +83,7 @@ function Digits() {
         fetchData();
     })
 
-    function getDate() {
+    function getFormattedDate() {
         const today = new Date();
         const month = today.getMonth() + 1;
         const year = today.getFullYear();
