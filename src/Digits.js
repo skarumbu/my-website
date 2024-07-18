@@ -28,6 +28,13 @@ function Digits() {
 
     const target = 234;
 
+    const getDate = () => {
+        const today = new Date();
+        const month = today.getMonth() + 1;
+        const date = today.getDate();
+        const year = today.getFullYear();
+        return `${year}-${month < 10 ? '0' + month : month}-${date < 10 ? '0' + date : date}`;
+    };
 
     useEffect(() => {
         const fetchData = async () => {
@@ -35,7 +42,7 @@ function Digits() {
                 "TableName": "digits",
                 "Key": {
                 "date": {
-                    "S": "2024-07-10"
+                    "S": getDate()
                 }
                 }
             });
