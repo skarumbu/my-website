@@ -30,33 +30,46 @@ function Digits() {
 
 
     useEffect(() => {
-        let data = JSON.stringify({
-            "TableName": "digits",
-            "Key": {
-              "date": {
-                "S": "2024-07-10"
-              }
+        const fetchData = async () => {
+            let data = JSON.stringify({
+                "TableName": "digits",
+                "Key": {
+                "date": {
+                    "S": "2024-07-10"
+                }
+                }
+            });
+
+            console.log(data)
+            
+            let config = {
+                method: 'post',
+                maxBodyLength: Infinity,
+                url: 'https://t1w5b1fiz4.execute-api.us-east-1.amazonaws.com/default/DigitsGetter',
+                headers: { 
+                'X-API-KEY': process.env.REACT_APP_API_GATEWAY_KEY, 
+                'Content-Type': 'application/json'
+                },
+                data : data
+            };
+            try {
+                const response = await axios.request(config);
+                const responseData = JSON.parse(response.data.body);
+                console.log(responseData);
+                
+                // Assuming responseData contains an array of numbers
+                setNumbers(responseData.Items.map((item, index) => ({
+                    id: index,
+                    value: item.value.N,
+                    shown: true,
+                    selected: false
+                })));
+            } catch (error) {
+                console.log(error);
             }
-          });
-          
-          let config = {
-            method: 'post',
-            maxBodyLength: Infinity,
-            url: 'https://t1w5b1fiz4.execute-api.us-east-1.amazonaws.com/default/DigitsGetter',
-            headers: { 
-              'X-API-KEY': process.env.REACT_APP_API_GATEWAY_KEY, 
-              'Content-Type': 'application/json'
-            },
-            data : data
-          };
-          console.log(config)
-          axios.request(config)
-          .then((response) => {
-            console.log(JSON.stringify(response.data));
-          })
-          .catch((error) => {
-            console.log(error);
-          });
+        }
+
+        fetchData();
     })
 
     function getDate() {
