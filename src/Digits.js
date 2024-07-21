@@ -28,27 +28,8 @@ function Digits() {
 
     const [target, setTarget] = useState(234);
 
-    const getDate = () => {
-        const today = new Date();
-        const month = today.getMonth() + 1;
-        const date = today.getDate();
-        const year = today.getFullYear();
-        return `${year}-${month < 10 ? '0' + month : month}-${date < 10 ? '0' + date : date}`;
-    };
-
     useEffect(() => {
         const fetchData = async () => {
-            let data = JSON.stringify({
-                "TableName": "digits",
-                "Key": {
-                "date": {
-                    "S": getFormattedDate   ()
-                }
-                }
-            });
-
-            console.log(data)
-            
             let config = {
                 method: 'get',
                 maxBodyLength: Infinity,
@@ -59,12 +40,10 @@ function Digits() {
                 }
             };
             try {
-                const response = await axios.request(config);
-                const responseData = JSON.parse(response.data.body);
-                console.log(responseData);
+                const response = await axios.request(config)
 
-                const matrix = JSON.parse(responseData.Item.matrix.S);
-                const goal = parseInt(responseData.Item.goal.N);
+                const matrix = JSON.parse(response.data.Item.matrix.S)
+                const goal = parseInt(response.data.Item.goal.N)
 
                 setNumbers(matrix.map((value, index) => ({
                     id: index,
@@ -80,23 +59,16 @@ function Digits() {
         }
 
         fetchData();
-    })
-
-    function getFormattedDate() {
-        const today = new Date();
-        const month = today.getMonth() + 1;
-        const year = today.getFullYear();
-        const date = today.getDate();
-        return `${month}-${date}-${year}`;
-      }
+    }, [])
       
-
     function selectNumber(numbers, id) {
         var selectedNumbers = numbers.find(number => number.selected)
+        console.log("Selected Number Value:", selectedNumbers?.value);
+        console.log("Current Number Value:", numbers[id]?.value);
         if (selectedNumbers != undefined && selectedNumbers.value + numbers[id].value === target) {
             setWin(true);
         } else if (selectedNumbers != undefined && selectedNumbers.id != id) {
-            if (!signs.some(sign => sign.selected) || id == 3 ? numbers[id].value % selectedNumbers.value != 0 : false) {
+            if (!signs.some(sign => sign.selected) || (id == 3 && numbers[id].value % selectedNumbers.value != 0)) {
                 return;
             }
             setSigns(signs.map((sign) => {
@@ -123,6 +95,21 @@ function Digits() {
             setNumbers(numbers.map((number) => {
                 return number.id == id ? {...number, selected: !number.selected} : number;
             }))
+        }
+    }
+
+    function applyOperation(sign, number1, number2) {
+        switch (sign) {
+            case '+':
+                return number1 + number2;
+            case '-':
+                return number1 - number2;
+            case '*':
+                return number1 * number2;
+            case '/':
+                return number2 !== 0 ? number1 / number2 : null; // Prevent division by zero
+            default:
+                return null;
         }
     }
 
