@@ -61,41 +61,36 @@ function Digits() {
         fetchData();
     }, [])
       
-    function selectNumber(numbers, id) {
-        var selectedNumbers = numbers.find(number => number.selected)
-        console.log("Selected Number Value:", selectedNumbers?.value);
-        console.log("Current Number Value:", numbers[id]?.value);
-        if (selectedNumbers != undefined && selectedNumbers.value + numbers[id].value === target) {
-            setWin(true);
-        } else if (selectedNumbers != undefined && selectedNumbers.id != id) {
-            if (!signs.some(sign => sign.selected) || (id == 3 && numbers[id].value % selectedNumbers.value != 0)) {
-                return;
-            }
-            setSigns(signs.map((sign) => {
-                return {...sign, selected:false};
-            }))
-            setNumbers(numbers.map((number) => {
-                if (number.selected) {
-                    return {...number, selected: !number.selected, shown: false};
-                } else if (number.id === id) {
-                    if (signs[0].selected) {
-                        return {...number, value: selectedNumbers.value + number.value};
-                    } else if (signs[1].selected) {
-                        return {...number, value: selectedNumbers.value -  number.value};
-                    } else if (signs[2].selected) {
-                        return {...number, value: selectedNumbers.value * number.value};
-                    } else if (signs[3].selected) {
-                        return {...number, value: selectedNumbers.value / number.value};
-                    }
+    function selectNumber(id) {
+        var selectedNumber = numbers.find(number => number.selected)
+        var selectedSign = signs.find(sign => sign.selected)
+        if (selectedNumber && selectedSign) {
+            var updatedValue = applyOperation(selectedSign, selectedNumber, numbers[id].value)
+            if (updatedValue === target) {
+                setWin(true);
+            } else if (selectedNumber != undefined && selectedNumber.id != id) {
+                if (!signs.some(sign => sign.selected) || (id == 3 && numbers[id].value % selectedNumber.value != 0)) {
+                    return;
                 }
-                return number;
-            }))
+                setSigns(signs.map((sign) => {
+                    return {...sign, selected:false};
+                }))
+                setNumbers(numbers.map((number) => {
+                    if (number.selected) {
+                        return {...number, selected: !number.selected, shown: false}
+                    } else if (number.id === id) {
+                        return {...number, selected: updatedValue}
+                    }
+                    return number
+                }))
+            }
         }
         else {
             setNumbers(numbers.map((number) => {
                 return number.id == id ? {...number, selected: !number.selected} : number;
             }))
         }
+
     }
 
     function applyOperation(sign, number1, number2) {
@@ -113,7 +108,7 @@ function Digits() {
         }
     }
 
-    function selectSign(signs, id) {
+    function selectSign(id) {
         setSigns(signs.map((sign) => {
             return sign.id == id ? {...sign, selected: !sign.selected} : {...sign, selected: false};
         }))
@@ -131,18 +126,18 @@ function Digits() {
                     <><div className='Row'>
                         Target: {target}
                     </div><div className='Row'>
-                            <span className='Circle' onClick={() => selectSign(signs, "+")} style={signs[0].selected ? { backgroundColor: 'black' } : {}}>&#43;</span>
-                            <span className='Circle' onClick={() => selectSign(signs, "-")} style={signs[1].selected ? { backgroundColor: 'black' } : {}}>&#8722;</span>
-                            <span className='Circle' onClick={() => selectSign(signs, "*")} style={signs[2].selected ? { backgroundColor: 'black' } : {}}>&#215;</span>
-                            <span className='Circle' onClick={() => selectSign(signs, "/")} style={signs[3].selected ? { backgroundColor: 'black' } : {}}>&#247;</span>
+                            <span className='Circle' onClick={() => selectSign("+")} style={signs[0].selected ? { backgroundColor: 'black' } : {}}>&#43;</span>
+                            <span className='Circle' onClick={() => selectSign("-")} style={signs[1].selected ? { backgroundColor: 'black' } : {}}>&#8722;</span>
+                            <span className='Circle' onClick={() => selectSign("*")} style={signs[2].selected ? { backgroundColor: 'black' } : {}}>&#215;</span>
+                            <span className='Circle' onClick={() => selectSign("/")} style={signs[3].selected ? { backgroundColor: 'black' } : {}}>&#247;</span>
                         </div><div className='Row'>
-                            {numbers[0].shown && <a className="Circle" onClick={() => selectNumber(numbers, 0)} style={numbers[0].selected ? { backgroundColor: 'black' } : {}}>{numbers[0].value}</a>}
-                            {numbers[1].shown && <a className="Circle" onClick={() => selectNumber(numbers, 1)} style={numbers[1].selected ? { backgroundColor: 'black' } : {}}>{numbers[1].value}</a>}
-                            {numbers[2].shown && <a className="Circle" onClick={() => selectNumber(numbers, 2)} style={numbers[2].selected ? { backgroundColor: 'black' } : {}}>{numbers[2].value}</a>}
+                            {numbers[0].shown && <a className="Circle" onClick={() => selectNumber(0)} style={numbers[0].selected ? { backgroundColor: 'black' } : {}}>{numbers[0].value}</a>}
+                            {numbers[1].shown && <a className="Circle" onClick={() => selectNumber(1)} style={numbers[1].selected ? { backgroundColor: 'black' } : {}}>{numbers[1].value}</a>}
+                            {numbers[2].shown && <a className="Circle" onClick={() => selectNumber(2)} style={numbers[2].selected ? { backgroundColor: 'black' } : {}}>{numbers[2].value}</a>}
                         </div><div className='Row'>
-                            {numbers[3].shown && <a className="Circle" onClick={() => selectNumber(numbers, 3)} style={numbers[3].selected ? { backgroundColor: 'black' } : {}}>{numbers[3].value}</a>}
-                            {numbers[4].shown && <a className="Circle" onClick={() => selectNumber(numbers, 4)} style={numbers[4].selected ? { backgroundColor: 'black' } : {}}>{numbers[4].value}</a>}
-                            {numbers[5].shown && <a className="Circle" onClick={() => selectNumber(numbers, 5)} style={numbers[5].selected ? { backgroundColor: 'black' } : {}}>{numbers[5].value}</a>}
+                            {numbers[3].shown && <a className="Circle" onClick={() => selectNumber(3)} style={numbers[3].selected ? { backgroundColor: 'black' } : {}}>{numbers[3].value}</a>}
+                            {numbers[4].shown && <a className="Circle" onClick={() => selectNumber(4)} style={numbers[4].selected ? { backgroundColor: 'black' } : {}}>{numbers[4].value}</a>}
+                            {numbers[5].shown && <a className="Circle" onClick={() => selectNumber(5)} style={numbers[5].selected ? { backgroundColor: 'black' } : {}}>{numbers[5].value}</a>}
                         </div></>
             }
             </header>
