@@ -42,7 +42,7 @@ function Digits() {
                 "TableName": "digits",
                 "Key": {
                 "date": {
-                    "S": getFormattedDate()
+                    "S": getFormattedDate   ()
                 }
                 }
             });
@@ -50,14 +50,13 @@ function Digits() {
             console.log(data)
             
             let config = {
-                method: 'post',
+                method: 'get',
                 maxBodyLength: Infinity,
                 url: 'https://t1w5b1fiz4.execute-api.us-east-1.amazonaws.com/default/DigitsGetter',
                 headers: { 
                 'X-API-KEY': process.env.REACT_APP_API_GATEWAY_KEY, 
                 'Content-Type': 'application/json'
-                },
-                data : data
+                }
             };
             try {
                 const response = await axios.request(config);
