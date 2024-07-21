@@ -1,19 +1,13 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
+import MoonLoader from "react-spinners/MoonLoader"
 
 import './styling/circle.css'
 import './App.css';
 import './Row.css'
 
 function Digits() {
-    const [numbers, setNumbers] = useState([
-        {id: 0, value: 11, shown: true, selected: false}, 
-        {id: 1, value: 1, shown: true, selected: false}, 
-        {id: 2, value: 99, shown: true, selected: false}, 
-        {id: 3, value: 73, shown: true, selected: false}, 
-        {id: 4, value: 42, shown: true, selected: false}, 
-        {id: 5, value: 93, shown: true, selected: false}, 
-    ]);
+    const [numbers, setNumbers] = useState(null);
 
     const [signs, setSigns] = useState(
         [
@@ -117,29 +111,37 @@ function Digits() {
     return (
         <div>
             <header className="Main-text" style={{fontFamily: "Seaweed Script"}}>
-                {win && 
+                {numbers == null ? (
+                    <div className="spinner-container">
+                        <MoonLoader color="#000" size={50} />
+                    </div>
+                ) : win ? (
                     <div className='Row'>
                         You Win!
                     </div>
-                }
-                {!win &&
-                    <><div className='Row'>
-                        Target: {target}
-                    </div><div className='Row'>
+                ) : (
+                    <>
+                        <div className='Row'>
+                            Target: {target}
+                        </div>
+                        <div className='Row'>
                             <span className='Circle' onClick={() => selectSign("+")} style={signs[0].selected ? { backgroundColor: 'black' } : {}}>&#43;</span>
                             <span className='Circle' onClick={() => selectSign("-")} style={signs[1].selected ? { backgroundColor: 'black' } : {}}>&#8722;</span>
                             <span className='Circle' onClick={() => selectSign("*")} style={signs[2].selected ? { backgroundColor: 'black' } : {}}>&#215;</span>
                             <span className='Circle' onClick={() => selectSign("/")} style={signs[3].selected ? { backgroundColor: 'black' } : {}}>&#247;</span>
-                        </div><div className='Row'>
+                        </div>
+                        <div className='Row'>
                             {numbers[0].shown && <a className="Circle" onClick={() => selectNumber(0)} style={numbers[0].selected ? { backgroundColor: 'black' } : {}}>{numbers[0].value}</a>}
                             {numbers[1].shown && <a className="Circle" onClick={() => selectNumber(1)} style={numbers[1].selected ? { backgroundColor: 'black' } : {}}>{numbers[1].value}</a>}
                             {numbers[2].shown && <a className="Circle" onClick={() => selectNumber(2)} style={numbers[2].selected ? { backgroundColor: 'black' } : {}}>{numbers[2].value}</a>}
-                        </div><div className='Row'>
+                        </div>
+                        <div className='Row'>
                             {numbers[3].shown && <a className="Circle" onClick={() => selectNumber(3)} style={numbers[3].selected ? { backgroundColor: 'black' } : {}}>{numbers[3].value}</a>}
                             {numbers[4].shown && <a className="Circle" onClick={() => selectNumber(4)} style={numbers[4].selected ? { backgroundColor: 'black' } : {}}>{numbers[4].value}</a>}
                             {numbers[5].shown && <a className="Circle" onClick={() => selectNumber(5)} style={numbers[5].selected ? { backgroundColor: 'black' } : {}}>{numbers[5].value}</a>}
-                        </div></>
-            }
+                        </div>
+                    </>
+                )}
             </header>
         </div>
     );
