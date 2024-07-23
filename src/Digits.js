@@ -62,6 +62,10 @@ function Digits() {
             if (selectedNumber != undefined && selectedNumber.id != id) {
                 var updatedValue = applyOperation(selectedSign.id, selectedNumber.value, numbers[id].value)
                 console.log(updatedValue)
+                if (updatedValue === target) {
+                    setWin(true);
+                    return;
+                }
                 if (selectedSign.id == "/" && numbers[id].value % selectedNumber.value != 0) {
                     return;
                 }
@@ -76,9 +80,7 @@ function Digits() {
                     }
                     return number
                 }))
-            } else if (updatedValue === target) {
-                setWin(true);
-            }
+            } 
         }
         else {
             setNumbers(numbers.map((number) => {
