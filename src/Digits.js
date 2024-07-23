@@ -59,11 +59,10 @@ function Digits() {
         var selectedNumber = numbers.find(number => number.selected)
         var selectedSign = signs.find(sign => sign.selected)
         if (selectedNumber && selectedSign) {
-            var updatedValue = applyOperation(selectedSign, selectedNumber, numbers[id].value)
-            if (updatedValue === target) {
-                setWin(true);
-            } else if (selectedNumber != undefined && selectedNumber.id != id) {
-                if (!signs.some(sign => sign.selected) || (id == 3 && numbers[id].value % selectedNumber.value != 0)) {
+            if (selectedNumber != undefined && selectedNumber.id != id) {
+                var updatedValue = applyOperation(selectedSign.id, selectedNumber.value, numbers[id].value)
+                console.log(updatedValue)
+                if (selectedSign.id == "/" && numbers[id].value % selectedNumber.value != 0) {
                     return;
                 }
                 setSigns(signs.map((sign) => {
@@ -73,10 +72,12 @@ function Digits() {
                     if (number.selected) {
                         return {...number, selected: !number.selected, shown: false}
                     } else if (number.id === id) {
-                        return {...number, selected: updatedValue}
+                        return {...number, value: updatedValue, selected: false}
                     }
                     return number
                 }))
+            } else if (updatedValue === target) {
+                setWin(true);
             }
         }
         else {
