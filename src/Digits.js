@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
-import MoonLoader from "react-spinners/MoonLoader"
+import PulseLoader from "react-spinners/PulseLoader"
 
 import './styling/circle.css'
 import './App.css';
@@ -62,9 +62,10 @@ function Digits() {
             if (selectedNumber != undefined && selectedNumber.id != id) {
                 var updatedValue = applyOperation(selectedSign.id, selectedNumber.value, numbers[id].value)
                 console.log(updatedValue)
+                console.log(target)
                 if (updatedValue === target) {
                     setWin(true);
-                    return;
+                    return
                 }
                 if (selectedSign.id == "/" && numbers[id].value % selectedNumber.value != 0) {
                     return;
@@ -116,7 +117,7 @@ function Digits() {
             <header className="Main-text" style={{fontFamily: "Seaweed Script"}}>
                 {numbers == null ? (
                     <div className="spinner-container">
-                        <MoonLoader color="#000" size={50} />
+                        <PulseLoader color="#000" size={25} speedMultiplier={.5} />
                     </div>
                 ) : win ? (
                     <div className='Row'>
