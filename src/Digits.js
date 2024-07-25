@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
+import FireworksComponent from './FireworksComponent.tsx';
 import PulseLoader from "react-spinners/PulseLoader"
 
 import './styling/circle.css'
@@ -120,8 +121,11 @@ function Digits() {
                         <PulseLoader color="#000" size={25} speedMultiplier={.5} />
                     </div>
                 ) : win ? (
-                    <div className='Row'>
-                        You Win!
+                    <div>
+                        <FireworksComponent />
+                        <div className='Row' style={ {position: 'absolute'} }>
+                            You Win!
+                        </div>
                     </div>
                 ) : (
                     <>

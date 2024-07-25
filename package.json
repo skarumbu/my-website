@@ -5,6 +5,7 @@
   "dependencies": {
     "@auth0/auth0-react": "^2.2.2",
     "@aws-sdk/client-secrets-manager": "^3.441.0",
+    "@fireworks-js/react": "^2.10.8",
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
