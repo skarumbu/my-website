@@ -1,11 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import axios from 'axios';
 import FireworksComponent from './FireworksComponent.tsx';
 import PulseLoader from "react-spinners/PulseLoader";
-import { motion, AnimatePresence } from 'framer-motion';
+
 import './styling/circle.css';
 import './App.css';
 import './Row.css';
+import React from 'react';
 
 interface Number {
   id: number;
@@ -20,14 +21,7 @@ interface Sign {
 }
 
 const Digits: React.FC = () => {
-  const [numbers, setNumbers] = useState<Number[]>([
-    { id: 0, value: 10, shown: true, selected: false },
-    { id: 1, value: 20, shown: true, selected: false },
-    { id: 2, value: 30, shown: true, selected: false },
-    { id: 3, value: 40, shown: true, selected: false },
-    { id: 4, value: 50, shown: true, selected: false },
-    { id: 5, value: 60, shown: true, selected: false },
-  ]);
+  const [numbers, setNumbers] = useState<Number[] | null>(null);
   const [signs, setSigns] = useState<Sign[]>([
     { id: "+", selected: false },
     { id: "-", selected: false },
@@ -71,6 +65,8 @@ const Digits: React.FC = () => {
   }, []);
 
   const selectNumber = (id: number) => {
+    if (numbers === null) return;
+
     const selectedNumber = numbers.find(number => number.selected);
     const selectedSign = signs.find(sign => sign.selected);
 
@@ -81,7 +77,8 @@ const Digits: React.FC = () => {
           console.log("Couldn't calculate value")
           return;
         }
-
+        console.log(updatedValue);
+        console.log(target);
         if (updatedValue === target) {
           setWin(true);
           return;
@@ -93,7 +90,7 @@ const Digits: React.FC = () => {
 
         setNumbers(numbers.map((number) => {
           if (number.selected) {
-            return { ...number, selected: false, shown: false, animate: true };
+            return { ...number, selected: !number.selected, shown: false };
           } else if (number.id === id) {
             return { ...number, value: updatedValue, selected: false };
           }
@@ -128,10 +125,6 @@ const Digits: React.FC = () => {
     )));
   };
 
-  // Split numbers into two arrays for two rows
-  const firstRowNumbers = numbers.slice(0, 3);
-  const secondRowNumbers = numbers.slice(3, 6);
-
   return (
     <div>
       <header className="Main-text" style={{ fontFamily: "Seaweed Script" }}>
@@ -158,44 +151,14 @@ const Digits: React.FC = () => {
               <span className='Circle' onClick={() => selectSign("/")} style={signs[3].selected ? { backgroundColor: 'black' } : {}}>&#247;</span>
             </div>
             <div className='Row'>
-              <AnimatePresence>
-                {firstRowNumbers.map((number) => (
-                  number.shown && (
-                    <motion.a
-                      key={number.id}
-                      className="Circle"
-                      onClick={() => selectNumber(number.id)}
-                      style={number.selected ? { backgroundColor: 'black' } : {}}
-                      initial={{ scale: 1 }}
-                      animate={{ scale: number.selected ? 1.2 : 1 }}
-                      exit={{ opacity: 0 }}
-                      transition={{ duration: 0.5 }}
-                    >
-                      {number.value}
-                    </motion.a>
-                  )
-                ))}
-              </AnimatePresence>
+              {numbers[0].shown && <a className="Circle" onClick={() => selectNumber(0)} style={numbers[0].selected ? { backgroundColor: 'black' } : {}}>{numbers[0].value}</a>}
+              {numbers[1].shown && <a className="Circle" onClick={() => selectNumber(1)} style={numbers[1].selected ? { backgroundColor: 'black' } : {}}>{numbers[1].value}</a>}
+              {numbers[2].shown && <a className="Circle" onClick={() => selectNumber(2)} style={numbers[2].selected ? { backgroundColor: 'black' } : {}}>{numbers[2].value}</a>}
             </div>
             <div className='Row'>
-              <AnimatePresence>
-                {secondRowNumbers.map((number) => (
-                  number.shown && (
-                    <motion.a
-                      key={number.id}
-                      className="Circle"
-                      onClick={() => selectNumber(number.id)}
-                      style={number.selected ? { backgroundColor: 'black' } : {}}
-                      initial={{ scale: 1 }}
-                      animate={{ scale: number.selected ? 1.2 : 1 }}
-                      exit={{ opacity: 0 }}
-                      transition={{ duration: 0.5 }}
-                    >
-                      {number.value}
-                    </motion.a>
-                  )
-                ))}
-              </AnimatePresence>
+              {numbers[3].shown && <a className="Circle" onClick={() => selectNumber(3)} style={numbers[3].selected ? { backgroundColor: 'black' } : {}}>{numbers[3].value}</a>}
+              {numbers[4].shown && <a className="Circle" onClick={() => selectNumber(4)} style={numbers[4].selected ? { backgroundColor: 'black' } : {}}>{numbers[4].value}</a>}
+              {numbers[5].shown && <a className="Circle" onClick={() => selectNumber(5)} style={numbers[5].selected ? { backgroundColor: 'black' } : {}}>{numbers[5].value}</a>}
             </div>
           </>
         )}
