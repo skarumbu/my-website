@@ -6,12 +6,12 @@ import NavBar from "./components/nav-bar";
 function App() {
   return (
     <div className="App">
-      <NavBar />
       <header className="Main-text">
-        <p style={{fontFamily: "Seaweed Script"}}>
-          Welcome to my website
-        </p>
+        <NavBar />
       </header>
+      <p>
+        Welcome to my website
+      </p>
     </div>
   );
 }

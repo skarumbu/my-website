@@ -1,0 +1,44 @@
+.nav-bar {
+    width: 100%;
+    overflow: hidden;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1000;
+    display: flex;
+    justify-content: flex-end;
+    font-family: 'Josefin Sans';
+  }
+
+  
+.nav-bar ul {
+list-style-type: none;
+margin: 0;
+padding: 0;
+display: flex; /* Ensure the list items are aligned horizontally */
+}
+
+.nav-bar li {
+float: left;
+}
+
+.nav-bar li a {
+display: block;
+color: white; /* Set the link color */
+text-align: center;
+padding: 14px 16px;
+text-decoration: none; /* Remove underline */
+transition: color 0.3s, background-color 0.3s; /* Smooth transition for hover effects */
+}
+
+.nav-bar li a:hover {
+color: #ffd700; /* Change text color on hover */
+background-color: #444; /* Change background color on hover */
+text-decoration: underline; /* Optional: Add underline on hover */
+}
+
+.nav-bar li a:visited, .nav-bar li a:active, .nav-bar li a:focus {
+color: white; /* Ensure the link color stays the same for visited, active, and focused links */
+outline: none; /* Remove default outline */
+}
+  

@@ -21,7 +21,7 @@ interface Sign {
 }
 
 const Digits: React.FC = () => {
-  const [numbers, setNumbers] = useState<Number[] | null>(null);
+  const [numbers, setNumbers] = useState<Number[] | null>(null);;
   const [signs, setSigns] = useState<Sign[]>([
     { id: "+", selected: false },
     { id: "-", selected: false },
@@ -126,8 +126,7 @@ const Digits: React.FC = () => {
   };
 
   return (
-    <div>
-      <header className="Main-text" style={{ fontFamily: "Seaweed Script" }}>
+    <div className="App">
         {numbers === null ? (
           <div className="spinner-container">
             <PulseLoader color="#000" size={25} speedMultiplier={.5} />
@@ -141,28 +140,29 @@ const Digits: React.FC = () => {
           </div>
         ) : (
           <>
-            <div className='Row'>
+            <div className='Row' style={{ color: '#1f7a6e' }}>
               Target: {target}
             </div>
             <div className='Row'>
-              <span className='Circle' onClick={() => selectSign("+")} style={signs[0].selected ? { backgroundColor: 'black' } : {}}>&#43;</span>
-              <span className='Circle' onClick={() => selectSign("-")} style={signs[1].selected ? { backgroundColor: 'black' } : {}}>&#8722;</span>
-              <span className='Circle' onClick={() => selectSign("*")} style={signs[2].selected ? { backgroundColor: 'black' } : {}}>&#215;</span>
-              <span className='Circle' onClick={() => selectSign("/")} style={signs[3].selected ? { backgroundColor: 'black' } : {}}>&#247;</span>
+              <span className='Circle' onClick={() => selectSign("+")} style={signs[0].selected ? { backgroundColor: '#bdcc77' } : { backgroundColor: '#8fa143' }}>&#43;</span>
+              <span className='Circle' onClick={() => selectSign("-")} style={signs[1].selected ? { backgroundColor: '#bdcc77' } : { backgroundColor: '#8fa143' }}>&#8722;</span>
+              <span className='Circle' onClick={() => selectSign("*")} style={signs[2].selected ? { backgroundColor: '#bdcc77' } : { backgroundColor: '#8fa143' }}>&#215;</span>
+              <span className='Circle' onClick={() => selectSign("/")} style={signs[3].selected ? { backgroundColor: '#bdcc77' } : { backgroundColor: '#8fa143' }}>&#247;</span>
             </div>
-            <div className='Row'>
-              {numbers[0].shown && <a className="Circle" onClick={() => selectNumber(0)} style={numbers[0].selected ? { backgroundColor: 'black' } : {}}>{numbers[0].value}</a>}
-              {numbers[1].shown && <a className="Circle" onClick={() => selectNumber(1)} style={numbers[1].selected ? { backgroundColor: 'black' } : {}}>{numbers[1].value}</a>}
-              {numbers[2].shown && <a className="Circle" onClick={() => selectNumber(2)} style={numbers[2].selected ? { backgroundColor: 'black' } : {}}>{numbers[2].value}</a>}
-            </div>
-            <div className='Row'>
-              {numbers[3].shown && <a className="Circle" onClick={() => selectNumber(3)} style={numbers[3].selected ? { backgroundColor: 'black' } : {}}>{numbers[3].value}</a>}
-              {numbers[4].shown && <a className="Circle" onClick={() => selectNumber(4)} style={numbers[4].selected ? { backgroundColor: 'black' } : {}}>{numbers[4].value}</a>}
-              {numbers[5].shown && <a className="Circle" onClick={() => selectNumber(5)} style={numbers[5].selected ? { backgroundColor: 'black' } : {}}>{numbers[5].value}</a>}
+            <div style = {{ color: '#add8d2' }}>
+              <div className='Row'>
+                {numbers[0].shown && <a className="Circle" onClick={() => selectNumber(0)} style={numbers[0].selected ? { backgroundColor: '#51a594' } : { backgroundColor: '#1f7a6e' }}>{numbers[0].value}</a>}
+                {numbers[1].shown && <a className="Circle" onClick={() => selectNumber(1)} style={numbers[1].selected ? { backgroundColor: '#51a594' } : { backgroundColor: '#1f7a6e' }}>{numbers[1].value}</a>}
+                {numbers[2].shown && <a className="Circle" onClick={() => selectNumber(2)} style={numbers[2].selected ? { backgroundColor: '#51a594' } : { backgroundColor: '#1f7a6e' }}>{numbers[2].value}</a>}
+              </div>
+              <div className='Row' style = {{ paddingTop: 0}}>
+                {numbers[3].shown && <a className="Circle" onClick={() => selectNumber(3)} style={numbers[3].selected ? { backgroundColor: '#51a594' } : { backgroundColor: '#1f7a6e' }}>{numbers[3].value}</a>}
+                {numbers[4].shown && <a className="Circle" onClick={() => selectNumber(4)} style={numbers[4].selected ? { backgroundColor: '#51a594' } : { backgroundColor: '#1f7a6e' }}>{numbers[4].value}</a>}
+                {numbers[5].shown && <a className="Circle" onClick={() => selectNumber(5)} style={numbers[5].selected ? { backgroundColor: '#51a594' } : { backgroundColor: '#1f7a6e' }}>{numbers[5].value}</a>}
+              </div>
             </div>
           </>
         )}
-      </header>
     </div>
   );
 };

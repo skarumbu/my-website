@@ -1,17 +1,14 @@
 import React from "react";
+import "../styling/nav-bar.css";
+import "../styling/button.css"; // Ensure you import the button styles
 
 const NavBar = () => {
   return (
-      <div className="nav-container mb-3">
-        <nav className="navbar" style = {{backgroundColor: "#282c34"}}>
-        <a
-          href="/digits"
-          className="Button"
-        >
-            Digits
-        </a>
-        </nav>
-      </div>
+    <nav className="nav-bar">
+      <a href="/digits" className="button">
+        Digits
+      </a>
+    </nav>
   );
 };
 
