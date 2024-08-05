@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import FireworksComponent from './FireworksComponent.tsx';
-import PulseLoader from "react-spinners/PulseLoader";
+import NumberCircle from './components/DigitCircle.tsx';
+import SignCircle from './components/SignCircle.tsx';
+import TargetDisplay from './components/TargetDisplay.tsx';
+import Spinner from './components/Spinner.tsx';
 
-import './styling/circle.css';
 import './App.css';
 import './Row.css';
 import React from 'react';
@@ -21,7 +23,7 @@ interface Sign {
 }
 
 const Digits: React.FC = () => {
-  const [numbers, setNumbers] = useState<Number[] | null>(null);;
+  const [numbers, setNumbers] = useState<Number[] | null>(null);
   const [signs, setSigns] = useState<Sign[]>([
     { id: "+", selected: false },
     { id: "-", selected: false },
@@ -77,15 +79,11 @@ const Digits: React.FC = () => {
           console.log("Couldn't calculate value")
           return;
         }
-        console.log(updatedValue);
-        console.log(target);
         if (updatedValue === target) {
           setWin(true);
           return;
         }
-        if (selectedSign.id === "/" && numbers[id].value % selectedNumber.value !== 0) {
-          return;
-        }
+
         setSigns(signs.map((sign) => ({ ...sign, selected: false })));
 
         setNumbers(numbers.map((number) => {
@@ -113,7 +111,7 @@ const Digits: React.FC = () => {
       case '*':
         return number1 * number2;
       case '/':
-        return number2 !== 0 ? number1 / number2 : null; // Prevent division by zero
+        return number1 % number2 == 0 ? (number1 / number2) : null; // Prevent division by zero
       default:
         return null;
     }
@@ -127,42 +125,37 @@ const Digits: React.FC = () => {
 
   return (
     <div className="App">
-        {numbers === null ? (
-          <div className="spinner-container">
-            <PulseLoader color="#000" size={25} speedMultiplier={.5} />
+      {numbers === null ? (
+        <Spinner />
+      ) : win ? (
+        <div>
+          <FireworksComponent />
+          <div className='Row' style={{ position: 'absolute' }}>
+            You Win!
           </div>
-        ) : win ? (
-          <div>
-            <FireworksComponent />
-            <div className='Row' style={{ position: 'absolute' }}>
-              You Win!
-            </div>
+        </div>
+      ) : (
+        <>
+          <TargetDisplay target={target} />
+          <div className='Row'>
+            {signs.map(sign => (
+              <SignCircle key={sign.id} id={sign.id} selected={sign.selected} onClick={selectSign} />
+            ))}
           </div>
-        ) : (
-          <>
-            <div className='Row' style={{ color: '#1f7a6e' }}>
-              Target: {target}
-            </div>
+          <div style={{ color: '#add8d2' }}>
             <div className='Row'>
-              <span className='Circle' onClick={() => selectSign("+")} style={signs[0].selected ? { backgroundColor: '#bdcc77' } : { backgroundColor: '#8fa143' }}>&#43;</span>
-              <span className='Circle' onClick={() => selectSign("-")} style={signs[1].selected ? { backgroundColor: '#bdcc77' } : { backgroundColor: '#8fa143' }}>&#8722;</span>
-              <span className='Circle' onClick={() => selectSign("*")} style={signs[2].selected ? { backgroundColor: '#bdcc77' } : { backgroundColor: '#8fa143' }}>&#215;</span>
-              <span className='Circle' onClick={() => selectSign("/")} style={signs[3].selected ? { backgroundColor: '#bdcc77' } : { backgroundColor: '#8fa143' }}>&#247;</span>
+              {numbers.slice(0, 3).map(number => (
+                <NumberCircle key={number.id} {...number} onClick={selectNumber} />
+              ))}
             </div>
-            <div style = {{ color: '#add8d2' }}>
-              <div className='Row'>
-                {numbers[0].shown && <a className="Circle" onClick={() => selectNumber(0)} style={numbers[0].selected ? { backgroundColor: '#51a594' } : { backgroundColor: '#1f7a6e' }}>{numbers[0].value}</a>}
-                {numbers[1].shown && <a className="Circle" onClick={() => selectNumber(1)} style={numbers[1].selected ? { backgroundColor: '#51a594' } : { backgroundColor: '#1f7a6e' }}>{numbers[1].value}</a>}
-                {numbers[2].shown && <a className="Circle" onClick={() => selectNumber(2)} style={numbers[2].selected ? { backgroundColor: '#51a594' } : { backgroundColor: '#1f7a6e' }}>{numbers[2].value}</a>}
-              </div>
-              <div className='Row' style = {{ paddingTop: 0}}>
-                {numbers[3].shown && <a className="Circle" onClick={() => selectNumber(3)} style={numbers[3].selected ? { backgroundColor: '#51a594' } : { backgroundColor: '#1f7a6e' }}>{numbers[3].value}</a>}
-                {numbers[4].shown && <a className="Circle" onClick={() => selectNumber(4)} style={numbers[4].selected ? { backgroundColor: '#51a594' } : { backgroundColor: '#1f7a6e' }}>{numbers[4].value}</a>}
-                {numbers[5].shown && <a className="Circle" onClick={() => selectNumber(5)} style={numbers[5].selected ? { backgroundColor: '#51a594' } : { backgroundColor: '#1f7a6e' }}>{numbers[5].value}</a>}
-              </div>
+            <div className='Row' style={{ paddingTop: 0 }}>
+              {numbers.slice(3).map(number => (
+                <NumberCircle key={number.id} {...number} onClick={selectNumber} />
+              ))}
             </div>
-          </>
-        )}
+          </div>
+        </>
+      )}
     </div>
   );
 };
