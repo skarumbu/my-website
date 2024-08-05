@@ -6,7 +6,7 @@ import SignCircle from './components/SignCircle.tsx';
 import TargetDisplay from './components/TargetDisplay.tsx';
 import Spinner from './components/Spinner.tsx';
 
-import './App.css';
+import './styling/main.css';
 import './Row.css';
 import React from 'react';
 
@@ -124,7 +124,7 @@ const Digits: React.FC = () => {
   };
 
   return (
-    <div className="App">
+    <div className="main">
       {numbers === null ? (
         <Spinner />
       ) : win ? (

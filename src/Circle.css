@@ -1,0 +1,18 @@
+.Circle {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 50px;
+    line-height: 50px;
+    text-align: center;
+    border-radius: 50%;
+    background-color: #f0f0f0;
+    margin: 10px;
+    cursor: pointer;
+    transition: transform 1s ease-in-out;
+  }
+  
+  .Circle.moving {
+    transition: transform 0.5s ease-in-out;
+  }
+  
