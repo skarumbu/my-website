@@ -1,5 +1,6 @@
 .Row {
     display:flex;
     gap: 5px;
-    margin: 5px;
+    margin: 10px;
+    font-size: 3.5rem;
 }

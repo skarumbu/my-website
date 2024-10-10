@@ -15,7 +15,7 @@
 list-style-type: none;
 margin: 0;
 padding: 0;
-display: flex; /* Ensure the list items are aligned horizontally */
+display: flex;
 }
 
 .nav-bar li {
@@ -24,21 +24,21 @@ float: left;
 
 .nav-bar li a {
 display: block;
-color: white; /* Set the link color */
+color: white;
 text-align: center;
 padding: 14px 16px;
-text-decoration: none; /* Remove underline */
-transition: color 0.3s, background-color 0.3s; /* Smooth transition for hover effects */
+text-decoration: none;
+transition: color 0.3s, background-color 0.3s;
 }
 
 .nav-bar li a:hover {
-color: #ffd700; /* Change text color on hover */
-background-color: #444; /* Change background color on hover */
-text-decoration: underline; /* Optional: Add underline on hover */
+color: #ffd700;
+background-color: #444;
+text-decoration: underline;
 }
 
 .nav-bar li a:visited, .nav-bar li a:active, .nav-bar li a:focus {
-color: white; /* Ensure the link color stays the same for visited, active, and focused links */
-outline: none; /* Remove default outline */
+color: white;
+outline: none;
 }
   

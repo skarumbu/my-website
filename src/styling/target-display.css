@@ -1,0 +1,6 @@
+.target-display-words {
+    display:flex;
+    gap: 5px;
+    margin: 5px;
+    font-size: 1.5rem;
+}

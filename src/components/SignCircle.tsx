@@ -8,20 +8,10 @@ interface SignCircleProps {
 }
 
 const SignCircle: React.FC<SignCircleProps> = ({ id, selected, onClick }) => {
-  const getSignCharacter = (sign: string) => {
-    switch (sign) {
-      case '+': return '＋';
-      case '-': return '−';
-      case '*': return '×';
-      case '/': return '÷';
-      default: return sign;
-    }
-  };
-
   return (
-    <span className='Circle' onClick={() => onClick(id)} style={selected ? { backgroundColor: '#bdcc77' } : { backgroundColor: '#8fa143' }}>
-      {getSignCharacter(id)}
-    </span>
+    <a className='Circle' onClick={() => onClick(id)} style={selected ? { backgroundColor: '#bdcc77' } : { backgroundColor: '#8fa143' }}>
+      {id}
+    </a>
   );
 };
 

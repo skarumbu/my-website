@@ -27,8 +27,8 @@ const Digits: React.FC = () => {
   const [signs, setSigns] = useState<Sign[]>([
     { id: "+", selected: false },
     { id: "-", selected: false },
-    { id: "*", selected: false },
-    { id: "/", selected: false }
+    { id: "×", selected: false },
+    { id: "÷", selected: false }
   ]);
   const [win, setWin] = useState(false);
   const [target, setTarget] = useState(234);
@@ -66,7 +66,7 @@ const Digits: React.FC = () => {
     fetchData();
   }, []);
 
-  const selectNumber = (id: number) => {
+  const selectNumber = (event, id: number) => {
     if (numbers === null) return;
 
     const selectedNumber = numbers.find(number => number.selected);
@@ -108,10 +108,10 @@ const Digits: React.FC = () => {
         return number1 + number2;
       case '-':
         return number1 - number2;
-      case '*':
+      case '×':
         return number1 * number2;
-      case '/':
-        return number1 % number2 == 0 ? (number1 / number2) : null; // Prevent division by zero
+      case '÷':
+        return number1 % number2 == 0 ? (number1 / number2) : null;
       default:
         return null;
     }
@@ -136,7 +136,9 @@ const Digits: React.FC = () => {
         </div>
       ) : (
         <>
-          <TargetDisplay target={target} />
+          <div className='Row'>
+            <TargetDisplay target={target} />
+          </div>
           <div className='Row'>
             {signs.map(sign => (
               <SignCircle key={sign.id} id={sign.id} selected={sign.selected} onClick={selectSign} />
@@ -145,12 +147,12 @@ const Digits: React.FC = () => {
           <div style={{ color: '#add8d2' }}>
             <div className='Row'>
               {numbers.slice(0, 3).map(number => (
-                <NumberCircle key={number.id} {...number} onClick={selectNumber} />
+                <NumberCircle key={number.id} {...number} onClick={(evt)=>selectNumber(evt, number.id)} />
               ))}
             </div>
             <div className='Row' style={{ paddingTop: 0 }}>
               {numbers.slice(3).map(number => (
-                <NumberCircle key={number.id} {...number} onClick={selectNumber} />
+                <NumberCircle key={number.id} {...number} onClick={(event) => selectNumber(event, number.id)} />
               ))}
             </div>
           </div>
