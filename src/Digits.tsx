@@ -9,6 +9,7 @@ import Spinner from './components/Spinner.tsx';
 import './styling/main.css';
 import './Row.css';
 import React from 'react';
+import RetryCircle from './components/RetryCircle.tsx';
 
 interface Number {
   id: number;
@@ -24,6 +25,7 @@ interface Sign {
 
 const Digits: React.FC = () => {
   const [numbers, setNumbers] = useState<Number[] | null>(null);
+  const [originalNumbers, setOriginalNumbers] = useState<Number[] | null>(null);
   const [signs, setSigns] = useState<Sign[]>([
     { id: "+", selected: false },
     { id: "-", selected: false },
@@ -51,6 +53,13 @@ const Digits: React.FC = () => {
         const goal = parseInt(response.data.Item.goal.N);
 
         setNumbers(matrix.map((value: number, index: number) => ({
+          id: index,
+          value: value,
+          shown: true,
+          selected: false
+        })));
+
+        setOriginalNumbers(matrix.map((value: number, index: number) => ({
           id: index,
           value: value,
           shown: true,
@@ -123,6 +132,10 @@ const Digits: React.FC = () => {
     )));
   };
 
+  const retry = () => {
+      setNumbers(originalNumbers);
+  }
+
   return (
     <div className="main">
       {numbers === null ? (
@@ -155,6 +168,9 @@ const Digits: React.FC = () => {
                 <NumberCircle key={number.id} {...number} onClick={(event) => selectNumber(event, number.id)} />
               ))}
             </div>
+          </div>
+          <div className='Row'>
+            <RetryCircle onClick={retry}/>
           </div>
         </>
       )}
