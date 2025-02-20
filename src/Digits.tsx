@@ -34,6 +34,8 @@ const Digits: React.FC = () => {
   ]);
   const [win, setWin] = useState(false);
   const [target, setTarget] = useState(234);
+  const [showSolution, setShowSolution] = useState(false); 
+  const [solution, setSolution] = useState<string[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -51,6 +53,9 @@ const Digits: React.FC = () => {
 
         const matrix = JSON.parse(response.data.Item.matrix.S);
         const goal = parseInt(response.data.Item.goal.N);
+        console.log(response.data);
+        const solutions = response.data.Item.solution.L.map(item => item.S);
+        console.log(solutions);
 
         setNumbers(matrix.map((value: number, index: number) => ({
           id: index,
@@ -67,6 +72,7 @@ const Digits: React.FC = () => {
         })));
 
         setTarget(goal);
+        setSolution(solutions);
       } catch (error) {
         console.log(error);
       }
@@ -172,6 +178,14 @@ const Digits: React.FC = () => {
           <div className='Row'>
             <RetryCircle onClick={retry}/>
           </div>
+          <div className='Row'>
+            <div className='button' onClick={() => setShowSolution(!showSolution)}>Solution</div>
+          </div>
+          {showSolution && (
+            <div>
+              <b>Solution:</b> {JSON.stringify(solution)}
+            </div>
+          )}
         </>
       )}
     </div>
