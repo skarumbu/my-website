@@ -24,8 +24,9 @@ interface Sign {
 }
 
 const Digits: React.FC = () => {
-  const [numbers, setNumbers] = useState<Number[] | null>(null);
-  const [originalNumbers, setOriginalNumbers] = useState<Number[] | null>(null);
+  const [numbersList, setNumbersList] = useState<Number[][] | null>(null);
+  const [currentPuzzleIndex, setCurrentPuzzleIndex] = useState(0);
+  const [originalNumbersList, setOriginalNumbersList] = useState<Number[][] | null>(null);
   const [signs, setSigns] = useState<Sign[]>([
     { id: "+", selected: false },
     { id: "-", selected: false },
@@ -33,7 +34,7 @@ const Digits: React.FC = () => {
     { id: "÷", selected: false }
   ]);
   const [win, setWin] = useState(false);
-  const [target, setTarget] = useState(234);
+  const [targetList, setTargetList] = useState<number[] | null>(null);
   const [showSolution, setShowSolution] = useState(false); 
   const [solution, setSolution] = useState<string[]>([]);
 
@@ -51,27 +52,29 @@ const Digits: React.FC = () => {
       try {
         const response = await axios.request(config);
 
-        const matrix = JSON.parse(response.data.Item.matrix.S);
-        const goal = parseInt(response.data.Item.goal.N);
+        const goalList = JSON.parse(response.data.Item.goalList.S);
         console.log(response.data);
         const solutions = response.data.Item.solution.L.map(item => item.S);
         console.log(solutions);
+        const matrixList = JSON.parse(response.data.Item.matrixList.S);
+        const puzzles: number[][] = [];
+        for (let i = 0; i < matrixList.length; i += 2) {
+          puzzles.push([...matrixList[i], ...(matrixList[i + 1])]);
+        }
+        
+        console.log(puzzles)
 
-        setNumbers(matrix.map((value: number, index: number) => ({
-          id: index,
-          value: value,
-          shown: true,
-          selected: false
-        })));
-
-        setOriginalNumbers(matrix.map((value: number, index: number) => ({
-          id: index,
-          value: value,
-          shown: true,
-          selected: false
-        })));
-
-        setTarget(goal);
+        const formattedPuzzles = puzzles.map((matrix, matrixIndex) =>
+          matrix.map((value: number, index: number) => ({
+            id: matrixIndex * 100 + index,
+            value: value,
+            shown: true,
+            selected: false
+          }))
+        );
+        setNumbersList(formattedPuzzles);
+        setOriginalNumbersList(formattedPuzzles);
+        setTargetList(goalList);
         setSolution(solutions);
       } catch (error) {
         console.log(error);
@@ -81,39 +84,50 @@ const Digits: React.FC = () => {
     fetchData();
   }, []);
 
-  const selectNumber = (event, id: number) => {
-    if (numbers === null) return;
+  const selectNumber = (id: number) => {
+    if (!numbersList) return;
 
+    const updatedNumbers = [...numbersList];
+    console.log(updatedNumbers);
+    const numbers = updatedNumbers[currentPuzzleIndex];
+    console.log(numbers);
     const selectedNumber = numbers.find(number => number.selected);
     const selectedSign = signs.find(sign => sign.selected);
+    const currentNumber = numbers.find(number => number.id == id);
 
-    if (selectedNumber && selectedSign) {
-      if (selectedNumber !== undefined && selectedNumber.id !== id) {
-        const updatedValue = applyOperation(selectedSign.id, selectedNumber.value, numbers[id].value);
+    if (selectedNumber && selectedSign && currentNumber) {
+      if (selectedNumber.id !== id) {
+        const updatedValue = applyOperation(selectedSign.id, selectedNumber.value, currentNumber.value);
+        console.log(updatedValue);
         if (updatedValue == null) {
           console.log("Couldn't calculate value")
           return;
         }
-        if (updatedValue === target) {
+        if (targetList && updatedValue === targetList[currentPuzzleIndex]) {
           setWin(true);
           return;
         }
 
         setSigns(signs.map((sign) => ({ ...sign, selected: false })));
+        console.log(signs);
 
-        setNumbers(numbers.map((number) => {
+        updatedNumbers[currentPuzzleIndex] = numbers.map(number => {
           if (number.selected) {
-            return { ...number, selected: !number.selected, shown: false };
+
+
+            return { ...number, selected: false, shown: false };
           } else if (number.id === id) {
             return { ...number, value: updatedValue, selected: false };
           }
           return number;
-        }));
+        });
+        setNumbersList(updatedNumbers);
       }
     } else {
-      setNumbers(numbers.map((number) => (
+      updatedNumbers[currentPuzzleIndex] = numbers.map(number =>
         number.id === id ? { ...number, selected: !number.selected } : number
-      )));
+      );
+      setNumbersList(updatedNumbers);
     }
   };
 
@@ -132,6 +146,18 @@ const Digits: React.FC = () => {
     }
   };
 
+  const handlePreviousPuzzle = () => {
+    if (numbersList && currentPuzzleIndex > 0) {
+      setCurrentPuzzleIndex(currentPuzzleIndex - 1);
+    }
+  };
+
+  const handleNextPuzzle = () => {
+    if (numbersList && currentPuzzleIndex < numbersList.length - 1) {
+      setCurrentPuzzleIndex(currentPuzzleIndex + 1);
+    }
+  };
+
   const selectSign = (id: string) => {
     setSigns(signs.map((sign) => (
       sign.id === id ? { ...sign, selected: !sign.selected } : { ...sign, selected: false }
@@ -139,12 +165,19 @@ const Digits: React.FC = () => {
   };
 
   const retry = () => {
-      setNumbers(originalNumbers);
-  }
+    if (originalNumbersList) {
+      setNumbersList(prev => {
+        if (!prev) return prev;
+        const updatedNumbers = [...prev];
+        updatedNumbers[currentPuzzleIndex] = [...originalNumbersList[currentPuzzleIndex]];
+        return updatedNumbers;
+      });
+    }
+  };
 
   return (
     <div className="main">
-      {numbers === null ? (
+      {numbersList === null ? (
         <Spinner />
       ) : win ? (
         <div>
@@ -156,7 +189,7 @@ const Digits: React.FC = () => {
       ) : (
         <>
           <div className='Row'>
-            <TargetDisplay target={target} />
+            <TargetDisplay target={targetList ? targetList[currentPuzzleIndex] : 0} />
           </div>
           <div className='Row'>
             {signs.map(sign => (
@@ -165,13 +198,13 @@ const Digits: React.FC = () => {
           </div>
           <div style={{ color: '#add8d2' }}>
             <div className='Row'>
-              {numbers.slice(0, 3).map(number => (
-                <NumberCircle key={number.id} {...number} onClick={(evt)=>selectNumber(evt, number.id)} />
+              {numbersList[currentPuzzleIndex].slice(0, 3).map(number => (
+                <NumberCircle key={number.id} {...number} onClick={() => selectNumber(number.id)} />
               ))}
             </div>
             <div className='Row' style={{ paddingTop: 0 }}>
-              {numbers.slice(3).map(number => (
-                <NumberCircle key={number.id} {...number} onClick={(event) => selectNumber(event, number.id)} />
+              {numbersList[currentPuzzleIndex].slice(3).map(number => (
+                <NumberCircle key={number.id} {...number} onClick={() => selectNumber(number.id)} />
               ))}
             </div>
           </div>
@@ -186,6 +219,10 @@ const Digits: React.FC = () => {
               <b>Solution:</b> {JSON.stringify(solution)}
             </div>
           )}
+          <div className='Row'>
+            <div className='button' onClick={handlePreviousPuzzle}>← Previous</div>
+            <div className='button' onClick={handleNextPuzzle}>Next →</div>
+          </div>
         </>
       )}
     </div>
