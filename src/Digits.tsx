@@ -36,7 +36,7 @@ const Digits: React.FC = () => {
   const [win, setWin] = useState(false);
   const [targetList, setTargetList] = useState<number[] | null>(null);
   const [showSolution, setShowSolution] = useState(false); 
-  const [solution, setSolution] = useState<string[]>([]);
+  const [solution, setSolution] = useState<string[][]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -53,9 +53,9 @@ const Digits: React.FC = () => {
         const response = await axios.request(config);
 
         const goalList = JSON.parse(response.data.Item.goalList.S);
-        console.log(response.data);
-        const solutions = response.data.Item.solution.L.map(item => item.S);
-        console.log(solutions);
+
+        const solutions = JSON.parse(response.data.Item.solutionList.S) as string[][];
+
         const matrixList = JSON.parse(response.data.Item.matrixList.S);
         const puzzles: number[][] = [];
         for (let i = 0; i < matrixList.length; i += 2) {
@@ -216,7 +216,10 @@ const Digits: React.FC = () => {
           </div>
           {showSolution && (
             <div>
-              <b>Solution:</b> {JSON.stringify(solution)}
+              <b>Possible Solutions:</b>
+              {solution[currentPuzzleIndex]?.map((sol, index) => (
+                <div key={index}>{sol}</div>
+              ))}
             </div>
           )}
           <div className='Row'>
