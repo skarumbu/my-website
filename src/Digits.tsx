@@ -35,8 +35,8 @@ const Digits: React.FC = () => {
   ]);
   const [win, setWin] = useState(false);
   const [targetList, setTargetList] = useState<number[] | null>(null);
-  const [showSolution, setShowSolution] = useState(false); 
   const [solution, setSolution] = useState<string[][]>([]);
+  const [pendingMove, setPendingMove] = useState<{ step: 'number1' | 'sign' | 'number2'; number1?: number; sign?: string; number2?: number } | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -53,16 +53,13 @@ const Digits: React.FC = () => {
         const response = await axios.request(config);
 
         const goalList = JSON.parse(response.data.Item.goalList.S);
-
         const solutions = JSON.parse(response.data.Item.solutionList.S) as string[][];
-
         const matrixList = JSON.parse(response.data.Item.matrixList.S);
         const puzzles: number[][] = [];
+
         for (let i = 0; i < matrixList.length; i += 2) {
           puzzles.push([...matrixList[i], ...(matrixList[i + 1])]);
         }
-        
-        console.log(puzzles)
 
         const formattedPuzzles = puzzles.map((matrix, matrixIndex) =>
           matrix.map((value: number, index: number) => ({
@@ -72,6 +69,7 @@ const Digits: React.FC = () => {
             selected: false
           }))
         );
+
         setNumbersList(formattedPuzzles);
         setOriginalNumbersList(formattedPuzzles);
         setTargetList(goalList);
@@ -84,23 +82,92 @@ const Digits: React.FC = () => {
     fetchData();
   }, []);
 
+
+  const helpMe = () => {
+    if (!numbersList || !solution || currentPuzzleIndex >= solution.length) {
+      console.log("No solution found or out of solutions.");
+      return;
+    }
+
+    const currentSolution = solution[currentPuzzleIndex];
+
+    for (let move of currentSolution) {
+      const operations = move.split(/(?=[-+*/])/);
+      let currNumber = parseInt(operations[0]);
+
+      for (let i = 1; i < operations.length; i++) {
+        const signType = operations[i].substring(0, 1) === "*" ? "×" : operations[i].substring(0, 1);
+        const num2 = parseInt(operations[i].slice(1));
+
+        const number1 = numbersList[currentPuzzleIndex].find(num => num.value === currNumber);
+        const number2 = numbersList[currentPuzzleIndex].find(num => num.value === num2);
+        const signObj = signs.find(sign => sign.id === signType);
+
+        if (number1 && number2 && signObj) {
+          setPendingMove({ step: 'number1', number1: number1.id, sign: signObj.id, number2: number2.id });
+          return;
+        } else {
+          var result = applyOperation(signType, currNumber, num2)
+          if (result == null) {
+            console.log("Bad Operation")
+          } else {
+            currNumber = result
+          }
+        }
+      }
+    }
+
+    retry();
+  };
+
+  const prettyPrintNumber = (num: Number | undefined) => {
+    if (!num) {
+      return 'null'
+    }
+    return `Number(id: ${num.id}, value: ${num.value}, shown: ${num.shown}, selected: ${num.selected})`;
+  };
+  
+  const prettyPrintSign = (sign: Sign | undefined) => {
+    if (!sign) {
+      return 'null'
+    }
+    return `Sign(id: ${sign.id}, selected: ${sign.selected})`;
+  };
+
+  useEffect(() => {
+    if (pendingMove && pendingMove.step === 'number1') {
+      selectNumber(pendingMove.number1!);
+      setPendingMove(prev => ({ ...prev, step: 'sign' }));
+    }
+  }, [pendingMove]);
+
+  useEffect(() => {
+    if (pendingMove && pendingMove.step === 'sign') {
+      selectSign(pendingMove.sign!);
+      setPendingMove(prev => ({ ...prev, step: 'number2' }));
+    }
+  }, [pendingMove]);
+
+  useEffect(() => {
+    if (pendingMove && pendingMove.step === 'number2') {
+      selectNumber(pendingMove.number2!);
+      setPendingMove(null);
+    }
+  }, [pendingMove]);
+
   const selectNumber = (id: number) => {
     if (!numbersList) return;
 
     const updatedNumbers = [...numbersList];
-    console.log(updatedNumbers);
     const numbers = updatedNumbers[currentPuzzleIndex];
-    console.log(numbers);
     const selectedNumber = numbers.find(number => number.selected);
     const selectedSign = signs.find(sign => sign.selected);
-    const currentNumber = numbers.find(number => number.id == id);
+    const currentNumber = numbers.find(number => number.id === id);
 
     if (selectedNumber && selectedSign && currentNumber) {
       if (selectedNumber.id !== id) {
         const updatedValue = applyOperation(selectedSign.id, selectedNumber.value, currentNumber.value);
-        console.log(updatedValue);
         if (updatedValue == null) {
-          console.log("Couldn't calculate value")
           return;
         }
         if (targetList && updatedValue === targetList[currentPuzzleIndex]) {
@@ -109,12 +176,9 @@ const Digits: React.FC = () => {
         }
 
         setSigns(signs.map((sign) => ({ ...sign, selected: false })));
-        console.log(signs);
 
         updatedNumbers[currentPuzzleIndex] = numbers.map(number => {
           if (number.selected) {
-
-
             return { ...number, selected: false, shown: false };
           } else if (number.id === id) {
             return { ...number, value: updatedValue, selected: false };
@@ -125,7 +189,7 @@ const Digits: React.FC = () => {
       }
     } else {
       updatedNumbers[currentPuzzleIndex] = numbers.map(number =>
-        number.id === id ? { ...number, selected: !number.selected } : number
+        number.id === id ? { ...number, selected: !number.selected } : { ...number, selected: false } 
       );
       setNumbersList(updatedNumbers);
     }
@@ -140,12 +204,12 @@ const Digits: React.FC = () => {
       case '×':
         return number1 * number2;
       case '÷':
-        return number1 % number2 == 0 ? (number1 / number2) : null;
+        return number1 % number2 === 0 ? number1 / number2 : null;
       default:
         return null;
     }
   };
-
+  
   const handlePreviousPuzzle = () => {
     if (numbersList && currentPuzzleIndex > 0) {
       setCurrentPuzzleIndex(currentPuzzleIndex - 1);
@@ -157,13 +221,12 @@ const Digits: React.FC = () => {
       setCurrentPuzzleIndex(currentPuzzleIndex + 1);
     }
   };
-
   const selectSign = (id: string) => {
     setSigns(signs.map((sign) => (
       sign.id === id ? { ...sign, selected: !sign.selected } : { ...sign, selected: false }
     )));
   };
-
+  
   const retry = () => {
     if (originalNumbersList) {
       setNumbersList(prev => {
@@ -212,16 +275,8 @@ const Digits: React.FC = () => {
             <RetryCircle onClick={retry}/>
           </div>
           <div className='Row'>
-            <div className='button' onClick={() => setShowSolution(!showSolution)}>Solution</div>
+            <div className='button' onClick={helpMe}>Help me!</div>
           </div>
-          {showSolution && (
-            <div>
-              <b>Possible Solutions:</b>
-              {solution[currentPuzzleIndex]?.map((sol, index) => (
-                <div key={index}>{sol}</div>
-              ))}
-            </div>
-          )}
           <div className='Row'>
             <div className='button' onClick={handlePreviousPuzzle}>← Previous</div>
             <div className='button' onClick={handleNextPuzzle}>Next →</div>
