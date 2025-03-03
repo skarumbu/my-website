@@ -120,41 +120,61 @@ const Digits: React.FC = () => {
     retry();
   };
 
-  const prettyPrintNumber = (num: Number | undefined) => {
-    if (!num) {
-      return 'null'
-    }
-    return `Number(id: ${num.id}, value: ${num.value}, shown: ${num.shown}, selected: ${num.selected})`;
-  };
-  
-  const prettyPrintSign = (sign: Sign | undefined) => {
-    if (!sign) {
-      return 'null'
-    }
-    return `Sign(id: ${sign.id}, selected: ${sign.selected})`;
-  };
+  const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-  useEffect(() => {
-    if (pendingMove && pendingMove.step === 'number1') {
+const addRippleEffect = async (id: number | string) => {
+  return new Promise<void>((resolve) => {
+    const element = document.getElementById(`number-${id}`) || document.getElementById(`sign-${id}`);
+    if (element) {
+      element.classList.add("ripple-effect");
+      setTimeout(() => {
+        element.classList.remove("ripple-effect");
+        resolve();
+      }, 600);
+    } else {
+      resolve();
+    }
+  });
+};
+
+useEffect(() => {
+  if (pendingMove && pendingMove.step === 'number1') {
+    const performMove = async () => {
+      await addRippleEffect(pendingMove.number1!);
       selectNumber(pendingMove.number1!);
+      await sleep(600);
       setPendingMove(prev => ({ ...prev, step: 'sign' }));
-    }
-  }, [pendingMove]);
+    };
 
-  useEffect(() => {
-    if (pendingMove && pendingMove.step === 'sign') {
+    performMove();
+  }
+}, [pendingMove]);
+
+useEffect(() => {
+  if (pendingMove && pendingMove.step === 'sign') {
+    const performMove = async () => {
+      await addRippleEffect(pendingMove.sign!);
       selectSign(pendingMove.sign!);
+      await sleep(600);
       setPendingMove(prev => ({ ...prev, step: 'number2' }));
-    }
-  }, [pendingMove]);
+    };
 
-  useEffect(() => {
-    if (pendingMove && pendingMove.step === 'number2') {
+    performMove();
+  }
+}, [pendingMove]);
+
+useEffect(() => {
+  if (pendingMove && pendingMove.step === 'number2') {
+    const performMove = async () => {
+      await addRippleEffect(pendingMove.number2!);
       selectNumber(pendingMove.number2!);
+      await sleep(600);
       setPendingMove(null);
-    }
-  }, [pendingMove]);
+    };
 
+    performMove();
+  }
+}, [pendingMove]);
   const selectNumber = (id: number) => {
     if (!numbersList) return;
 

@@ -9,7 +9,7 @@ interface SignCircleProps {
 
 const SignCircle: React.FC<SignCircleProps> = ({ id, selected, onClick }) => {
   return (
-    <a className='Circle' onClick={() => onClick(id)} style={selected ? { backgroundColor: '#bdcc77' } : { backgroundColor: '#8fa143' }}>
+    <a className='Circle' id={`sign-${id}`} onClick={() => onClick(id)} style={selected ? { backgroundColor: '#bdcc77' } : { backgroundColor: '#8fa143' }}>
       {id}
     </a>
   );
