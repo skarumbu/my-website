@@ -33,54 +33,73 @@ const Digits: React.FC = () => {
     { id: "×", selected: false },
     { id: "÷", selected: false }
   ]);
-  const [win, setWin] = useState(false);
+  const [solvedPuzzles, setSolvedPuzzles] = useState<boolean[]>([]);
   const [targetList, setTargetList] = useState<number[] | null>(null);
   const [solution, setSolution] = useState<string[][]>([]);
   const [pendingMove, setPendingMove] = useState<{ step: 'number1' | 'sign' | 'number2'; number1?: number; sign?: string; number2?: number } | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
-      let config = {
-        method: 'get',
-        maxBodyLength: Infinity,
-        url: 'https://t1w5b1fiz4.execute-api.us-east-1.amazonaws.com/default/DigitsGetter',
-        headers: {
-          'X-API-KEY': process.env.REACT_APP_API_GATEWAY_KEY!,
-          'Content-Type': 'application/json'
+      if (process.env.NODE_ENV === 'development') {
+        // Stubbed data for local development
+        const stubbedPuzzles = [
+          [{ id: 0, value: 3, shown: true, selected: false }, { id: 1, value: 5, shown: true, selected: false }],
+          [{ id: 2, value: 7, shown: true, selected: false }, { id: 3, value: 2, shown: true, selected: false }]
+        ];
+        const stubbedTargets = [8, 9];
+        const stubbedSolutions = [['3+5'], ['7+2']];
+  
+        setSolvedPuzzles(new Array(stubbedPuzzles.length).fill(false));
+        setNumbersList(stubbedPuzzles);
+        setOriginalNumbersList(stubbedPuzzles);
+        setTargetList(stubbedTargets);
+        setSolution(stubbedSolutions);
+      } else {
+        // Fetch real data in production
+        let config = {
+          method: 'get',
+          maxBodyLength: Infinity,
+          url: 'https://t1w5b1fiz4.execute-api.us-east-1.amazonaws.com/default/DigitsGetter',
+          headers: {
+            'X-API-KEY': process.env.REACT_APP_API_GATEWAY_KEY!,
+            'Content-Type': 'application/json'
+          }
+        };
+  
+        try {
+          const response = await axios.request(config);
+          const goalList = JSON.parse(response.data.Item.goalList.S);
+          const solutions = JSON.parse(response.data.Item.solutionList.S) as string[][];
+          const matrixList = JSON.parse(response.data.Item.matrixList.S);
+          const puzzles: number[][] = [];
+  
+          for (let i = 0; i < matrixList.length; i += 2) {
+            puzzles.push([...matrixList[i], ...(matrixList[i + 1])]);
+          }
+  
+          const formattedPuzzles = puzzles.map((matrix, matrixIndex) =>
+            matrix.map((value: number, index: number) => ({
+              id: matrixIndex * 100 + index,
+              value: value,
+              shown: true,
+              selected: false
+            }))
+          );
+  
+          setSolvedPuzzles(new Array(formattedPuzzles.length).fill(false));
+          setNumbersList(formattedPuzzles);
+          setOriginalNumbersList(formattedPuzzles);
+          setTargetList(goalList);
+          setSolution(solutions);
+        } catch (error) {
+          console.log(error);
         }
-      };
-      try {
-        const response = await axios.request(config);
-
-        const goalList = JSON.parse(response.data.Item.goalList.S);
-        const solutions = JSON.parse(response.data.Item.solutionList.S) as string[][];
-        const matrixList = JSON.parse(response.data.Item.matrixList.S);
-        const puzzles: number[][] = [];
-
-        for (let i = 0; i < matrixList.length; i += 2) {
-          puzzles.push([...matrixList[i], ...(matrixList[i + 1])]);
-        }
-
-        const formattedPuzzles = puzzles.map((matrix, matrixIndex) =>
-          matrix.map((value: number, index: number) => ({
-            id: matrixIndex * 100 + index,
-            value: value,
-            shown: true,
-            selected: false
-          }))
-        );
-
-        setNumbersList(formattedPuzzles);
-        setOriginalNumbersList(formattedPuzzles);
-        setTargetList(goalList);
-        setSolution(solutions);
-      } catch (error) {
-        console.log(error);
       }
     };
-
+  
     fetchData();
   }, []);
+  
 
 
   const helpMe = () => {
@@ -122,59 +141,60 @@ const Digits: React.FC = () => {
 
   const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-const addRippleEffect = async (id: number | string) => {
-  return new Promise<void>((resolve) => {
-    const element = document.getElementById(`number-${id}`) || document.getElementById(`sign-${id}`);
-    if (element) {
-      element.classList.add("ripple-effect");
-      setTimeout(() => {
-        element.classList.remove("ripple-effect");
+  const addRippleEffect = async (id: number | string) => {
+    return new Promise<void>((resolve) => {
+      const element = document.getElementById(`number-${id}`) || document.getElementById(`sign-${id}`);
+      if (element) {
+        element.classList.add("ripple-effect");
+        setTimeout(() => {
+          element.classList.remove("ripple-effect");
+          resolve();
+        }, 600);
+      } else {
         resolve();
-      }, 600);
-    } else {
-      resolve();
+      }
+    });
+  };
+
+  useEffect(() => {
+    if (pendingMove && pendingMove.step === 'number1') {
+      const performMove = async () => {
+        await addRippleEffect(pendingMove.number1!);
+        selectNumber(pendingMove.number1!);
+        await sleep(600);
+        setPendingMove(prev => ({ ...prev, step: 'sign' }));
+      };
+
+      performMove();
     }
-  });
-};
+  }, [pendingMove]);
 
-useEffect(() => {
-  if (pendingMove && pendingMove.step === 'number1') {
-    const performMove = async () => {
-      await addRippleEffect(pendingMove.number1!);
-      selectNumber(pendingMove.number1!);
-      await sleep(600);
-      setPendingMove(prev => ({ ...prev, step: 'sign' }));
-    };
+  useEffect(() => {
+    if (pendingMove && pendingMove.step === 'sign') {
+      const performMove = async () => {
+        await addRippleEffect(pendingMove.sign!);
+        selectSign(pendingMove.sign!);
+        await sleep(600);
+        setPendingMove(prev => ({ ...prev, step: 'number2' }));
+      };
 
-    performMove();
-  }
-}, [pendingMove]);
+      performMove();
+    }
+  }, [pendingMove]);
 
-useEffect(() => {
-  if (pendingMove && pendingMove.step === 'sign') {
-    const performMove = async () => {
-      await addRippleEffect(pendingMove.sign!);
-      selectSign(pendingMove.sign!);
-      await sleep(600);
-      setPendingMove(prev => ({ ...prev, step: 'number2' }));
-    };
+  useEffect(() => {
+    if (pendingMove && pendingMove.step === 'number2') {
+      const performMove = async () => {
+        await addRippleEffect(pendingMove.number2!);
+        selectNumber(pendingMove.number2!);
+        await sleep(600);
+        setPendingMove(null);
+      };
 
-    performMove();
-  }
-}, [pendingMove]);
+      performMove();
+    }
+  }, [pendingMove]);
 
-useEffect(() => {
-  if (pendingMove && pendingMove.step === 'number2') {
-    const performMove = async () => {
-      await addRippleEffect(pendingMove.number2!);
-      selectNumber(pendingMove.number2!);
-      await sleep(600);
-      setPendingMove(null);
-    };
-
-    performMove();
-  }
-}, [pendingMove]);
   const selectNumber = (id: number) => {
     if (!numbersList) return;
 
@@ -191,8 +211,7 @@ useEffect(() => {
           return;
         }
         if (targetList && updatedValue === targetList[currentPuzzleIndex]) {
-          setWin(true);
-          return;
+          setSolvedPuzzles(prev => prev.map((solved, i) => (i === currentPuzzleIndex ? true : solved)));
         }
 
         setSigns(signs.map((sign) => ({ ...sign, selected: false })));
@@ -262,7 +281,7 @@ useEffect(() => {
     <div className="main">
       {numbersList === null ? (
         <Spinner />
-      ) : win ? (
+      ) : solvedPuzzles.every(Boolean) ? (
         <div>
           <FireworksComponent />
           <div className='Row' style={{ position: 'absolute' }}>
@@ -279,13 +298,18 @@ useEffect(() => {
               <SignCircle key={sign.id} id={sign.id} selected={sign.selected} onClick={selectSign} />
             ))}
           </div>
+          {solvedPuzzles[currentPuzzleIndex] && (
+            <div className="overlay">
+              DONE!
+            </div>
+          )}
           <div style={{ color: '#add8d2' }}>
-            <div className='Row'>
+            <div className='Row' style={{ pointerEvents: solvedPuzzles[currentPuzzleIndex] ? 'none' : 'auto' }}>
               {numbersList[currentPuzzleIndex].slice(0, 3).map(number => (
                 <NumberCircle key={number.id} {...number} onClick={() => selectNumber(number.id)} />
               ))}
             </div>
-            <div className='Row' style={{ paddingTop: 0 }}>
+            <div className='Row' style={{ paddingTop: 0, pointerEvents: solvedPuzzles[currentPuzzleIndex] ? 'none' : 'auto' }}>
               {numbersList[currentPuzzleIndex].slice(3).map(number => (
                 <NumberCircle key={number.id} {...number} onClick={() => selectNumber(number.id)} />
               ))}
