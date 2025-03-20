@@ -108,6 +108,18 @@ const Digits: React.FC = () => {
       return;
     }
 
+    setNumbersList(prev => {
+      if (!prev) return prev;
+      const updatedNumbers = [...prev];
+      updatedNumbers[currentPuzzleIndex] = updatedNumbers[currentPuzzleIndex].map(number => ({
+        ...number,
+        selected: false
+      }));
+      return updatedNumbers;
+    });
+
+    setSigns(prevSigns => prevSigns.map(sign => ({ ...sign, selected: false })));
+
     const currentSolution = solution[currentPuzzleIndex];
 
     for (let move of currentSolution) {
