@@ -11,7 +11,7 @@ import './Row.css';
 import React from 'react';
 import RetryCircle from './components/RetryCircle.tsx';
 
-interface Number {
+interface Digit {
   id: number;
   value: number;
   shown: boolean;
@@ -24,9 +24,9 @@ interface Sign {
 }
 
 const Digits: React.FC = () => {
-  const [numbersList, setNumbersList] = useState<Number[][] | null>(null);
+  const [numbersList, setNumbersList] = useState<Digit[][] | null>(null);
   const [currentPuzzleIndex, setCurrentPuzzleIndex] = useState(0);
-  const [originalNumbersList, setOriginalNumbersList] = useState<Number[][] | null>(null);
+  const [originalNumbersList, setOriginalNumbersList] = useState<Digit[][] | null>(null);
   const [signs, setSigns] = useState<Sign[]>([
     { id: "+", selected: false },
     { id: "-", selected: false },
