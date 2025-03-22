@@ -1,19 +1,17 @@
-import './styling/main.css';
+import "./styling/main.css";
 
 import React from "react";
-import NavBar from "./components/nav-bar";
+import NavBar from "./components/nav-bar.tsx";
 
-function App() {
+const App: React.FC = () => {
   return (
     <div className="main">
       <header className="Main-text">
         <NavBar />
       </header>
-      <p>
-        Welcome to my website
-      </p>
+      <p>Welcome to my website</p>
     </div>
   );
-}
+};
 
 export default App;
