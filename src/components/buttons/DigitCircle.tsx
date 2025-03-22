@@ -1,5 +1,5 @@
 import React from 'react';
-import '../styling/circle.css';
+import '../../styling/circle.css';
 
 interface DigitCircleProps {
   id: number;

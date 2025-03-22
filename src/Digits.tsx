@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
-import FireworksComponent from './FireworksComponent.tsx';
-import NumberCircle from './components/DigitCircle.tsx';
+import FireworksComponent from './components/FireworksComponent.tsx';
+import NumberCircle from './components/buttons/DigitCircle.tsx';
 import SignCircle from './components/SignCircle.tsx';
 import TargetDisplay from './components/TargetDisplay.tsx';
 import Spinner from './components/Spinner.tsx';
@@ -9,7 +9,7 @@ import Spinner from './components/Spinner.tsx';
 import './styling/main.css';
 import './Row.css';
 import React from 'react';
-import RetryCircle from './components/RetryCircle.tsx';
+import RetryCircle from './components/buttons/RetryCircle.tsx';
 
 interface Digit {
   id: number;

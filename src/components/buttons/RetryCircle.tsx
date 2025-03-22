@@ -1,5 +1,5 @@
 import React from 'react';
-import refresh from '../images/refresh.png';
+import refresh from '../../images/refresh.png';
 
 import { motion } from 'framer-motion';
 
