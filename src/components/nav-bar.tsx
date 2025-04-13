@@ -8,6 +8,9 @@ const NavBar: React.FC = () => {
       <a href="/digits" className="button">
         Digits
       </a>
+      <a href="/momentum-finder" className="button">
+        momentum finder
+      </a>
     </nav>
   );
 };

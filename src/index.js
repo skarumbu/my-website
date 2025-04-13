@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import './styling/index.css';
 import App from './App.tsx';
 import Digits from './Digits.tsx';
+import MomentumFinder from './MomentumFinder.tsx';
 import reportWebVitals from './reportWebVitals';
 import {
   createBrowserRouter,
@@ -17,6 +18,10 @@ const router = createBrowserRouter([
   {
     path: "/",
     element: <App />
+  },
+  {
+    path: "momentum-finder",
+    element: <MomentumFinder />
   }
 ]);
 
