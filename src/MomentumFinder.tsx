@@ -1,86 +1,81 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
+
+interface Game {
+  team1: string;
+  team2: string;
+  date: string;
+  status?: string;
+  team1_score?: number;
+  team2_score?: number;
+  location?: string;
+}
 
 function MomentumFinder() {
-  const [gameDetails, setGameDetails] = useState({
-    team1: '',
-    team2: '',
-    date: ''
-  });
-  const [results, setResults] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [games, setGames] = useState<Game[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<String | null>(null);
 
-  const handleChange = (e) => {
-    setGameDetails({ ...gameDetails, [e.target.name]: e.target.value });
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await fetch('https://MomentumFinder-2099902565.us-east-1.elb.amazonaws.com/get-momentum', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(gameDetails)
-      });
-      if (!response.ok) {
-        throw new Error(`Error: ${response.status} ${response.statusText}`);
+  useEffect(() => {
+    const fetchGames = async () => {
+      if (!API_BASE_URL) {
+        setError('Missing REACT_APP_API_BASE_URL environment variable');
+        setLoading(false);
+        return;
       }
-      const data = await response.json();
-      setResults(data);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/get-current-games`);
+        if (!response.ok) {
+          throw new Error(`Error: ${response.status} ${response.statusText}`);
+        }
+        const text = await response.text();
+        console.log('API raw response:', text);
+      
+        const data = JSON.parse(text);
+        setGames(data.games);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchGames();
+  }, []);
 
   return (
-    <div style={{ maxWidth: '600px', margin: 'auto', padding: '1rem' }}>
-      <h2>Momentum Finder</h2>
-      <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: '1rem' }}>
-          <input 
-            type="text" 
-            name="team1" 
-            placeholder="Team 1 (e.g., Clippers)" 
-            value={gameDetails.team1} 
-            onChange={handleChange} 
-            style={{ width: '100%', padding: '0.5rem' }}
-          />
-        </div>
-        <div style={{ marginBottom: '1rem' }}>
-          <input 
-            type="text" 
-            name="team2" 
-            placeholder="Team 2 (e.g., Lakers)" 
-            value={gameDetails.team2} 
-            onChange={handleChange} 
-            style={{ width: '100%', padding: '0.5rem' }}
-          />
-        </div>
-        <div style={{ marginBottom: '1rem' }}>
-          <input 
-            type="date" 
-            name="date" 
-            value={gameDetails.date} 
-            onChange={handleChange} 
-            style={{ width: '100%', padding: '0.5rem' }}
-          />
-        </div>
-        <button type="submit" style={{ padding: '0.5rem 1rem' }}>
-          Find Momentum Shifts
-        </button>
-      </form>
-      {loading && <p>Loading...</p>}
+    <div style={{ maxWidth: '800px', margin: 'auto', padding: '1rem' }}>
+      <h2>Current NBA Games</h2>
+      {loading && <p>Loading games...</p>}
       {error && <p style={{ color: 'red' }}>Error: {error}</p>}
-      {results && (
-        <div>
-          <h3>Results</h3>
-          <pre style={{ background: '#f4f4f4', padding: '1rem' }}>{JSON.stringify(results, null, 2)}</pre>
+      {!loading && !error && games.length === 0 && (
+        <p>No games are currently in progress or scheduled.</p>
+      )}
+      {!loading && !error && games.length > 0 && (
+        <div style={{ display: 'grid', gap: '1rem' }}>
+          {games.map((game, index) => (
+            <div
+              key={index}
+              style={{
+                border: '1px solid #ccc',
+                borderRadius: '10px',
+                padding: '1rem',
+                background: '#f9f9f9'
+              }}
+            >
+              <h3>
+                {game.team1} vs {game.team2}
+              </h3>
+              <p>
+                🕒 {game.date} — {game.status || 'TBD'}
+              </p>
+              <p>
+                Score: {game.team1_score} - {game.team2_score}
+              </p>
+            </div>
+          ))}
         </div>
       )}
     </div>
