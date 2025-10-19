@@ -31,9 +31,7 @@ function MomentumFinder() {
         if (!response.ok) {
           throw new Error(`Error: ${response.status} ${response.statusText}`);
         }
-        const text = await response.text();
-        console.log('API raw response:', text);
-      
+        const text = await response.text();      
         const data = JSON.parse(text);
         setGames(data.games);
       } catch (err) {
