@@ -10,6 +10,7 @@ import './styling/main.css';
 import './Row.css';
 import React from 'react';
 import RetryCircle from './components/buttons/RetryCircle.tsx';
+import NavBar from './components/nav-bar.tsx';
 
 interface Digit {
   id: number;
@@ -291,6 +292,9 @@ const Digits: React.FC = () => {
 
   return (
     <div className="main">
+      <header className="Main-text">
+        <NavBar />
+      </header>   
       {numbersList === null ? (
         <Spinner />
       ) : solvedPuzzles.every(Boolean) ? (
