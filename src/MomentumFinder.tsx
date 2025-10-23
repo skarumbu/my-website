@@ -8,8 +8,7 @@ interface Game {
   team2: string;
   date: string;
   status?: string;
-  team1_score?: number;
-  team2_score?: number;
+  score?: number;
   location?: string;
 }
 
@@ -45,44 +44,44 @@ function MomentumFinder() {
   }, []);
 
   return (
-    <div className="main">
-      <header className="Main-text">
-        <NavBar />
-      </header>
-      <div style={{ maxWidth: '800px', margin: 'auto', padding: '1rem' }}>
-        <h2>Current NBA Games</h2>
-        {loading && <p>Loading games...</p>}
-        {error && <p style={{ color: 'red' }}>Error: {error}</p>}
-        {!loading && !error && games.length === 0 && (
-          <p>No games are currently in progress or scheduled.</p>
-        )}
-        {!loading && !error && games.length > 0 && (
-          <div style={{ display: 'grid', gap: '1rem' }}>
-            {games.map((game, index) => (
-              <div
-                key={index}
-                style={{
-                  border: '1px solid #ccc',
-                  borderRadius: '10px',
-                  padding: '1rem',
-                  background: '#f9f9f9'
-                }}
-              >
-                <h3>
-                  {game.team1} vs {game.team2}
-                </h3>
-                <p>
-                  🕒 {game.date} — {game.status || 'TBD'}
-                </p>
-                <p>
-                  Score: {game.team1_score} - {game.team2_score}
-                </p>
-              </div>
-            ))}
+<div className="main">
+  <header className="Main-text">
+    <NavBar />
+  </header>
+  <div style={{ maxWidth: '800px', margin: 'auto', padding: '1rem' }}>
+    <h2>Current NBA Games</h2>
+    {loading && <p>Loading games...</p>}
+    {error && <p style={{ color: 'red' }}>Error: {error}</p>}
+    {!loading && !error && games.length === 0 && (
+      <p>No games are currently in progress or scheduled.</p>
+    )}
+    {!loading && !error && games.length > 0 && (
+      <div style={{ display: 'grid', gap: '1rem' }}>
+        {games.map((game, index) => (
+          <div
+            key={index}
+            style={{
+              border: '1px solid #ccc',
+              borderRadius: '10px',
+              padding: '1rem',
+              background: '#f9f9f9'
+            }}
+          >
+            <h3>
+              {game.team1} vs {game.team2}
+            </h3>
+            <p>
+              🕒 {game.date} — {game.status || 'TBD'}
+            </p>
+            <p>
+              Score: {game.score?.[game.team1] ?? 0} - {game.score?.[game.team2] ?? 0}
+            </p>
           </div>
-        )}
+        ))}
       </div>
-    </div>
+    )}
+  </div>
+</div>
   );
 }
 
