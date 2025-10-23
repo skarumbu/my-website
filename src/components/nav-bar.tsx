@@ -9,7 +9,7 @@ const NavBar: React.FC = () => {
         Digits
       </a>
       <a href="/momentum-finder" className="button">
-        momentum finder
+        NBA Games
       </a>
     </nav>
   );
