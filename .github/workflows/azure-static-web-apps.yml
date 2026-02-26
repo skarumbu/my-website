@@ -30,6 +30,8 @@ jobs:
           app_location: "/"
           api_location: ""
           output_location: "build"
+        env:
+          CI: false
 
   close_pull_request_job:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
