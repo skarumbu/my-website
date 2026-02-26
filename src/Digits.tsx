@@ -60,13 +60,12 @@ const Digits: React.FC = () => {
         let config = {
           method: 'get',
           maxBodyLength: Infinity,
-          url: 'https://t1w5b1fiz4.execute-api.us-east-1.amazonaws.com/default/DigitsGetter',
+          url: 'https://digits-api-prod-hwbxtkz6lsfoq.azurewebsites.net/api/DigitsGetter',
           headers: {
-            'X-API-KEY': process.env.REACT_APP_API_GATEWAY_KEY!,
             'Content-Type': 'application/json'
           }
         };
-  
+
         try {
           const response = await axios.request(config);
           const goalList = JSON.parse(response.data.Item.goalList.S);
