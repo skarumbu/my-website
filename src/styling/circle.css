@@ -11,3 +11,23 @@
 .Circle-Hidden {
   visibility: hidden;
 }
+
+@keyframes combineOut {
+  0%   { transform: scale(1); opacity: 1; }
+  100% { transform: scale(0); opacity: 0; }
+}
+
+@keyframes combineIn {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.25); }
+  70%  { transform: scale(0.95); }
+  100% { transform: scale(1); }
+}
+
+.combine-out {
+  animation: combineOut 0.3s ease-in forwards;
+}
+
+.combine-in {
+  animation: combineIn 0.35s ease-out;
+}

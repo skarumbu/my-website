@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import axios from 'axios';
 import FireworksComponent from './components/FireworksComponent.tsx';
 import NumberCircle from './components/buttons/DigitCircle.tsx';
@@ -38,6 +38,7 @@ const Digits: React.FC = () => {
   const [targetList, setTargetList] = useState<number[] | null>(null);
   const [solution, setSolution] = useState<string[][]>([]);
   const [pendingMove, setPendingMove] = useState<{ step: 'number1' | 'sign' | 'number2'; number1?: number; sign?: string; number2?: number } | null>(null);
+  const isAnimating = useRef(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -244,7 +245,7 @@ const Digits: React.FC = () => {
   }, [pendingMove]);
 
   const selectNumber = (id: number) => {
-    if (!numbersList) return;
+    if (!numbersList || isAnimating.current) return;
 
     const updatedNumbers = [...numbersList];
     const numbers = updatedNumbers[currentPuzzleIndex];
@@ -258,25 +259,38 @@ const Digits: React.FC = () => {
         if (updatedValue == null) {
           return;
         }
-        if (targetList && updatedValue === targetList[currentPuzzleIndex]) {
-          setSolvedPuzzles(prev => prev.map((solved, i) => (i === currentPuzzleIndex ? true : solved)));
-        }
 
-        setSigns(signs.map((sign) => ({ ...sign, selected: false })));
+        isAnimating.current = true;
+        document.getElementById(`number-${selectedNumber.id}`)?.classList.add('combine-out');
+        document.getElementById(`number-${id}`)?.classList.add('combine-in');
 
-        updatedNumbers[currentPuzzleIndex] = numbers.map(number => {
-          if (number.selected) {
-            return { ...number, selected: false, shown: false };
-          } else if (number.id === id) {
-            return { ...number, value: updatedValue, selected: false };
+        setTimeout(() => {
+          document.getElementById(`number-${selectedNumber.id}`)?.classList.remove('combine-out');
+          document.getElementById(`number-${id}`)?.classList.remove('combine-in');
+
+          if (targetList && updatedValue === targetList[currentPuzzleIndex]) {
+            setSolvedPuzzles(prev => prev.map((solved, i) => (i === currentPuzzleIndex ? true : solved)));
           }
-          return number;
-        });
-        setNumbersList(updatedNumbers);
+
+          setSigns(prev => prev.map(sign => ({ ...sign, selected: false })));
+
+          setNumbersList(prev => {
+            if (!prev) return prev;
+            const updated = [...prev];
+            updated[currentPuzzleIndex] = numbers.map(number => {
+              if (number.selected) return { ...number, selected: false, shown: false };
+              if (number.id === id) return { ...number, value: updatedValue, selected: false };
+              return number;
+            });
+            return updated;
+          });
+
+          isAnimating.current = false;
+        }, 350);
       }
     } else {
       updatedNumbers[currentPuzzleIndex] = numbers.map(number =>
-        number.id === id ? { ...number, selected: !number.selected } : { ...number, selected: false } 
+        number.id === id ? { ...number, selected: !number.selected } : { ...number, selected: false }
       );
       setNumbersList(updatedNumbers);
     }
