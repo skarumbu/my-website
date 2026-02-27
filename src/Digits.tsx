@@ -42,13 +42,39 @@ const Digits: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       if (process.env.NODE_ENV === 'development') {
-        // Stubbed data for local development
+        // Stubbed data for local development (mirrors prod shape: 3 puzzles, 6 numbers each)
         const stubbedPuzzles = [
-          [{ id: 0, value: 3, shown: true, selected: false }, { id: 1, value: 5, shown: true, selected: false }],
-          [{ id: 2, value: 7, shown: true, selected: false }, { id: 3, value: 2, shown: true, selected: false }]
+          [
+            { id: 0, value: 14, shown: true, selected: false },
+            { id: 1, value: 5,  shown: true, selected: false },
+            { id: 2, value: 4,  shown: true, selected: false },
+            { id: 3, value: 23, shown: true, selected: false },
+            { id: 4, value: 22, shown: true, selected: false },
+            { id: 5, value: 2,  shown: true, selected: false },
+          ],
+          [
+            { id: 100, value: 86, shown: true, selected: false },
+            { id: 101, value: 9,  shown: true, selected: false },
+            { id: 102, value: 50, shown: true, selected: false },
+            { id: 103, value: 62, shown: true, selected: false },
+            { id: 104, value: 72, shown: true, selected: false },
+            { id: 105, value: 46, shown: true, selected: false },
+          ],
+          [
+            { id: 200, value: 46, shown: true, selected: false },
+            { id: 201, value: 65, shown: true, selected: false },
+            { id: 202, value: 34, shown: true, selected: false },
+            { id: 203, value: 9,  shown: true, selected: false },
+            { id: 204, value: 13, shown: true, selected: false },
+            { id: 205, value: 96, shown: true, selected: false },
+          ],
         ];
-        const stubbedTargets = [8, 9];
-        const stubbedSolutions = [['3+5'], ['7+2']];
+        const stubbedTargets = [114, 660, 2146];
+        const stubbedSolutions = [
+          ['14+23+22*2-4', '4*5-14*23-22-2', '23+14+5+4*2+22', '23*22-2-4/5+14', '22*5+4', '22+2-4*5+14'],
+          ['50-46+72*9-86+62', '72-46+50*9-86+62'],
+          ['9+13*96+34'],
+        ];
   
         setSolvedPuzzles(new Array(stubbedPuzzles.length).fill(false));
         setNumbersList(stubbedPuzzles);
@@ -71,12 +97,13 @@ const Digits: React.FC = () => {
           const goalList = JSON.parse(response.data.Item.goalList.S);
           const solutions = JSON.parse(response.data.Item.solutionList.S) as string[][];
           const matrixList = JSON.parse(response.data.Item.matrixList.S);
+          const difficulties: string[] = JSON.parse(response.data.Item.difficultyList.S);
           const puzzles: number[][] = [];
-  
+
           for (let i = 0; i < matrixList.length; i += 2) {
             puzzles.push([...matrixList[i], ...(matrixList[i + 1])]);
           }
-  
+
           const formattedPuzzles = puzzles.map((matrix, matrixIndex) =>
             matrix.map((value: number, index: number) => ({
               id: matrixIndex * 100 + index,
@@ -85,12 +112,21 @@ const Digits: React.FC = () => {
               selected: false
             }))
           );
-  
-          setSolvedPuzzles(new Array(formattedPuzzles.length).fill(false));
-          setNumbersList(formattedPuzzles);
-          setOriginalNumbersList(formattedPuzzles);
-          setTargetList(goalList);
-          setSolution(solutions);
+
+          const difficultyOrder: Record<string, number> = { easy: 0, medium: 1, hard: 2 };
+          const indexed = formattedPuzzles.map((puzzle, i) => ({
+            puzzle,
+            target: goalList[i],
+            solution: solutions[i],
+            difficulty: difficulties[i],
+          }));
+          indexed.sort((a, b) => (difficultyOrder[a.difficulty] ?? 99) - (difficultyOrder[b.difficulty] ?? 99));
+
+          setSolvedPuzzles(new Array(indexed.length).fill(false));
+          setNumbersList(indexed.map(p => p.puzzle));
+          setOriginalNumbersList(indexed.map(p => p.puzzle));
+          setTargetList(indexed.map(p => p.target));
+          setSolution(indexed.map(p => p.solution));
         } catch (error) {
           console.log(error);
         }
