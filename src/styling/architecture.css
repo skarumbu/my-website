@@ -1,0 +1,316 @@
+/* ── Page shell ─────────────────────────────────────────── */
+.arch-page {
+  background: #0d1117;
+  min-height: 100vh;
+  color: #e6edf3;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.arch-content {
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 5rem 1.5rem 5rem;
+}
+
+/* ── Typography ─────────────────────────────────────────── */
+.arch-title {
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: #e6edf3;
+  margin: 0 0 0.25rem;
+}
+
+.arch-subtitle {
+  color: #8b949e;
+  margin: 0 0 2.5rem;
+  font-size: 0.9rem;
+  letter-spacing: 0.02em;
+}
+
+.arch-section {
+  margin-top: 3rem;
+}
+
+.arch-section h2 {
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: #58a6ff;
+  border-bottom: 1px solid #21262d;
+  padding-bottom: 0.4rem;
+  margin: 0 0 1rem;
+}
+
+.arch-section h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #3fb950;
+  margin: 1.5rem 0 0.6rem;
+}
+
+.arch-section p {
+  color: #c9d1d9;
+  margin: 0 0 0.75rem;
+}
+
+.arch-section ul {
+  color: #c9d1d9;
+  padding-left: 1.5rem;
+}
+
+.arch-section li {
+  margin: 0.3rem 0;
+}
+
+/* ── Cards ──────────────────────────────────────────────── */
+.arch-card {
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+}
+
+.arch-toc {
+  margin: 0.5rem 0 0;
+  padding-left: 1.4rem;
+  color: #c9d1d9;
+}
+
+.arch-toc li { margin: 0.3rem 0; }
+
+.arch-toc a {
+  color: #58a6ff;
+  text-decoration: none;
+}
+
+.arch-toc a:hover { text-decoration: underline; }
+
+/* ── Tech badge row ─────────────────────────────────────── */
+.arch-tech-stack {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.75rem;
+}
+
+.arch-tech-item {
+  background: #21262d;
+  border: 1px solid #30363d;
+  border-radius: 4px;
+  padding: 0.2rem 0.65rem;
+  font-size: 0.8rem;
+  font-family: 'SF Mono', Consolas, 'Courier New', monospace;
+  color: #e6edf3;
+}
+
+/* ── Flow diagram boxes ─────────────────────────────────── */
+.arch-flow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  margin: 1rem 0;
+}
+
+.arch-flow-box {
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  padding: 0.55rem 1.1rem;
+  font-family: 'SF Mono', Consolas, 'Courier New', monospace;
+  font-size: 0.8rem;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.arch-flow-box small {
+  display: block;
+  color: #8b949e;
+  font-size: 0.7rem;
+  margin-top: 0.15rem;
+}
+
+.arch-flow-box.blue   { border-color: #1f6feb; background: #0d2238; color: #58a6ff; }
+.arch-flow-box.green  { border-color: #2ea043; background: #0d2c0d; color: #3fb950; }
+.arch-flow-box.orange { border-color: #9e6a03; background: #2c1f00; color: #d29922; }
+.arch-flow-box.purple { border-color: #6e40c9; background: #1c0e38; color: #bc8cff; }
+
+.arch-flow-box.blue   small,
+.arch-flow-box.green  small,
+.arch-flow-box.orange small,
+.arch-flow-box.purple small { color: inherit; opacity: 0.7; }
+
+.arch-flow-down {
+  color: #484f58;
+  font-size: 1.1rem;
+  line-height: 1.2;
+  user-select: none;
+}
+
+/* ── Route grid ─────────────────────────────────────────── */
+.arch-route-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.6rem;
+  margin-top: 0.75rem;
+}
+
+.arch-route-grid .arch-flow-box {
+  white-space: normal;
+  padding: 0.75rem 0.75rem;
+}
+
+.arch-route-path {
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.arch-route-component {
+  font-size: 0.72rem;
+  margin-top: 0.2rem;
+}
+
+.arch-route-label {
+  font-size: 0.68rem;
+  color: #8b949e;
+  margin-top: 0.2rem;
+}
+
+/* ── Two-column data-flow fork ──────────────────────────── */
+.arch-fork {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin: 1rem 0;
+}
+
+.arch-fork-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.arch-fork-col .arch-flow-box {
+  width: 100%;
+  box-sizing: border-box;
+  white-space: normal;
+}
+
+/* ── Pre / code ─────────────────────────────────────────── */
+.arch-code {
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  padding: 0.9rem 1.1rem;
+  font-family: 'SF Mono', Consolas, 'Courier New', monospace;
+  font-size: 0.78rem;
+  line-height: 1.65;
+  color: #e6edf3;
+  overflow-x: auto;
+  white-space: pre;
+  margin: 0.5rem 0;
+}
+
+.arch-inline-code {
+  background: #21262d;
+  border: 1px solid #30363d;
+  border-radius: 3px;
+  padding: 0.1em 0.4em;
+  font-family: 'SF Mono', Consolas, 'Courier New', monospace;
+  font-size: 0.82em;
+  color: #e6edf3;
+}
+
+/* ── Table ──────────────────────────────────────────────── */
+.arch-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+  margin: 0.5rem 0;
+}
+
+.arch-table th {
+  background: #21262d;
+  color: #8b949e;
+  text-align: left;
+  padding: 0.45rem 0.75rem;
+  border: 1px solid #30363d;
+  font-weight: 600;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.arch-table td {
+  padding: 0.45rem 0.75rem;
+  border: 1px solid #30363d;
+  vertical-align: top;
+  color: #c9d1d9;
+}
+
+.arch-table tr:nth-child(even) td { background: #0d1117; }
+
+/* ── Color palette ──────────────────────────────────────── */
+.arch-color-palette {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.arch-color-swatch {
+  border-radius: 6px;
+  padding: 0.55rem 0.9rem;
+  font-size: 0.78rem;
+  font-family: 'SF Mono', Consolas, monospace;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 110px;
+  border: 1px solid rgba(0,0,0,0.2);
+}
+
+.arch-color-hex { opacity: 0.75; }
+
+/* ── CI/CD pipeline ─────────────────────────────────────── */
+.arch-pipeline {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0;
+  margin: 1rem 0;
+}
+
+.arch-pipeline-box {
+  background: #21262d;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  padding: 0.5rem 0.85rem;
+  font-size: 0.78rem;
+  font-family: 'SF Mono', Consolas, monospace;
+  text-align: center;
+  white-space: pre;
+  line-height: 1.5;
+}
+
+.arch-pipeline-box.blue   { border-color: #1f6feb; background: #0d2238; color: #58a6ff; }
+.arch-pipeline-box.orange { border-color: #9e6a03; background: #2c1f00; color: #d29922; }
+.arch-pipeline-box.green  { border-color: #2ea043; background: #0d2c0d; color: #3fb950; }
+
+.arch-pipeline-arrow {
+  color: #484f58;
+  font-size: 1.1rem;
+  padding: 0 0.3rem;
+  user-select: none;
+}
+
+/* ── Footer ─────────────────────────────────────────────── */
+.arch-footer {
+  margin-top: 4rem;
+  color: #484f58;
+  font-size: 0.78rem;
+  text-align: center;
+  font-family: 'SF Mono', Consolas, monospace;
+}

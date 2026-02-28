@@ -4,6 +4,7 @@ import './styling/index.css';
 import App from './App.tsx';
 import Digits from './Digits.tsx';
 import MomentumFinder from './MomentumFinder.tsx';
+import Architecture from './Architecture.tsx';
 import reportWebVitals from './reportWebVitals';
 import {
   createBrowserRouter,
@@ -22,6 +23,10 @@ const router = createBrowserRouter([
   {
     path: "momentum-finder",
     element: <MomentumFinder />
+  },
+  {
+    path: "/architecture",
+    element: <Architecture />
   }
 ]);
 
