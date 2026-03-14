@@ -1,22 +1,27 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import NavBar from './components/nav-bar.tsx';
 import './styling/momentum-finder.css';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
+const POLL_INTERVAL_MS = 30_000;
 
 interface Game {
+  gameId: string;
   team1: string;
   team2: string;
   date: string;
   status?: string;
   score?: Record<string, number>;
+  momentumTeam?: string | null;
   location?: string;
 }
 
 function MomentumFinder() {
   const [games, setGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<String | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [flashingScores, setFlashingScores] = useState<Set<string>>(new Set());
+  const prevScoresRef = useRef<Record<string, Record<string, number>>>({});
 
   useEffect(() => {
     const fetchGames = async () => {
@@ -28,13 +33,29 @@ function MomentumFinder() {
 
       try {
         const response = await fetch(`${API_BASE_URL}/get-current-games`);
-        if (!response.ok) {
-          throw new Error(`Error: ${response.status} ${response.statusText}`);
+        if (!response.ok) throw new Error(`Error: ${response.status} ${response.statusText}`);
+        const data = await response.json();
+
+        const newFlashing = new Set<string>();
+        for (const game of data.games as Game[]) {
+          const prev = prevScoresRef.current[game.gameId];
+          if (prev && game.score) {
+            for (const team of [game.team1, game.team2]) {
+              if (game.score[team] !== undefined && game.score[team] !== prev[team]) {
+                newFlashing.add(`${game.gameId}-${team}`);
+              }
+            }
+          }
+          if (game.score) prevScoresRef.current[game.gameId] = { ...game.score };
         }
-        const text = await response.text();      
-        const data = JSON.parse(text);
+
+        if (newFlashing.size > 0) {
+          setFlashingScores(newFlashing);
+          setTimeout(() => setFlashingScores(new Set()), 1000);
+        }
+
         setGames(data.games);
-      } catch (err) {
+      } catch (err: any) {
         setError(err.message);
       } finally {
         setLoading(false);
@@ -42,6 +63,8 @@ function MomentumFinder() {
     };
 
     fetchGames();
+    const interval = setInterval(fetchGames, POLL_INTERVAL_MS);
+    return () => clearInterval(interval);
   }, []);
 
   return (
@@ -64,10 +87,10 @@ function MomentumFinder() {
 
         {!loading && !error && games.length > 0 && (
           <div className="momentum-grid">
-            {games.map((game, index) => (
+            {games.map((game) => (
               <div
-                key={index}
-                className="momentum-card"
+                key={game.gameId}
+                className={`momentum-card${game.momentumTeam ? ' momentum-card--hot' : ''}`}
               >
                 <h3 className="momentum-card__title">
                   {game.team1} <span className="vs-sep">vs</span> {game.team2}
@@ -83,14 +106,18 @@ function MomentumFinder() {
                 </div>
 
                 <div className="momentum-card__score">
-                  <span className="momentum-card__score-value">
+                  <span className={`momentum-card__score-value${flashingScores.has(`${game.gameId}-${game.team1}`) ? ' score-flash' : ''}`}>
                     {game.score?.[game.team1] ?? '-'}
                   </span>
                   <span className="momentum-card__score-sep">–</span>
-                  <span className="momentum-card__score-value">
+                  <span className={`momentum-card__score-value${flashingScores.has(`${game.gameId}-${game.team2}`) ? ' score-flash' : ''}`}>
                     {game.score?.[game.team2] ?? '-'}
                   </span>
                 </div>
+
+                {game.momentumTeam && (
+                  <p className="momentum-badge">🔥 {game.momentumTeam} on a run</p>
+                )}
               </div>
             ))}
           </div>
