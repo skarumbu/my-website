@@ -9,7 +9,7 @@ interface Game {
   team2: string;
   date: string;
   status?: string;
-  score?: number;
+  score?: Record<string, number>;
   location?: string;
 }
 
