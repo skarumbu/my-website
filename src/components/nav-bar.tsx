@@ -11,6 +11,9 @@ const NavBar: React.FC = () => {
       <a href="/momentum-finder" className="button">
         NBA Games
       </a>
+      <a href="/trail-finder" className="button">
+        Trail Finder
+      </a>
     </nav>
   );
 };

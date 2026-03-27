@@ -5,6 +5,7 @@ import App from './App.tsx';
 import Digits from './Digits.tsx';
 import MomentumFinder from './MomentumFinder.tsx';
 import Architecture from './Architecture.tsx';
+import TrailFinder from './TrailFinder.tsx';
 import reportWebVitals from './reportWebVitals';
 import {
   createBrowserRouter,
@@ -15,7 +16,7 @@ const router = createBrowserRouter([
   {
     path: "/digits",
     element: <Digits />,
-  }, 
+  },
   {
     path: "/",
     element: <App />
@@ -27,6 +28,10 @@ const router = createBrowserRouter([
   {
     path: "/architecture",
     element: <Architecture />
+  },
+  {
+    path: "/trail-finder",
+    element: <TrailFinder />
   }
 ]);
 
