@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import NavBar from './components/nav-bar.tsx';
 import Spinner from './components/Spinner.tsx';
 import './styling/trail-finder.css';
@@ -20,6 +20,39 @@ function TrailFinder() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searched, setSearched] = useState(false);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (location.trim().length < 2) {
+      setSuggestions([]);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      if (!API_BASE_URL) return;
+      try {
+        const resp = await fetch(`${API_BASE_URL}/autocomplete?input=${encodeURIComponent(location)}`);
+        if (!resp.ok) return;
+        const data = await resp.json();
+        setSuggestions(data.suggestions ?? []);
+        setShowSuggestions(true);
+      } catch {
+        // ignore autocomplete errors
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [location]);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleSearch = async () => {
     if (!location.trim()) return;
@@ -28,6 +61,7 @@ function TrailFinder() {
       return;
     }
 
+    setShowSuggestions(false);
     setLoading(true);
     setError(null);
     setSearched(true);
@@ -49,6 +83,13 @@ function TrailFinder() {
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') handleSearch();
+    if (e.key === 'Escape') setShowSuggestions(false);
+  };
+
+  const handleSuggestionClick = (suggestion: string) => {
+    setLocation(suggestion);
+    setSuggestions([]);
+    setShowSuggestions(false);
   };
 
   return (
@@ -61,14 +102,30 @@ function TrailFinder() {
         <p className="trail-subtitle">Find great hikes near you this weekend</p>
 
         <div className="trail-search">
-          <input
-            className="trail-input"
-            type="text"
-            placeholder="Enter a city or location..."
-            value={location}
-            onChange={e => setLocation(e.target.value)}
-            onKeyDown={handleKeyDown}
-          />
+          <div className="trail-input-wrapper" ref={wrapperRef}>
+            <input
+              className="trail-input"
+              type="text"
+              placeholder="Enter a city or location..."
+              value={location}
+              onChange={e => setLocation(e.target.value)}
+              onKeyDown={handleKeyDown}
+              onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
+            />
+            {showSuggestions && suggestions.length > 0 && (
+              <ul className="trail-autocomplete">
+                {suggestions.map((s, i) => (
+                  <li
+                    key={i}
+                    className="trail-autocomplete__item"
+                    onMouseDown={() => handleSuggestionClick(s)}
+                  >
+                    {s}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
           <button className="trail-button" onClick={handleSearch} disabled={loading}>
             Find Hikes
           </button>
