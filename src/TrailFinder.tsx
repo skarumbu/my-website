@@ -5,6 +5,24 @@ import './styling/trail-finder.css';
 
 const API_BASE_URL = process.env.REACT_APP_TRAIL_FINDER_API_BASE_URL;
 
+declare global {
+  interface Window {
+    google?: {
+      maps: {
+        places: {
+          AutocompleteService: new () => {
+            getPlacePredictions: (
+              request: { input: string; types: string[] },
+              callback: (predictions: Array<{ description: string }> | null, status: string) => void
+            ) => void;
+          };
+          PlacesServiceStatus: { OK: string };
+        };
+      };
+    };
+  }
+}
+
 interface Trail {
   name: string;
   address: string;
@@ -29,17 +47,20 @@ function TrailFinder() {
       setSuggestions([]);
       return;
     }
-    const timer = setTimeout(async () => {
-      if (!API_BASE_URL) return;
-      try {
-        const resp = await fetch(`${API_BASE_URL}/autocomplete?input=${encodeURIComponent(location)}`);
-        if (!resp.ok) return;
-        const data = await resp.json();
-        setSuggestions(data.suggestions ?? []);
-        setShowSuggestions(true);
-      } catch {
-        // ignore autocomplete errors
-      }
+    const timer = setTimeout(() => {
+      if (!window.google?.maps?.places) return;
+      const service = new window.google.maps.places.AutocompleteService();
+      service.getPlacePredictions(
+        { input: location, types: ['(cities)'] },
+        (predictions, status) => {
+          if (status === window.google!.maps.places.PlacesServiceStatus.OK && predictions) {
+            setSuggestions(predictions.map(p => p.description));
+            setShowSuggestions(true);
+          } else {
+            setSuggestions([]);
+          }
+        }
+      );
     }, 300);
     return () => clearTimeout(timer);
   }, [location]);
