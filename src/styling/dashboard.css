@@ -1,0 +1,238 @@
+/* ── Page shell ─────────────────────────────────────────── */
+.dash-page {
+  min-height: 100vh;
+  background-color: #add8d2;
+  color: #111827;
+  font-family: 'Josefin Sans', sans-serif;
+}
+
+.dash-content {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 5rem 1.5rem 5rem;
+}
+
+/* ── Typography ─────────────────────────────────────────── */
+.dash-title {
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0 0 0.25rem;
+  text-shadow: 0 4px 3px rgba(0,0,0,0.07), 0 2px 2px rgba(0,0,0,0.06);
+}
+
+.dash-subtitle {
+  color: #4b5563;
+  margin: 0 0 2rem;
+  font-size: 0.9rem;
+  letter-spacing: 0.02em;
+}
+
+/* ── Sections ──────────────────────────────────────────── */
+.dash-section {
+  margin-top: 2.5rem;
+}
+
+.dash-section h2 {
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: #1f2937;
+  border-bottom: 2px solid rgba(0,0,0,0.1);
+  padding-bottom: 0.4rem;
+  margin: 0 0 1rem;
+}
+
+.dash-section h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #374151;
+  margin: 1.5rem 0 0.6rem;
+}
+
+/* ── Health grid ───────────────────────────────────────── */
+.dash-service-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+
+.dash-health-card {
+  background: #ffffff;
+  border-radius: 1rem;
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  transition: box-shadow 150ms ease, transform 150ms ease;
+}
+
+.dash-health-card:hover {
+  box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
+  transform: translateY(-0.25rem);
+}
+
+.dash-service-name {
+  font-weight: 600;
+  color: #1f2937;
+  font-size: 1rem;
+}
+
+.dash-latency {
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+/* ── Status pills ──────────────────────────────────────── */
+.dash-status-pill {
+  display: inline-block;
+  padding: 0.2rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.dash-status-pill.up {
+  background: #0d2c0d;
+  border: 1px solid #2ea043;
+  color: #3fb950;
+}
+
+.dash-status-pill.down {
+  background: #2c0d0d;
+  border: 1px solid #a02020;
+  color: #f85149;
+}
+
+.dash-status-pill.cold {
+  background: #2c1f00;
+  border: 1px solid #9e6a03;
+  color: #d29922;
+}
+
+/* ── Table ─────────────────────────────────────────────── */
+.dash-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  margin: 0.5rem 0;
+  background: #ffffff;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+.dash-table th {
+  background: #f3f4f6;
+  color: #6b7280;
+  text-align: left;
+  padding: 0.55rem 0.75rem;
+  border-bottom: 2px solid #e5e7eb;
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.dash-table td {
+  padding: 0.55rem 0.75rem;
+  border-bottom: 1px solid #e5e7eb;
+  color: #374151;
+}
+
+.dash-table tr:nth-child(even) td {
+  background: #f9fafb;
+}
+
+/* ── Cost total ────────────────────────────────────────── */
+.dash-cost-total {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0.5rem 0 1rem;
+}
+
+/* ── Error list ────────────────────────────────────────── */
+.dash-error-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.dash-error-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+  font-size: 0.85rem;
+}
+
+.dash-error-time {
+  color: #6b7280;
+  font-size: 0.78rem;
+  min-width: 10rem;
+}
+
+.dash-error-endpoint {
+  font-family: 'SF Mono', Consolas, 'Courier New', monospace;
+  font-size: 0.8rem;
+  color: #4b5563;
+}
+
+.dash-error-message {
+  color: #f85149;
+  font-size: 0.82rem;
+}
+
+/* ── Service badge ─────────────────────────────────────── */
+.dash-service-badge {
+  display: inline-block;
+  padding: 0.15rem 0.55rem;
+  border-radius: 4px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.dash-service-badge--digits {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.dash-service-badge--momentum-finder {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.dash-service-badge--trail-finder {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+/* ── Notes & meta ──────────────────────────────────────── */
+.dash-note {
+  font-size: 0.82rem;
+  color: #6b7280;
+  margin: 0.5rem 0;
+}
+
+.dash-last-updated {
+  font-size: 0.78rem;
+  color: #6b7280;
+  margin-bottom: 1rem;
+}
+
+/* ── Responsive ────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .dash-service-grid {
+    grid-template-columns: 1fr;
+  }
+}

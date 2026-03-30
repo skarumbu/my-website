@@ -6,6 +6,7 @@ import Digits from './Digits.tsx';
 import MomentumFinder from './MomentumFinder.tsx';
 import Architecture from './Architecture.tsx';
 import TrailFinder from './TrailFinder.tsx';
+import Dashboard from './Dashboard.tsx';
 import reportWebVitals from './reportWebVitals';
 import {
   createBrowserRouter,
@@ -32,6 +33,10 @@ const router = createBrowserRouter([
   {
     path: "/trail-finder",
     element: <TrailFinder />
+  },
+  {
+    path: "/dashboard",
+    element: <Dashboard />
   }
 ]);
 
