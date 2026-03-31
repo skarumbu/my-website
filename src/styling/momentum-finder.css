@@ -1,7 +1,8 @@
 .momentum-main {
   min-height: 100vh;
   background-color: #B5E0DC;
-  color: #111827;
+  color: #e5e7eb;
+  font-family: 'Josefin Sans', sans-serif;
 }
 
 .momentum-container {
@@ -13,20 +14,20 @@
 
 .momentum-title {
   font-size: 1.875rem;
-  line-height: 2.25rem;
   font-weight: 700;
   text-align: center;
   margin-bottom: 2rem;
   color: #ffffff;
-  text-shadow: 0 4px 3px rgba(0,0,0,0.07), 0 2px 2px rgba(0,0,0,0.06);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .momentum-status {
   text-align: center;
-  color: #374151;
+  color: #9ca3af;
 }
 .momentum-status--error {
-  color: #dc2626;
+  color: #f87171;
 }
 
 .momentum-grid {
@@ -36,27 +37,31 @@
 }
 
 .momentum-card {
-  background-color: #ffffff;
-  border-radius: 1rem;
-  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
-  padding: 1.25rem;
+  background-color: #1a2535;
+  border: 1px solid #2d3f55;
+  border-radius: 0.875rem;
+  padding: 1.25rem 1.5rem;
   transition: box-shadow 150ms ease, transform 150ms ease;
 }
 .momentum-card:hover {
-  box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
-  transform: translateY(-0.25rem);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
 }
 
 .momentum-card__title {
-  font-size: 1.25rem;
-  line-height: 1.75rem;
-  font-weight: 600;
+  font-size: 1.2rem;
+  font-weight: 700;
   text-align: center;
-  color: #1f2937;
+  color: #ffffff;
   margin-bottom: 0.75rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
 }
 .momentum-card__title .vs-sep {
-  color: #6b7280;
+  color: #4b5563;
+  font-weight: 400;
+  font-size: 0.85rem;
+  margin: 0 0.4rem;
 }
 
 .momentum-card__meta {
@@ -64,8 +69,10 @@
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  margin-bottom: 0.5rem;
-  color: #4b5563;
+  margin-bottom: 0.75rem;
+  color: #6b7280;
+  font-size: 0.8rem;
+  letter-spacing: 0.03em;
 }
 .momentum-card__icon {
   display: inline-flex;
@@ -75,27 +82,30 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.125rem;
-  line-height: 1.75rem;
-  font-weight: 500;
+  gap: 0.75rem;
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1;
+  margin: 0.25rem 0;
 }
 .momentum-card__score-value {
-  color: #1f2937;
+  color: #ffffff;
+  min-width: 2.5rem;
+  text-align: center;
 }
 .momentum-card__score-sep {
-  margin-left: 0.5rem;
-  margin-right: 0.5rem;
-  color: #6b7280;
+  color: #374151;
+  font-weight: 300;
 }
 
 @keyframes scoreFlash {
-  0%   { color: #059669; transform: scale(1.2); }
-  100% { color: #1f2937; transform: scale(1); }
+  0%   { color: #34d399; transform: scale(1.25); }
+  100% { color: #ffffff;  transform: scale(1); }
 }
 
 @keyframes momentumPulse {
-  0%, 100% { box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 0 0 0 rgba(234,88,12,0.5); }
-  50%       { box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 0 0 8px rgba(234,88,12,0); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(234, 88, 12, 0.4); }
+  50%       { box-shadow: 0 0 0 8px rgba(234, 88, 12, 0); }
 }
 
 .score-flash {
@@ -104,7 +114,7 @@
 }
 
 .momentum-card--hot {
-  border: 2px solid #ea580c;
+  border: 1px solid #ea580c;
   animation: momentumPulse 2s ease-in-out infinite;
 }
 
@@ -112,8 +122,8 @@
   text-align: center;
   font-size: 0.75rem;
   font-weight: 700;
-  color: #ea580c;
-  margin-top: 0.5rem;
-  letter-spacing: 0.05em;
+  color: #fb923c;
+  margin-top: 0.75rem;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }

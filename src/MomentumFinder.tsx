@@ -97,12 +97,9 @@ function MomentumFinder() {
                 </h3>
 
                 <div className="momentum-card__meta">
-                  <span className="momentum-card__icon" role="img" aria-label="clock">
-                    🕒
-                  </span>
-                  <span>
-                    {game.date} — <strong>{game.status || 'TBD'}</strong>
-                  </span>
+                  <span>{game.date}</span>
+                  <span>·</span>
+                  <span>{game.status || 'TBD'}</span>
                 </div>
 
                 <div className="momentum-card__score">
