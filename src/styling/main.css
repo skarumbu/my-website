@@ -39,6 +39,16 @@
   animation: ripple 0.6s ease-out;
 }
 
+@keyframes hint-glow {
+  0%   { box-shadow: 0 0 0 0px rgba(255, 255, 255, 0.9); }
+  50%  { box-shadow: 0 0 0 10px rgba(255, 255, 255, 0.3); }
+  100% { box-shadow: 0 0 0 0px rgba(255, 255, 255, 0); }
+}
+
+.hint-glow {
+  animation: hint-glow 0.25s ease-out;
+}
+
 .puzzle-pills {
   display: flex;
   gap: 10px;

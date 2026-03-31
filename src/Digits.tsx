@@ -197,11 +197,11 @@ const Digits: React.FC = () => {
     return new Promise<void>((resolve) => {
       const element = document.getElementById(`number-${id}`) || document.getElementById(`sign-${id}`);
       if (element) {
-        element.classList.add("ripple-effect");
+        element.classList.add("hint-glow");
         setTimeout(() => {
-          element.classList.remove("ripple-effect");
+          element.classList.remove("hint-glow");
           resolve();
-        }, 600);
+        }, 250);
       } else {
         resolve();
       }
@@ -213,7 +213,7 @@ const Digits: React.FC = () => {
       const performMove = async () => {
         await addRippleEffect(pendingMove.number1!);
         selectNumber(pendingMove.number1!);
-        await sleep(600);
+        await sleep(200);
         setPendingMove(prev => ({ ...prev, step: 'sign' }));
       };
 
@@ -226,7 +226,7 @@ const Digits: React.FC = () => {
       const performMove = async () => {
         await addRippleEffect(pendingMove.sign!);
         selectSign(pendingMove.sign!);
-        await sleep(600);
+        await sleep(200);
         setPendingMove(prev => ({ ...prev, step: 'number2' }));
       };
 
@@ -239,7 +239,7 @@ const Digits: React.FC = () => {
       const performMove = async () => {
         await addRippleEffect(pendingMove.number2!);
         selectNumber(pendingMove.number2!);
-        await sleep(600);
+        await sleep(200);
         setPendingMove(null);
       };
 
