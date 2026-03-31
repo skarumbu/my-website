@@ -13,6 +13,7 @@ interface Game {
   status?: string;
   score?: Record<string, number>;
   momentumTeam?: string | null;
+  winProbability?: Record<string, number> | null;
   location?: string;
 }
 
@@ -114,6 +115,13 @@ function MomentumFinder() {
 
                 {game.momentumTeam && (
                   <p className="momentum-badge">🔥 {game.momentumTeam} on a run</p>
+                )}
+                {game.winProbability && (
+                  <div className="win-prob-row">
+                    <span>{game.team1}: {Math.round(game.winProbability[game.team1] * 100)}%</span>
+                    <span className="win-prob-sep">·</span>
+                    <span>{game.team2}: {Math.round(game.winProbability[game.team2] * 100)}%</span>
+                  </div>
                 )}
               </div>
             ))}

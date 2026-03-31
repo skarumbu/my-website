@@ -118,6 +118,17 @@
   animation: momentumPulse 2s ease-in-out infinite;
 }
 
+.win-prob-row {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  font-size: 0.78rem;
+  color: #9ca3af;
+  margin-top: 0.4rem;
+  letter-spacing: 0.03em;
+}
+.win-prob-sep { color: #374151; }
+
 .momentum-badge {
   text-align: center;
   font-size: 0.75rem;
