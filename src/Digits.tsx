@@ -349,7 +349,7 @@ const Digits: React.FC = () => {
       ) : solvedPuzzles.every(Boolean) ? (
         <div>
           <FireworksComponent />
-          <div className='Row' style={{ position: 'absolute' }}>
+          <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', zIndex: 1, fontSize: '2rem', fontWeight: 700, color: '#fff' }}>
             You Win!
           </div>
         </div>
