@@ -328,17 +328,6 @@ const Digits: React.FC = () => {
     }
   };
   
-  const handlePreviousPuzzle = () => {
-    if (numbersList && currentPuzzleIndex > 0) {
-      setCurrentPuzzleIndex(currentPuzzleIndex - 1);
-    }
-  };
-
-  const handleNextPuzzle = () => {
-    if (numbersList && currentPuzzleIndex < numbersList.length - 1) {
-      setCurrentPuzzleIndex(currentPuzzleIndex + 1);
-    }
-  };
   const selectSign = (id: string) => {
     setSigns(signs.map((sign) => (
       sign.id === id ? { ...sign, selected: !sign.selected } : { ...sign, selected: false }
@@ -392,11 +381,21 @@ const Digits: React.FC = () => {
               )}
             </div>
           )}
-          {solvedPuzzles[currentPuzzleIndex] ? (
+          {solvedPuzzles[currentPuzzleIndex] && justSolvedIndex !== currentPuzzleIndex ? (
             <div className="solved-card">
-              <span>✓ {DIFFICULTIES[currentPuzzleIndex]}</span>
-              <span style={{ opacity: 0.7 }}>→</span>
-              <span>{targetList?.[currentPuzzleIndex]}</span>
+              <div className="solved-card-header">
+                <span>✓ {DIFFICULTIES[currentPuzzleIndex]}</span>
+                <span style={{ opacity: 0.7 }}>→</span>
+                <span>{targetList?.[currentPuzzleIndex]}</span>
+              </div>
+              <div className="solved-card-equation">
+                {solution[currentPuzzleIndex]?.[0]
+                  ?.replace(/\*/g, ' × ')
+                  .replace(/\+/g, ' + ')
+                  .replace(/-/g, ' − ')
+                  .trim()
+                } = {targetList?.[currentPuzzleIndex]}
+              </div>
             </div>
           ) : (
             <>

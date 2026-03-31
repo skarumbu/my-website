@@ -11,7 +11,7 @@ export default function FireworksComponent({ particles }: FireworksComponentProp
 
   return (  
       <Fireworks ref={containerRef}
-        options={{ opacity: 0.5, particles }}
+        options={{ opacity: 0.5, particles: particles ?? 50 }}
         style={{
           top: 0,
           left: 0,
