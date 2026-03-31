@@ -24,9 +24,12 @@ interface Sign {
   selected: boolean;
 }
 
+const DIFFICULTIES = ['Easy', 'Medium', 'Hard'];
+
 const Digits: React.FC = () => {
   const [numbersList, setNumbersList] = useState<Digit[][] | null>(null);
   const [currentPuzzleIndex, setCurrentPuzzleIndex] = useState(0);
+  const [justSolvedIndex, setJustSolvedIndex] = useState<number | null>(null);
   const [originalNumbersList, setOriginalNumbersList] = useState<Digit[][] | null>(null);
   const [signs, setSigns] = useState<Sign[]>([
     { id: "+", selected: false },
@@ -244,6 +247,19 @@ const Digits: React.FC = () => {
     }
   }, [pendingMove]);
 
+  useEffect(() => {
+    if (justSolvedIndex === null) return;
+    const isLast = justSolvedIndex >= (numbersList?.length ?? 0) - 1;
+    const timer = setTimeout(() => {
+      setJustSolvedIndex(null);
+      if (!isLast) {
+        setCurrentPuzzleIndex(justSolvedIndex + 1);
+        setSigns(prev => prev.map(s => ({ ...s, selected: false })));
+      }
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, [justSolvedIndex, numbersList]);
+
   const selectNumber = (id: number) => {
     if (!numbersList || isAnimating.current) return;
 
@@ -270,6 +286,7 @@ const Digits: React.FC = () => {
 
           if (targetList && updatedValue === targetList[currentPuzzleIndex]) {
             setSolvedPuzzles(prev => prev.map((solved, i) => (i === currentPuzzleIndex ? true : solved)));
+            setJustSolvedIndex(currentPuzzleIndex);
           }
 
           setSigns(prev => prev.map(sign => ({ ...sign, selected: false })));
@@ -355,41 +372,62 @@ const Digits: React.FC = () => {
         </div>
       ) : (
         <>
-          <div className='Row'>
-            <TargetDisplay target={targetList ? targetList[currentPuzzleIndex] : 0} />
-          </div>
-          <div className='Row'>
-            {signs.map(sign => (
-              <SignCircle key={sign.id} id={sign.id} selected={sign.selected} onClick={selectSign} />
+          <div className="puzzle-pills">
+            {DIFFICULTIES.map((label, i) => (
+              <div
+                key={label}
+                className={`puzzle-pill${solvedPuzzles[i] ? ' solved' : ''}${currentPuzzleIndex === i ? ' active' : ''}`}
+                onClick={() => { setCurrentPuzzleIndex(i); setJustSolvedIndex(null); }}
+              >
+                {solvedPuzzles[i] ? '✓ ' : ''}{label}
+              </div>
             ))}
           </div>
-          {solvedPuzzles[currentPuzzleIndex] && (
-            <div className="overlay">
-              DONE!
+          {justSolvedIndex === currentPuzzleIndex && (
+            <div className="completion-overlay">
+              <div>✓ {DIFFICULTIES[currentPuzzleIndex]}</div>
+              <div style={{ fontSize: '1.2rem', opacity: 0.85 }}>Target: {targetList?.[currentPuzzleIndex]}</div>
+              {currentPuzzleIndex < (numbersList?.length ?? 0) - 1 && (
+                <div style={{ fontSize: '1rem', marginTop: '0.5rem', opacity: 0.7 }}>Next in 1s…</div>
+              )}
             </div>
           )}
-          <div style={{ color: '#add8d2' }}>
-            <div className='Row' style={{ pointerEvents: solvedPuzzles[currentPuzzleIndex] ? 'none' : 'auto' }}>
-              {numbersList[currentPuzzleIndex].slice(0, 3).map(number => (
-                <NumberCircle key={number.id} {...number} onClick={() => selectNumber(number.id)} />
-              ))}
+          {solvedPuzzles[currentPuzzleIndex] ? (
+            <div className="solved-card">
+              <span>✓ {DIFFICULTIES[currentPuzzleIndex]}</span>
+              <span style={{ opacity: 0.7 }}>→</span>
+              <span>{targetList?.[currentPuzzleIndex]}</span>
             </div>
-            <div className='Row' style={{ paddingTop: 0, pointerEvents: solvedPuzzles[currentPuzzleIndex] ? 'none' : 'auto' }}>
-              {numbersList[currentPuzzleIndex].slice(3).map(number => (
-                <NumberCircle key={number.id} {...number} onClick={() => selectNumber(number.id)} />
-              ))}
-            </div>
-          </div>
-          <div className='Row'>
-            <RetryCircle onClick={retry}/>
-          </div>
-          <div className='Row'>
-            <div className='button' onClick={helpMe}>Help me!</div>
-          </div>
-          <div className='Row'>
-            <div className='button' onClick={handlePreviousPuzzle}>← Previous</div>
-            <div className='button' onClick={handleNextPuzzle}>Next →</div>
-          </div>
+          ) : (
+            <>
+              <div className='Row'>
+                <TargetDisplay target={targetList ? targetList[currentPuzzleIndex] : 0} />
+              </div>
+              <div className='Row'>
+                {signs.map(sign => (
+                  <SignCircle key={sign.id} id={sign.id} selected={sign.selected} onClick={selectSign} />
+                ))}
+              </div>
+              <div style={{ color: '#add8d2' }}>
+                <div className='Row'>
+                  {numbersList[currentPuzzleIndex].slice(0, 3).map(number => (
+                    <NumberCircle key={number.id} {...number} onClick={() => selectNumber(number.id)} />
+                  ))}
+                </div>
+                <div className='Row' style={{ paddingTop: 0 }}>
+                  {numbersList[currentPuzzleIndex].slice(3).map(number => (
+                    <NumberCircle key={number.id} {...number} onClick={() => selectNumber(number.id)} />
+                  ))}
+                </div>
+              </div>
+              <div className='Row'>
+                <RetryCircle onClick={retry}/>
+              </div>
+              <div className='Row'>
+                <div className='button' onClick={helpMe}>Help me!</div>
+              </div>
+            </>
+          )}
         </>
       )}
     </div>
