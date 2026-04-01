@@ -1,6 +1,16 @@
 import React from 'react';
 import NavBar from './components/nav-bar.tsx';
 import './styling/architecture.css';
+import metadata from './architecture-metadata.json';
+
+type ServiceMeta = { lastDeploy: string | null; commitSha: string | null };
+const meta = metadata as Record<string, ServiceMeta>;
+
+function deployLabel(key: string) {
+  const m = meta[key];
+  if (!m?.lastDeploy) return null;
+  return `${m.lastDeploy} · ${m.commitSha}`;
+}
 
 const Architecture: React.FC = () => {
   const today = new Date().toISOString().split('T')[0];
@@ -37,21 +47,24 @@ const Architecture: React.FC = () => {
           </p>
           <table className="arch-table">
             <thead>
-              <tr><th>Package</th><th>Role</th><th>Runs on</th></tr>
+              <tr><th>Package</th><th>Role</th><th>Runs on</th><th>Last Deploy</th></tr>
             </thead>
             <tbody>
               {[
-                ['my-website',           'React SPA — the user-facing frontend',                          'Azure Static Web Apps'],
-                ['digits',               'Generates and serves Digits puzzles',                           'Azure Functions'],
-                ['momentum-finder',      'Identifies momentum shifts in live NBA games',                  'Azure Container Apps'],
-                ['trail-finder',         'Trail recommendations + conditions via Google Places & AI',     'Azure Container Apps'],
-                ['dashboard-api',        'Aggregates health, metrics, and cost across all services',      'Azure Functions'],
-                ['azure-infrastructure', 'Defines all Azure cloud resources (infra-as-code)',             'Provisioning only'],
-              ].map(([pkg, role, runs]) => (
+                ['my-website',           'React SPA — the user-facing frontend',                          'Azure Static Web Apps', null],
+                ['digits',               'Generates and serves Digits puzzles',                           'Azure Functions',       'digits'],
+                ['momentum-finder',      'Identifies momentum shifts in live NBA games',                  'Azure Container Apps',  'momentum-finder'],
+                ['trail-finder',         'Trail recommendations + conditions via Google Places & AI',     'Azure Container Apps',  'trail-finder'],
+                ['dashboard-api',        'Aggregates health, metrics, and cost across all services',      'Azure Functions',       'dashboard-api'],
+                ['azure-infrastructure', 'Defines all Azure cloud resources (infra-as-code)',             'Provisioning only',     null],
+              ].map(([pkg, role, runs, metaKey]) => (
                 <tr key={pkg as string}>
                   <td><code className="arch-inline-code">{pkg}</code></td>
                   <td>{role}</td>
                   <td>{runs}</td>
+                  <td style={{ fontSize: '0.78rem', color: '#8b949e', whiteSpace: 'nowrap' }}>
+                    {metaKey ? (deployLabel(metaKey as string) ?? '—') : '—'}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -317,10 +330,9 @@ const Architecture: React.FC = () => {
         <section className="arch-section" id="cicd">
           <h2>5. CI/CD &amp; Deployment</h2>
           <p>
-            Every package deploys automatically via GitHub Actions. Pushes to any backend
-            repo also dispatch an <code className="arch-inline-code">architecture-update</code> event
-            to <code className="arch-inline-code">my-website</code>, triggering a frontend rebuild
-            so this page stays current.
+            Every package deploys automatically via GitHub Actions. After each backend deploy
+            succeeds, the workflow commits updated deploy metadata to <code className="arch-inline-code">my-website</code>,
+            triggering a frontend rebuild so this page stays current.
           </p>
 
           <h3>my-website</h3>
@@ -364,9 +376,9 @@ const Architecture: React.FC = () => {
           <div className="arch-pipeline">
             <div className="arch-pipeline-box">{'any backend\nrepo push'}</div>
             <span className="arch-pipeline-arrow">→</span>
-            <div className="arch-pipeline-box blue">{'repository_dispatch\narchitecture-update'}</div>
+            <div className="arch-pipeline-box blue">{'deploy succeeds\n(post-deploy job)'}</div>
             <span className="arch-pipeline-arrow">→</span>
-            <div className="arch-pipeline-box orange">{'my-website\nrebuild triggered'}</div>
+            <div className="arch-pipeline-box orange">{'commit metadata\nto my-website'}</div>
             <span className="arch-pipeline-arrow">→</span>
             <div className="arch-pipeline-box green">{'Architecture page\nauto-updated'}</div>
           </div>
