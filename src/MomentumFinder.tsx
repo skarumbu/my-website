@@ -12,6 +12,7 @@ interface Game {
   date: string;
   status?: string;
   score?: Record<string, number>;
+  isLive?: boolean;
   momentumTeam?: string | null;
   winProbability?: Record<string, number> | null;
   location?: string;
@@ -91,7 +92,7 @@ function MomentumFinder() {
             {games.map((game) => (
               <div
                 key={game.gameId}
-                className={`momentum-card${game.momentumTeam ? ' momentum-card--hot' : ''}`}
+                className={`momentum-card${game.isLive ? ' momentum-card--live' : ''}${game.momentumTeam ? ' momentum-card--hot' : ''}`}
               >
                 <h3 className="momentum-card__title">
                   {game.team1} <span className="vs-sep">vs</span> {game.team2}
