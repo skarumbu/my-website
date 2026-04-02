@@ -30,6 +30,19 @@ interface Trail {
   google_maps_url: string;
   condition_summary: string;
   gear_list: string[];
+  condition_tags: string[];
+  suitability_score: number;
+  difficulty: 'easy' | 'moderate' | 'hard';
+  distance_km: number | null;
+}
+
+function SuitabilityDot({ score }: { score: number }) {
+  const color = score >= 7 ? '#22c55e' : score >= 4 ? '#f59e0b' : '#ef4444';
+  return <span className="tf-suitability-dot" style={{ backgroundColor: color }} title={`Suitability: ${score}/10`} />;
+}
+
+function DifficultyBadge({ difficulty }: { difficulty: string }) {
+  return <span className={`tf-difficulty-badge tf-difficulty-badge--${difficulty}`}>{difficulty}</span>;
 }
 
 function TrailFinder() {
@@ -40,6 +53,9 @@ function TrailFinder() {
   const [searched, setSearched] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [sortBy, setSortBy] = useState<'suitability' | 'rating'>('suitability');
+  const [minRating, setMinRating] = useState(0);
+  const [activeConditionFilters, setActiveConditionFilters] = useState<Set<string>>(new Set());
   const wrapperRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -87,6 +103,7 @@ function TrailFinder() {
     setError(null);
     setSearched(true);
     setTrails([]);
+    setActiveConditionFilters(new Set());
 
     try {
       const response = await fetch(
@@ -112,6 +129,28 @@ function TrailFinder() {
     setSuggestions([]);
     setShowSuggestions(false);
   };
+
+  const toggleConditionFilter = (tag: string) => {
+    setActiveConditionFilters(prev => {
+      const next = new Set(prev);
+      if (next.has(tag)) next.delete(tag); else next.add(tag);
+      return next;
+    });
+  };
+
+  const allTags = Array.from(new Set(trails.flatMap(t => t.condition_tags ?? [])));
+
+  const filtered = trails
+    .filter(t => t.rating >= minRating)
+    .filter(t => activeConditionFilters.size === 0 ||
+      [...activeConditionFilters].every(tag => (t.condition_tags ?? []).includes(tag)));
+
+  const sorted = [...filtered].sort((a, b) =>
+    sortBy === 'suitability' ? b.suitability_score - a.suitability_score : b.rating - a.rating
+  );
+
+  const ratingOptions = [0, 3, 4, 4.5];
+  const ratingLabels: Record<number, string> = { 0: 'Any', 3: '3.0+', 4: '4.0+', 4.5: '4.5+' };
 
   return (
     <div className="main trail-main">
@@ -164,32 +203,82 @@ function TrailFinder() {
         )}
 
         {!loading && trails.length > 0 && (
-          <div className="trail-grid">
-            {trails.map((trail, i) => (
-              <div key={i} className="trail-card">
-                <div className="trail-card__header">
-                  <h3 className="trail-card__name">
-                    <a href={trail.google_maps_url} target="_blank" rel="noopener noreferrer">
-                      {trail.name}
-                    </a>
-                  </h3>
-                  {trail.rating > 0 && (
-                    <span className="trail-card__rating">★ {trail.rating.toFixed(1)}</span>
-                  )}
-                </div>
-                <p className="trail-card__address">{trail.address}</p>
-                <p className="trail-card__conditions">{trail.condition_summary}</p>
-                <div className="trail-card__gear">
-                  <span className="trail-card__gear-label">Gear:</span>
-                  <div className="trail-card__gear-chips">
-                    {trail.gear_list.map((item, j) => (
-                      <span key={j} className="trail-gear-chip">{item}</span>
-                    ))}
-                  </div>
-                </div>
+          <>
+            <div className="tf-filter-bar">
+              <select
+                className="tf-sort-select"
+                value={sortBy}
+                onChange={e => setSortBy(e.target.value as 'suitability' | 'rating')}
+              >
+                <option value="suitability">Best match</option>
+                <option value="rating">Highest rated</option>
+              </select>
+              <div className="tf-filter-group">
+                {ratingOptions.map(r => (
+                  <button
+                    key={r}
+                    className={`tf-rating-pill${minRating === r ? ' active' : ''}`}
+                    onClick={() => setMinRating(r)}
+                  >
+                    {ratingLabels[r]}
+                  </button>
+                ))}
               </div>
-            ))}
-          </div>
+              {allTags.map(tag => (
+                <button
+                  key={tag}
+                  className={`tf-condition-chip${activeConditionFilters.has(tag) ? ' active' : ''}`}
+                  onClick={() => toggleConditionFilter(tag)}
+                >
+                  {tag}{activeConditionFilters.has(tag) ? ' ×' : ''}
+                </button>
+              ))}
+            </div>
+
+            {sorted.length === 0 ? (
+              <p className="trail-status">No trails match the current filters.</p>
+            ) : (
+              <div className="trail-grid">
+                {sorted.map((trail, i) => (
+                  <div key={i} className="trail-card">
+                    <div className="trail-card__header">
+                      <h3 className="trail-card__name">
+                        <SuitabilityDot score={trail.suitability_score} />
+                        <a href={trail.google_maps_url} target="_blank" rel="noopener noreferrer">
+                          {trail.name}
+                        </a>
+                      </h3>
+                      <div className="trail-card__meta">
+                        {trail.rating > 0 && (
+                          <span className="trail-card__rating">★ {trail.rating.toFixed(1)}</span>
+                        )}
+                        <DifficultyBadge difficulty={trail.difficulty} />
+                      </div>
+                    </div>
+                    <p className="trail-card__address">
+                      {trail.distance_km != null ? `${trail.distance_km} km · ` : ''}{trail.address}
+                    </p>
+                    <p className="trail-card__conditions">{trail.condition_summary}</p>
+                    {(trail.condition_tags ?? []).length > 0 && (
+                      <div className="trail-card__condition-tags">
+                        {trail.condition_tags.map((tag, j) => (
+                          <span key={j} className="tf-condition-chip">{tag}</span>
+                        ))}
+                      </div>
+                    )}
+                    <div className="trail-card__gear">
+                      <span className="trail-card__gear-label">Gear:</span>
+                      <div className="trail-card__gear-chips">
+                        {trail.gear_list.map((item, j) => (
+                          <span key={j} className="trail-gear-chip">{item}</span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
