@@ -236,3 +236,18 @@
     grid-template-columns: 1fr;
   }
 }
+
+
+/* ── Login ───────────────────────────────────────────────── */
+.dash-login-btn {
+  margin-top: 2rem;
+  padding: 0.75rem 2rem;
+  background: #0078d4;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-family: inherit;
+  cursor: pointer;
+}
+.dash-login-btn:hover { background: #005fa3; }

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import NavBar from './components/nav-bar.tsx';
 import './styling/dashboard.css';
+import { useMsal, useIsAuthenticated } from "@azure/msal-react";
+import { dashboardApiRequest } from "./authConfig";
 
 const DASHBOARD_URL = process.env.REACT_APP_DASHBOARD_API_BASE_URL
   ? `${process.env.REACT_APP_DASHBOARD_API_BASE_URL}/api/DashboardGetter`
@@ -54,10 +56,19 @@ function StatusPill({ health }: { health: HealthStatus }) {
 }
 
 function Dashboard() {
+  const { instance, accounts } = useMsal();
+  const isAuthenticated = useIsAuthenticated();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+
+  const getToken = async (): Promise<string> => {
+    const response = await instance
+      .acquireTokenSilent({ ...dashboardApiRequest, account: accounts[0] })
+      .catch(() => instance.acquireTokenPopup(dashboardApiRequest));
+    return response.accessToken;
+  };
 
   const fetchData = async () => {
     if (!DASHBOARD_URL) {
@@ -66,7 +77,10 @@ function Dashboard() {
       return;
     }
     try {
-      const resp = await fetch(DASHBOARD_URL);
+      const token = await getToken();
+      const resp = await fetch(DASHBOARD_URL, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       if (!resp.ok) throw new Error(`${resp.status} ${resp.statusText}`);
       const json = await resp.json();
       setData(json);
@@ -80,10 +94,29 @@ function Dashboard() {
   };
 
   useEffect(() => {
+    if (!isAuthenticated) return;
     fetchData();
     const interval = setInterval(fetchData, 60_000);
     return () => clearInterval(interval);
-  }, []);
+  }, [isAuthenticated]);
+
+  if (!isAuthenticated) {
+    return (
+      <div className="main dash-page">
+        <header className="Main-text"><NavBar /></header>
+        <div className="dash-content" style={{ textAlign: 'center', paddingTop: '4rem' }}>
+          <h1 className="dash-title">Operations Dashboard</h1>
+          <p className="dash-subtitle">Sign in with your Microsoft account to continue</p>
+          <button
+            className="dash-login-btn"
+            onClick={() => instance.loginPopup(dashboardApiRequest)}
+          >
+            Sign in with Microsoft
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="main dash-page">

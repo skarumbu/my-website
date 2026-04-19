@@ -8,10 +8,12 @@ import Architecture from './Architecture.tsx';
 import TrailFinder from './TrailFinder.tsx';
 import Dashboard from './Dashboard.tsx';
 import reportWebVitals from './reportWebVitals';
-import {
-  createBrowserRouter,
-  RouterProvider,
-} from "react-router-dom";
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import { PublicClientApplication } from "@azure/msal-browser";
+import { MsalProvider } from "@azure/msal-react";
+import { msalConfig } from "./authConfig";
+
+const msalInstance = new PublicClientApplication(msalConfig);
 
 const router = createBrowserRouter([
   {
@@ -43,7 +45,9 @@ const router = createBrowserRouter([
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
-    <RouterProvider router={router} /> 
+    <MsalProvider instance={msalInstance}>
+      <RouterProvider router={router} />
+    </MsalProvider>
   </React.StrictMode>
 );
 
