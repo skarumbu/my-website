@@ -66,7 +66,7 @@ function Dashboard() {
   const getToken = async (): Promise<string> => {
     const response = await instance
       .acquireTokenSilent({ ...dashboardApiRequest, account: accounts[0] })
-      .catch(() => instance.acquireTokenPopup(dashboardApiRequest));
+      .catch(() => instance.acquireTokenRedirect(dashboardApiRequest));
     return response.accessToken;
   };
 
@@ -109,7 +109,7 @@ function Dashboard() {
           <p className="dash-subtitle">Sign in with your Microsoft account to continue</p>
           <button
             className="dash-login-btn"
-            onClick={() => instance.loginPopup(dashboardApiRequest)}
+            onClick={() => instance.loginRedirect(dashboardApiRequest)}
           >
             Sign in with Microsoft
           </button>
