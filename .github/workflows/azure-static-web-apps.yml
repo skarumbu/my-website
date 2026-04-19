@@ -36,6 +36,8 @@ jobs:
           REACT_APP_TRAIL_FINDER_API_BASE_URL: ${{ secrets.REACT_APP_TRAIL_FINDER_API_BASE_URL }}
           REACT_APP_GOOGLE_MAPS_API_KEY: ${{ secrets.REACT_APP_GOOGLE_MAPS_API_KEY }}
           REACT_APP_DASHBOARD_API_BASE_URL: ${{ secrets.REACT_APP_DASHBOARD_API_BASE_URL }}
+          REACT_APP_AZURE_CLIENT_ID: ${{ secrets.REACT_APP_AZURE_CLIENT_ID }}
+          REACT_APP_AZURE_TENANT_ID: ${{ secrets.REACT_APP_AZURE_TENANT_ID }}
 
   close_pull_request_job:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'

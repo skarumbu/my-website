@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import NavBar from './components/nav-bar.tsx';
 import './styling/dashboard.css';
 import { useMsal, useIsAuthenticated } from "@azure/msal-react";
-import { dashboardApiRequest } from "./authConfig";
+import { dashboardApiRequest } from "./authConfig.js";
 
 const DASHBOARD_URL = process.env.REACT_APP_DASHBOARD_API_BASE_URL
   ? `${process.env.REACT_APP_DASHBOARD_API_BASE_URL}/api/DashboardGetter`
