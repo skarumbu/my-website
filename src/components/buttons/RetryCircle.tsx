@@ -13,7 +13,7 @@ const RetryCircle: React.FC<RetryCircleProps> = ({onClick}) => {
             <motion.div whileHover={{ rotate: 360, transition: { duration: .25 } }} style={{ maxWidth: '100%', maxHeight: '100%' }}>
                 <img src={refresh} alt="Refresh" style={{ maxWidth: '100%', maxHeight: '100%' }} />
             </motion.div>
-        </a>
+        </button>
     );
 };
 
