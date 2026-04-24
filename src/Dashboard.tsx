@@ -13,6 +13,8 @@ interface HealthStatus {
   status: 'up' | 'down' | 'unknown';
   latency_ms?: number;
   cold_start?: boolean;
+  last_run?: string;
+  last_run_status?: string;
   error?: string;
 }
 
@@ -253,6 +255,9 @@ function Dashboard() {
                     <StatusPill health={h} />
                     {h.latency_ms !== undefined && (
                       <span className="dash-latency">{h.latency_ms}ms</span>
+                    )}
+                    {h.last_run && (
+                      <span className="dash-latency">{new Date(h.last_run).toLocaleDateString()}</span>
                     )}
                   </div>
                 ))}
