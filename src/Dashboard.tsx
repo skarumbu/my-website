@@ -51,6 +51,7 @@ interface DiscoveredResource {
   location: string;
   resource_group: string;
   subscription_id: string;
+  health_url: string;
   already_registered: boolean;
 }
 
@@ -156,7 +157,7 @@ function Dashboard() {
     setRegisterForm({
       name: resource.name,
       type: TYPE_FROM_AZURE[resource.type] ?? 'custom',
-      health_url: '',
+      health_url: resource.health_url ?? '',
       log_workspace_id: '',
     });
     setRegisterError(null);
