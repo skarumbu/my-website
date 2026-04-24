@@ -291,7 +291,7 @@ function Dashboard() {
 
             {/* Errors */}
             <div className="dash-section">
-              <h2>Recent Errors (24h)</h2>
+              <h2>Most Recent Errors</h2>
               {data.errors.length === 0 ? (
                 <p className="dash-note">No errors in the last 24 hours</p>
               ) : (
