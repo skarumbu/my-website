@@ -113,6 +113,12 @@
   color: #d29922;
 }
 
+.dash-status-pill.unknown {
+  background: #1f2937;
+  border: 1px solid #6b7280;
+  color: #9ca3af;
+}
+
 /* ── Table ─────────────────────────────────────────────── */
 .dash-table {
   width: 100%;

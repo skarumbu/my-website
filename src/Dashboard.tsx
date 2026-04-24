@@ -80,8 +80,8 @@ const SERVICE_NAMES: Record<string, string> = {
 };
 
 function StatusPill({ health }: { health: HealthStatus }) {
-  const cls = health.cold_start ? 'cold' : health.status === 'up' ? 'up' : 'down';
-  const label = health.cold_start ? 'Cold Start' : health.status === 'up' ? 'Up' : 'Down';
+  const cls = health.cold_start ? 'cold' : health.status === 'up' ? 'up' : health.status === 'unknown' ? 'unknown' : 'down';
+  const label = health.cold_start ? 'Cold Start' : health.status === 'up' ? 'Up' : health.status === 'unknown' ? 'Unknown' : 'Down';
   return <span className={`dash-status-pill ${cls}`}>{label}</span>;
 }
 
