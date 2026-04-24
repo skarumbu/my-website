@@ -52,6 +52,7 @@ interface DiscoveredResource {
   resource_group: string;
   subscription_id: string;
   health_url: string;
+  log_workspace_id: string;
   already_registered: boolean;
 }
 
@@ -158,7 +159,7 @@ function Dashboard() {
       name: resource.name,
       type: TYPE_FROM_AZURE[resource.type] ?? 'custom',
       health_url: resource.health_url ?? '',
-      log_workspace_id: '',
+      log_workspace_id: resource.log_workspace_id ?? '',
     });
     setRegisterError(null);
   };
