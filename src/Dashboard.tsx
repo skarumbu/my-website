@@ -138,7 +138,10 @@ function Dashboard() {
       const resp = await fetch(DISCOVER_URL, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (!resp.ok) throw new Error(`${resp.status} ${resp.statusText}`);
+      if (!resp.ok) {
+        const body = await resp.json().catch(() => ({}));
+        throw new Error(body.detail ?? body.error ?? `${resp.status} ${resp.statusText}`);
+      }
       const json = await resp.json();
       setDiscoverData(json.resources);
     } catch (e: any) {
