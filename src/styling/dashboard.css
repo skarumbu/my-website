@@ -238,6 +238,140 @@
 }
 
 
+/* ── Register Services ─────────────────────────────────── */
+.dash-action-btn {
+  padding: 0.45rem 1rem;
+  background: #1f7a6e;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 150ms ease;
+}
+.dash-action-btn:hover:not(:disabled) { background: #155f55; }
+.dash-action-btn:disabled { opacity: 0.5; cursor: default; }
+
+.dash-action-btn--secondary {
+  background: transparent;
+  color: #1f7a6e;
+  border: 1px solid #1f7a6e;
+  margin-left: 0.5rem;
+}
+.dash-action-btn--secondary:hover:not(:disabled) { background: rgba(31,122,110,0.08); }
+
+.dash-action-btn--ghost {
+  background: transparent;
+  color: #6b7280;
+  border: 1px solid #d1d5db;
+}
+.dash-action-btn--ghost:hover:not(:disabled) { background: #f3f4f6; }
+
+.dash-resource-list {
+  margin-top: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.dash-resource-item {
+  background: #fff;
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+.dash-resource-item--registered {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  opacity: 0.7;
+}
+
+.dash-resource-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.dash-resource-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.dash-resource-name {
+  font-weight: 600;
+  color: #1f2937;
+  font-size: 0.9rem;
+}
+
+.dash-tag {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.dash-tag--muted {
+  background: transparent;
+  color: #9ca3af;
+  font-weight: 400;
+}
+
+.dash-register-form {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.dash-form-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.dash-form-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #374151;
+  min-width: 9rem;
+}
+
+.dash-form-optional {
+  font-weight: 400;
+  color: #9ca3af;
+}
+
+.dash-input {
+  flex: 1;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-family: inherit;
+  color: #1f2937;
+  background: #f9fafb;
+}
+.dash-input:focus {
+  outline: none;
+  border-color: #1f7a6e;
+  background: #fff;
+}
+
+.dash-already-registered {
+  margin-top: 1rem;
+}
+
 /* ── Login ───────────────────────────────────────────────── */
 .dash-login-btn {
   margin-top: 2rem;

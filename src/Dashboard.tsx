@@ -4,9 +4,10 @@ import './styling/dashboard.css';
 import { useMsal, useIsAuthenticated } from "@azure/msal-react";
 import { dashboardApiRequest } from "./authConfig.js";
 
-const DASHBOARD_URL = process.env.REACT_APP_DASHBOARD_API_BASE_URL
-  ? `${process.env.REACT_APP_DASHBOARD_API_BASE_URL}/api/DashboardGetter`
-  : null;
+const BASE_URL = process.env.REACT_APP_DASHBOARD_API_BASE_URL;
+const DASHBOARD_URL = BASE_URL ? `${BASE_URL}/api/DashboardGetter` : null;
+const DISCOVER_URL = BASE_URL ? `${BASE_URL}/api/discover` : null;
+const APPS_URL = BASE_URL ? `${BASE_URL}/api/apps` : null;
 
 interface HealthStatus {
   status: 'up' | 'down' | 'unknown';
@@ -43,6 +44,33 @@ interface DashboardData {
   note?: string;
 }
 
+interface DiscoveredResource {
+  id: string;
+  name: string;
+  type: string;
+  location: string;
+  resource_group: string;
+  subscription_id: string;
+  already_registered: boolean;
+}
+
+interface RegisterForm {
+  name: string;
+  type: string;
+  health_url: string;
+  log_workspace_id: string;
+}
+
+const TYPE_FROM_AZURE: Record<string, string> = {
+  'microsoft.web/sites': 'FunctionApp',
+  'microsoft.app/containerapps': 'ContainerApp',
+  'microsoft.apimanagement/service': 'APIM',
+  'microsoft.web/staticsites': 'StaticWebApp',
+  'microsoft.app/jobs': 'ContainerAppJob',
+};
+
+const VALID_TYPES = ['ContainerApp', 'FunctionApp', 'APIM', 'StaticWebApp', 'ContainerAppJob', 'custom'];
+
 const SERVICE_NAMES: Record<string, string> = {
   'digits': 'Digits',
   'momentum-finder': 'Momentum Finder',
@@ -62,6 +90,14 @@ function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+
+  const [discoverData, setDiscoverData] = useState<DiscoveredResource[] | null>(null);
+  const [discoverLoading, setDiscoverLoading] = useState(false);
+  const [discoverError, setDiscoverError] = useState<string | null>(null);
+  const [registeringId, setRegisteringId] = useState<string | null>(null);
+  const [registerForm, setRegisterForm] = useState<RegisterForm>({ name: '', type: '', health_url: '', log_workspace_id: '' });
+  const [registerLoading, setRegisterLoading] = useState(false);
+  const [registerError, setRegisterError] = useState<string | null>(null);
 
   const getToken = async (): Promise<string> => {
     const response = await instance
@@ -93,6 +129,69 @@ function Dashboard() {
     }
   };
 
+  const fetchDiscover = async () => {
+    if (!DISCOVER_URL) return;
+    setDiscoverLoading(true);
+    setDiscoverError(null);
+    try {
+      const token = await getToken();
+      const resp = await fetch(DISCOVER_URL, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!resp.ok) throw new Error(`${resp.status} ${resp.statusText}`);
+      const json = await resp.json();
+      setDiscoverData(json.resources);
+    } catch (e: any) {
+      setDiscoverError(e.message);
+    } finally {
+      setDiscoverLoading(false);
+    }
+  };
+
+  const openRegisterForm = (resource: DiscoveredResource) => {
+    setRegisteringId(resource.id);
+    setRegisterForm({
+      name: resource.name,
+      type: TYPE_FROM_AZURE[resource.type] ?? 'custom',
+      health_url: '',
+      log_workspace_id: '',
+    });
+    setRegisterError(null);
+  };
+
+  const submitRegister = async () => {
+    if (!APPS_URL || !registeringId) return;
+    setRegisterLoading(true);
+    setRegisterError(null);
+    try {
+      const token = await getToken();
+      const resource = discoverData?.find(r => r.id === registeringId);
+      const body = {
+        resource_id: registeringId,
+        name: registerForm.name,
+        type: registerForm.type,
+        health_url: registerForm.health_url,
+        log_workspace_id: registerForm.log_workspace_id,
+      };
+      const resp = await fetch(APPS_URL, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (!resp.ok) {
+        const err = await resp.json();
+        throw new Error(err.error ?? `${resp.status}`);
+      }
+      setRegisteringId(null);
+      setDiscoverData(prev => prev?.map(r => r.id === registeringId ? { ...r, already_registered: true } : r) ?? null);
+      fetchData();
+    } catch (e: any) {
+      setRegisterError(e.message);
+    } finally {
+      setRegisterLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (!isAuthenticated) return;
     fetchData();
@@ -117,6 +216,9 @@ function Dashboard() {
       </div>
     );
   }
+
+  const unregistered = discoverData?.filter(r => !r.already_registered) ?? [];
+  const registered = discoverData?.filter(r => r.already_registered) ?? [];
 
   return (
     <div className="main dash-page">
@@ -222,6 +324,119 @@ function Dashboard() {
             </div>
           </>
         )}
+
+        {/* Register Services */}
+        <div className="dash-section">
+          <h2>Register Services</h2>
+          {!discoverData && (
+            <button className="dash-action-btn" onClick={fetchDiscover} disabled={discoverLoading}>
+              {discoverLoading ? 'Discovering...' : 'Discover Azure Resources'}
+            </button>
+          )}
+          {discoverError && <p className="dash-note" style={{color: '#f85149'}}>Error: {discoverError}</p>}
+
+          {discoverData && (
+            <>
+              <button className="dash-action-btn dash-action-btn--secondary" onClick={fetchDiscover} disabled={discoverLoading}>
+                {discoverLoading ? 'Refreshing...' : 'Refresh'}
+              </button>
+
+              {unregistered.length === 0 && (
+                <p className="dash-note" style={{ marginTop: '1rem' }}>All discovered resources are already registered.</p>
+              )}
+
+              {unregistered.length > 0 && (
+                <div className="dash-resource-list">
+                  <p className="dash-note" style={{ marginBottom: '0.75rem' }}>
+                    {unregistered.length} resource{unregistered.length !== 1 ? 's' : ''} available to register:
+                  </p>
+                  {unregistered.map(resource => (
+                    <div key={resource.id} className="dash-resource-item">
+                      <div className="dash-resource-header">
+                        <div className="dash-resource-meta">
+                          <span className="dash-resource-name">{resource.name}</span>
+                          <span className="dash-tag">{TYPE_FROM_AZURE[resource.type] ?? resource.type}</span>
+                          <span className="dash-tag dash-tag--muted">{resource.resource_group}</span>
+                        </div>
+                        {registeringId === resource.id ? (
+                          <button className="dash-action-btn dash-action-btn--ghost" onClick={() => setRegisteringId(null)}>
+                            Cancel
+                          </button>
+                        ) : (
+                          <button className="dash-action-btn" onClick={() => openRegisterForm(resource)}>
+                            Register
+                          </button>
+                        )}
+                      </div>
+
+                      {registeringId === resource.id && (
+                        <div className="dash-register-form">
+                          <div className="dash-form-row">
+                            <label className="dash-form-label">Name</label>
+                            <input
+                              className="dash-input"
+                              value={registerForm.name}
+                              onChange={e => setRegisterForm(f => ({ ...f, name: e.target.value }))}
+                            />
+                          </div>
+                          <div className="dash-form-row">
+                            <label className="dash-form-label">Type</label>
+                            <select
+                              className="dash-input"
+                              value={registerForm.type}
+                              onChange={e => setRegisterForm(f => ({ ...f, type: e.target.value }))}
+                            >
+                              {VALID_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                            </select>
+                          </div>
+                          <div className="dash-form-row">
+                            <label className="dash-form-label">Health URL <span className="dash-form-optional">(optional)</span></label>
+                            <input
+                              className="dash-input"
+                              placeholder="https://my-api.example.com"
+                              value={registerForm.health_url}
+                              onChange={e => setRegisterForm(f => ({ ...f, health_url: e.target.value }))}
+                            />
+                          </div>
+                          <div className="dash-form-row">
+                            <label className="dash-form-label">Log Workspace ID <span className="dash-form-optional">(optional)</span></label>
+                            <input
+                              className="dash-input"
+                              placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                              value={registerForm.log_workspace_id}
+                              onChange={e => setRegisterForm(f => ({ ...f, log_workspace_id: e.target.value }))}
+                            />
+                          </div>
+                          {registerError && <p className="dash-note" style={{ color: '#f85149' }}>{registerError}</p>}
+                          <button className="dash-action-btn" onClick={submitRegister} disabled={registerLoading || !registerForm.name || !registerForm.type}>
+                            {registerLoading ? 'Registering...' : 'Confirm Registration'}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {registered.length > 0 && (
+                <details className="dash-already-registered">
+                  <summary className="dash-note" style={{ cursor: 'pointer' }}>
+                    {registered.length} already registered
+                  </summary>
+                  <div className="dash-resource-list" style={{ marginTop: '0.5rem' }}>
+                    {registered.map(resource => (
+                      <div key={resource.id} className="dash-resource-item dash-resource-item--registered">
+                        <span className="dash-resource-name">{resource.name}</span>
+                        <span className="dash-tag">{TYPE_FROM_AZURE[resource.type] ?? resource.type}</span>
+                        <span className="dash-status-pill up" style={{ fontSize: '0.65rem' }}>Registered</span>
+                      </div>
+                    ))}
+                  </div>
+                </details>
+              )}
+            </>
+          )}
+        </div>
       </div>
     </div>
   );
