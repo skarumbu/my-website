@@ -15,5 +15,5 @@ export const dashboardApiRequest = {
 };
 
 export const ideasApiRequest = {
-  scopes: ['api://ideas-api/access_as_user'],
+  scopes: ['api://bb744b67-4a31-41ab-a52b-006f90fce6cb/access_as_user'],
 };
