@@ -25,14 +25,16 @@ function Ideas() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('open');
-  const [loginLoading, setLoginLoading] = useState(false);
   const [updating, setUpdating] = useState<string | null>(null);
 
   const getToken = useCallback(async (): Promise<string> => {
-    const response = await instance
-      .acquireTokenSilent({ ...ideasApiRequest, account: accounts[0] })
-      .catch(() => instance.acquireTokenPopup(ideasApiRequest));
-    return response.accessToken;
+    try {
+      const response = await instance.acquireTokenSilent({ ...ideasApiRequest, account: accounts[0] });
+      return response.accessToken;
+    } catch {
+      instance.acquireTokenRedirect({ ...ideasApiRequest, redirectUri: window.location.origin + '/ideas' });
+      throw new Error('Redirecting for auth...');
+    }
   }, [instance, accounts]);
 
   const fetchIdeas = useCallback(async () => {
@@ -62,17 +64,8 @@ function Ideas() {
     if (isAuthenticated) fetchIdeas();
   }, [isAuthenticated, fetchIdeas]);
 
-  const handleLogin = async () => {
-    setLoginLoading(true);
-    try {
-      await instance.loginPopup(ideasApiRequest);
-    } catch (e: any) {
-      if (e.errorCode !== 'user_cancelled') {
-        setError('Sign-in failed: ' + e.message);
-      }
-    } finally {
-      setLoginLoading(false);
-    }
+  const handleLogin = () => {
+    instance.loginRedirect({ ...ideasApiRequest, redirectUri: window.location.origin + '/ideas' });
   };
 
   const handleStatusChange = async (idea: Idea, newStatus: Idea['status']) => {
@@ -116,8 +109,8 @@ function Ideas() {
         <div className="ideas-content ideas-centered">
           <h1 className="ideas-title">Feature Ideas</h1>
           <p className="ideas-subtitle">Sign in to view and manage the feature backlog</p>
-          <button className="ideas-login-btn" onClick={handleLogin} disabled={loginLoading}>
-            {loginLoading ? 'Signing in…' : 'Sign in with Microsoft'}
+          <button className="ideas-login-btn" onClick={handleLogin}>
+            Sign in with Microsoft
           </button>
           {error && <p className="ideas-error">{error}</p>}
         </div>
