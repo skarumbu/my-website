@@ -7,6 +7,7 @@ import MomentumFinder from './MomentumFinder.tsx';
 import Architecture from './Architecture.tsx';
 import TrailFinder from './TrailFinder.tsx';
 import Dashboard from './Dashboard.tsx';
+import Ideas from './Ideas.tsx';
 import reportWebVitals from './reportWebVitals';
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { PublicClientApplication } from "@azure/msal-browser";
@@ -39,6 +40,10 @@ const router = createBrowserRouter([
   {
     path: "/dashboard",
     element: <Dashboard />
+  },
+  {
+    path: "/ideas",
+    element: <Ideas />
   }
 ]);
 

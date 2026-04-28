@@ -1,0 +1,283 @@
+/* ── Page shell ──────────────────────────────────────────── */
+.ideas-page {
+  min-height: 100vh;
+  background-color: #add8d2;
+  font-family: 'Josefin Sans', sans-serif;
+  color: #1f2937;
+}
+
+.ideas-content {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 5rem 1.5rem 5rem;
+}
+
+.ideas-centered {
+  text-align: center;
+  padding-top: 6rem;
+}
+
+/* ── Header ─────────────────────────────────────────────── */
+.ideas-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.75rem;
+}
+
+/* ── Typography ─────────────────────────────────────────── */
+.ideas-title {
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0 0 0.25rem;
+  text-shadow: 0 4px 3px rgba(0,0,0,0.07), 0 2px 2px rgba(0,0,0,0.06);
+}
+
+.ideas-subtitle {
+  color: #4b5563;
+  margin: 0;
+  font-size: 0.88rem;
+}
+
+.ideas-note {
+  font-size: 0.85rem;
+  color: #6b7280;
+  margin: 0.5rem 0;
+}
+
+.ideas-error {
+  font-size: 0.85rem;
+  color: #f85149;
+  margin: 0.5rem 0;
+}
+
+/* ── Controls ───────────────────────────────────────────── */
+.ideas-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.ideas-filter-group {
+  display: flex;
+  border: 1px solid rgba(0,0,0,0.15);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.ideas-filter-btn {
+  padding: 0.35rem 0.85rem;
+  background: rgba(255,255,255,0.6);
+  color: #374151;
+  border: none;
+  border-right: 1px solid rgba(0,0,0,0.1);
+  font-size: 0.8rem;
+  font-family: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 120ms ease;
+}
+.ideas-filter-btn:last-child { border-right: none; }
+.ideas-filter-btn:hover { background: rgba(255,255,255,0.85); }
+.ideas-filter-btn--active {
+  background: #1f7a6e;
+  color: #ffffff;
+}
+.ideas-filter-btn--active:hover { background: #155f55; }
+
+.ideas-refresh-btn {
+  padding: 0.35rem 0.9rem;
+  background: transparent;
+  color: #1f7a6e;
+  border: 1px solid #1f7a6e;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-family: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 120ms ease;
+}
+.ideas-refresh-btn:hover:not(:disabled) { background: rgba(31,122,110,0.08); }
+.ideas-refresh-btn:disabled { opacity: 0.5; cursor: default; }
+
+/* ── List + cards ───────────────────────────────────────── */
+.ideas-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.ideas-card {
+  background: #ffffff;
+  border-radius: 0.75rem;
+  padding: 1.1rem 1.25rem;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  transition: box-shadow 150ms ease, transform 150ms ease;
+}
+.ideas-card:hover {
+  box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+  transform: translateY(-1px);
+}
+
+.ideas-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.35rem;
+}
+
+.ideas-card-title {
+  font-size: 0.98rem;
+  font-weight: 600;
+  color: #1f2937;
+  line-height: 1.4;
+  flex: 1;
+}
+
+/* ── State pills ────────────────────────────────────────── */
+.ideas-state-pill {
+  display: inline-block;
+  padding: 0.2rem 0.65rem;
+  border-radius: 9999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.ideas-state-pill--open {
+  background: #0d2c0d;
+  border: 1px solid #2ea043;
+  color: #3fb950;
+}
+.ideas-state-pill--done {
+  background: #1f2937;
+  border: 1px solid #4b5563;
+  color: #9ca3af;
+}
+.ideas-state-pill--dismissed {
+  background: #2c1a0d;
+  border: 1px solid #92400e;
+  color: #d97706;
+}
+
+/* ── Meta row ───────────────────────────────────────────── */
+.ideas-card-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.55rem;
+  font-size: 0.78rem;
+}
+
+.ideas-card-date {
+  color: #6b7280;
+}
+
+.ideas-source-badge {
+  padding: 0.1rem 0.45rem;
+  border-radius: 9999px;
+  font-size: 0.68rem;
+  font-weight: 600;
+}
+.ideas-source-badge--ideator {
+  background: #dbeafe;
+  color: #1e40af;
+  border: 1px solid rgba(30,64,175,0.2);
+}
+.ideas-source-badge--manual {
+  background: #f3e8ff;
+  color: #6b21a8;
+  border: 1px solid rgba(107,33,168,0.2);
+}
+
+/* ── Body preview ───────────────────────────────────────── */
+.ideas-card-body {
+  font-size: 0.83rem;
+  color: #4b5563;
+  line-height: 1.55;
+  margin: 0 0 0.75rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* ── Action buttons ─────────────────────────────────────── */
+.ideas-action-row {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.ideas-action-btn {
+  padding: 0.25rem 0.7rem;
+  border-radius: 5px;
+  font-size: 0.75rem;
+  font-family: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: opacity 120ms ease;
+}
+.ideas-action-btn:disabled { opacity: 0.45; cursor: default; }
+
+.ideas-action-btn--done {
+  background: rgba(31,122,110,0.1);
+  color: #1f7a6e;
+  border-color: rgba(31,122,110,0.3);
+}
+.ideas-action-btn--done:hover:not(:disabled) { background: rgba(31,122,110,0.18); }
+
+.ideas-action-btn--reopen {
+  background: rgba(37,99,235,0.1);
+  color: #1d4ed8;
+  border-color: rgba(37,99,235,0.3);
+}
+.ideas-action-btn--reopen:hover:not(:disabled) { background: rgba(37,99,235,0.18); }
+
+.ideas-action-btn--dismiss {
+  background: rgba(217,119,6,0.1);
+  color: #b45309;
+  border-color: rgba(217,119,6,0.3);
+}
+.ideas-action-btn--dismiss:hover:not(:disabled) { background: rgba(217,119,6,0.18); }
+
+.ideas-action-btn--delete {
+  background: rgba(248,81,73,0.08);
+  color: #dc2626;
+  border-color: rgba(248,81,73,0.3);
+  margin-left: auto;
+}
+.ideas-action-btn--delete:hover { background: rgba(248,81,73,0.15); }
+
+/* ── Login screen ───────────────────────────────────────── */
+.ideas-login-btn {
+  margin-top: 2rem;
+  padding: 0.75rem 2rem;
+  background: #0078d4;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 150ms ease;
+}
+.ideas-login-btn:hover:not(:disabled) { background: #005fa3; }
+.ideas-login-btn:disabled { opacity: 0.6; cursor: default; }
+
+/* ── Responsive ─────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .ideas-header { flex-direction: column; }
+  .ideas-card-header { flex-direction: column; align-items: flex-start; }
+  .ideas-action-btn--delete { margin-left: 0; }
+}

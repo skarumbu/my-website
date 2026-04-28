@@ -13,3 +13,7 @@ export const msalConfig = {
 export const dashboardApiRequest = {
   scopes: [`api://${process.env.REACT_APP_AZURE_CLIENT_ID}/access_as_user`],
 };
+
+export const ideasApiRequest = {
+  scopes: ['api://ideas-api/access_as_user'],
+};
