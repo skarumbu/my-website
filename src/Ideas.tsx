@@ -408,17 +408,6 @@ function Ideas() {
     }
   }, [getToken]);
 
-  const createProject = useCallback(async (name: string): Promise<void> => {
-    if (!BASE_URL) return;
-    const token = await getToken();
-    const resp = await fetch(`${BASE_URL}/api/projects`, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name }),
-    });
-    if (!resp.ok) throw new Error(`${resp.status}`);
-  }, [getToken]);
-
   const fetchIdeas = useCallback(async () => {
     if (!BASE_URL) { setError('REACT_APP_IDEAS_API_BASE_URL is not configured'); return; }
     setLoading(true);
@@ -519,6 +508,17 @@ function Ideas() {
 
   const openNew = () => { setEditing(null); setComposerOpen(true); };
   const openEdit = (idea: Idea) => { setEditing(idea); setComposerOpen(true); };
+
+  const createProject = useCallback(async (name: string): Promise<void> => {
+    if (!BASE_URL) return;
+    const token = await getToken();
+    const resp = await fetch(`${BASE_URL}/api/projects`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name }),
+    });
+    if (!resp.ok) throw new Error(`${resp.status}`);
+  }, [getToken]);
 
   const handleComposerSubmit = async (
     data: { feature_name: string; title: string; body: string; status: Idea['status'] },
