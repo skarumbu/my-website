@@ -445,9 +445,20 @@ function Ideas() {
     try {
       const response = await instance.acquireTokenSilent({ ...ideasApiRequest, account: accounts[0] });
       return response.accessToken;
-    } catch {
+    } catch (e: any) {
+      if (e?.errorCode === 'interaction_in_progress') throw e;
       instance.acquireTokenRedirect({ ...ideasApiRequest, redirectUri: window.location.origin + '/ideas' });
       throw new Error('Redirecting for auth...');
+    }
+  }, [instance, accounts]);
+
+  // Silent-only token fetch for background operations — never redirects
+  const getTokenSilent = useCallback(async (): Promise<string | null> => {
+    try {
+      const response = await instance.acquireTokenSilent({ ...ideasApiRequest, account: accounts[0] });
+      return response.accessToken;
+    } catch {
+      return null;
     }
   }, [instance, accounts]);
 
@@ -519,7 +530,8 @@ function Ideas() {
 
     const poll = async () => {
       try {
-        const token = await getToken();
+        const token = await getTokenSilent();
+        if (!token) return;
         const resp = await fetch(`${BASE_URL}/api/ideas`, {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -531,7 +543,7 @@ function Ideas() {
 
     const id = setInterval(poll, 10000);
     return () => clearInterval(id);
-  }, [ideas, getToken]);
+  }, [ideas, getTokenSilent]);
 
   const handleLogin = () => {
     instance.loginRedirect({ ...ideasApiRequest, redirectUri: window.location.origin + '/ideas' });
