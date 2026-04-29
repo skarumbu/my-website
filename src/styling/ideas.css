@@ -156,11 +156,12 @@
 
 .ideas-sort-select {
   height: 36px;
-  padding: 0 32px 0 14px;
+  padding: 0 36px 0 14px;
   background-color: rgba(255, 255, 255, 0.6);
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'><path d='M3 5l3 3 3-3' stroke='%231f3a3a' stroke-width='1.5' fill='none' stroke-linecap='round'/></svg>");
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' stroke='%231f6b6b' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>");
   background-repeat: no-repeat;
-  background-position: right 12px center;
+  background-position: right 13px center;
+  background-size: 10px 6px;
   border: 1px solid rgba(31, 107, 107, 0.18);
   border-radius: 999px;
   font-family: inherit;
