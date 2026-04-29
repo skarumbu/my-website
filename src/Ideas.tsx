@@ -26,6 +26,11 @@ interface Idea {
   source: string;
 }
 
+interface Project {
+  id: string;
+  name: string;
+}
+
 type StatusFilter = 'open' | 'done' | 'dismissed' | 'all';
 type SortOrder = 'newest' | 'oldest' | 'project';
 
@@ -53,28 +58,38 @@ function tintFor(name: string) {
 
 // ── Composer (slide-over) ─────────────────────────────────────────────
 
+const NEW_PROJECT_SENTINEL = '__new__';
+
 interface ComposerProps {
   open: boolean;
   onClose: () => void;
-  onSubmit: (data: { feature_name: string; title: string; body: string; status: Idea['status'] }) => void;
+  onSubmit: (
+    data: { feature_name: string; title: string; body: string; status: Idea['status'] },
+    newProjectName?: string
+  ) => void;
   initial: Idea | null;
+  projects: string[];
 }
 
-function Composer({ open, onClose, onSubmit, initial }: ComposerProps) {
+function Composer({ open, onClose, onSubmit, initial, projects }: ComposerProps) {
   const isEdit = !!initial;
-  const [project, setProject] = useState(initial?.feature_name || 'Digits');
+  const [project, setProject] = useState(initial?.feature_name || projects[0] || 'Digits');
   const [title, setTitle] = useState(initial?.title || '');
   const [body, setBody] = useState(initial?.body || '');
   const [status, setStatus] = useState<Idea['status']>(initial?.status || 'open');
+  const [newProjectName, setNewProjectName] = useState('');
+  const [showNewInput, setShowNewInput] = useState(false);
 
   useEffect(() => {
     if (open) {
-      setProject(initial?.feature_name || 'Digits');
+      setProject(initial?.feature_name || projects[0] || 'Digits');
       setTitle(initial?.title || '');
       setBody(initial?.body || '');
       setStatus(initial?.status || 'open');
+      setNewProjectName('');
+      setShowNewInput(false);
     }
-  }, [open, initial]);
+  }, [open, initial, projects]);
 
   useEffect(() => {
     if (!open) return;
@@ -86,7 +101,12 @@ function Composer({ open, onClose, onSubmit, initial }: ComposerProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return;
-    onSubmit({ feature_name: project, title: title.trim(), body: body.trim(), status });
+    const effectiveProject = showNewInput ? newProjectName.trim() : project;
+    if (!effectiveProject) return;
+    onSubmit(
+      { feature_name: effectiveProject, title: title.trim(), body: body.trim(), status },
+      showNewInput ? newProjectName.trim() : undefined
+    );
     onClose();
   };
 
@@ -106,11 +126,30 @@ function Composer({ open, onClose, onSubmit, initial }: ComposerProps) {
             <span className="ideas-field-label">Project</span>
             <select
               className="ideas-field-input"
-              value={project}
-              onChange={e => setProject(e.target.value)}
+              value={showNewInput ? NEW_PROJECT_SENTINEL : project}
+              onChange={e => {
+                if (e.target.value === NEW_PROJECT_SENTINEL) {
+                  setShowNewInput(true);
+                  setProject('');
+                } else {
+                  setShowNewInput(false);
+                  setProject(e.target.value);
+                }
+              }}
             >
-              {PROJECTS.map(p => <option key={p} value={p}>{p}</option>)}
+              {projects.map(p => <option key={p} value={p}>{p}</option>)}
+              <option value={NEW_PROJECT_SENTINEL}>+ New project…</option>
             </select>
+            {showNewInput && (
+              <input
+                autoFocus
+                className="ideas-field-input ideas-new-project-input"
+                value={newProjectName}
+                onChange={e => setNewProjectName(e.target.value)}
+                placeholder="Project name"
+                maxLength={60}
+              />
+            )}
           </label>
 
           <label className="ideas-field">
@@ -157,7 +196,7 @@ function Composer({ open, onClose, onSubmit, initial }: ComposerProps) {
             <button
               type="submit"
               className="ideas-submit-btn"
-              disabled={!title.trim()}
+              disabled={!title.trim() || (showNewInput && !newProjectName.trim())}
             >{isEdit ? 'Save' : 'Add idea'}</button>
           </div>
         </form>
@@ -334,6 +373,7 @@ function Ideas() {
   const isAuthenticated = useIsAuthenticated();
 
   const [ideas, setIdeas] = useState<Idea[]>([]);
+  const [projects, setProjects] = useState<string[]>(PROJECTS);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<StatusFilter>('open');
@@ -352,6 +392,32 @@ function Ideas() {
       throw new Error('Redirecting for auth...');
     }
   }, [instance, accounts]);
+
+  const fetchProjects = useCallback(async (): Promise<string[]> => {
+    if (!BASE_URL) return PROJECTS;
+    try {
+      const token = await getToken();
+      const resp = await fetch(`${BASE_URL}/api/projects`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!resp.ok) return PROJECTS;
+      const json = await resp.json();
+      return (json.projects as Project[]).map(p => p.name);
+    } catch {
+      return PROJECTS;
+    }
+  }, [getToken]);
+
+  const createProject = useCallback(async (name: string): Promise<void> => {
+    if (!BASE_URL) return;
+    const token = await getToken();
+    const resp = await fetch(`${BASE_URL}/api/projects`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name }),
+    });
+    if (!resp.ok) throw new Error(`${resp.status}`);
+  }, [getToken]);
 
   const fetchIdeas = useCallback(async () => {
     if (!BASE_URL) { setError('REACT_APP_IDEAS_API_BASE_URL is not configured'); return; }
@@ -373,8 +439,10 @@ function Ideas() {
   }, [getToken]);
 
   useEffect(() => {
-    if (isAuthenticated) fetchIdeas();
-  }, [isAuthenticated, fetchIdeas]);
+    if (!isAuthenticated) return;
+    fetchIdeas();
+    fetchProjects().then(names => setProjects(names));
+  }, [isAuthenticated, fetchIdeas, fetchProjects]);
 
   const handleLogin = () => {
     instance.loginRedirect({ ...ideasApiRequest, redirectUri: window.location.origin + '/ideas' });
@@ -452,7 +520,19 @@ function Ideas() {
   const openNew = () => { setEditing(null); setComposerOpen(true); };
   const openEdit = (idea: Idea) => { setEditing(idea); setComposerOpen(true); };
 
-  const handleComposerSubmit = (data: { feature_name: string; title: string; body: string; status: Idea['status'] }) => {
+  const handleComposerSubmit = async (
+    data: { feature_name: string; title: string; body: string; status: Idea['status'] },
+    newProjectName?: string
+  ) => {
+    if (newProjectName) {
+      try {
+        await createProject(newProjectName);
+        setProjects(prev => [...prev, newProjectName]);
+      } catch (e: any) {
+        setError('Failed to create project: ' + e.message);
+        return;
+      }
+    }
     if (editing) handleEdit(editing, data);
     else handleCreate(data);
   };
@@ -602,6 +682,7 @@ function Ideas() {
         onClose={() => setComposerOpen(false)}
         onSubmit={handleComposerSubmit}
         initial={editing}
+        projects={projects}
       />
     </div>
   );

@@ -536,6 +536,22 @@
   line-height: 1.5;
 }
 
+.ideas-new-project-input {
+  margin-top: 6px;
+  border-color: rgba(31, 107, 107, 0.45);
+  background: #f4f9f7;
+  animation: ideas-reveal 160ms ease;
+}
+.ideas-new-project-input:focus {
+  border-color: rgba(31, 107, 107, 0.75);
+  background: #ffffff;
+}
+
+@keyframes ideas-reveal {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 .ideas-status-toggle {
   display: flex;
   gap: 8px;
