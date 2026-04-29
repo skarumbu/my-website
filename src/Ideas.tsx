@@ -16,6 +16,8 @@ const PROJECT_TINTS: Record<string, { fg: string; bg: string }> = {
 
 const PROJECTS = ['Digits', 'NBA Games', 'Trail Finder', 'Ideas', 'Other'];
 
+type BotStatus = 'queued' | 'running' | 'completed' | 'failed';
+
 interface Idea {
   id: string;
   feature_name: string;
@@ -24,6 +26,9 @@ interface Idea {
   status: 'open' | 'done' | 'dismissed';
   created_at: string;
   source: string;
+  bot_status?: BotStatus | null;
+  bot_pr_url?: string | null;
+  bot_error?: string | null;
 }
 
 interface Project {
@@ -205,6 +210,42 @@ function Composer({ open, onClose, onSubmit, initial, projects }: ComposerProps)
   );
 }
 
+// ── BotStatusChip ─────────────────────────────────────────────────────
+
+function BotStatusChip({ idea }: { idea: Idea }) {
+  const status = idea.bot_status;
+  if (!status) return null;
+
+  const map: Record<BotStatus, { fg: string; bg: string; label: string }> = {
+    queued:    { fg: '#92400e', bg: 'rgba(251,191,36,0.18)',  label: 'Queued' },
+    running:   { fg: '#1e40af', bg: 'rgba(59,130,246,0.15)',  label: 'Running…' },
+    completed: { fg: '#065f46', bg: 'rgba(16,185,129,0.15)',  label: 'Done' },
+    failed:    { fg: '#991b1b', bg: 'rgba(239,68,68,0.15)',   label: 'Failed' },
+  };
+  const s = map[status];
+
+  return (
+    <span
+      className="ideas-bot-chip"
+      style={{ color: s.fg, background: s.bg }}
+      title={status === 'failed' ? (idea.bot_error ?? undefined) : undefined}
+    >
+      {status === 'running' && <span className="ideas-bot-spinner" />}
+      {status === 'completed' && idea.bot_pr_url ? (
+        <a
+          className="ideas-bot-pr-link"
+          href={idea.bot_pr_url}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={e => e.stopPropagation()}
+        >
+          {s.label} · View PR
+        </a>
+      ) : s.label}
+    </span>
+  );
+}
+
 // ── StatusBadge ───────────────────────────────────────────────────────
 
 function StatusBadge({ status }: { status: Idea['status'] }) {
@@ -229,10 +270,12 @@ interface CardProps {
   onEdit: () => void;
   onDelete: () => void;
   onSetState: (s: Idea['status']) => void;
+  onRunBot: () => void;
   updating: boolean;
+  botRunning: boolean;
 }
 
-function IdeaCard({ idea, onEdit, onDelete, onSetState, updating }: CardProps) {
+function IdeaCard({ idea, onEdit, onDelete, onSetState, onRunBot, updating, botRunning }: CardProps) {
   const [hover, setHover] = useState(false);
   const tint = tintFor(idea.feature_name);
   const isDone = idea.status === 'done';
@@ -312,6 +355,20 @@ function IdeaCard({ idea, onEdit, onDelete, onSetState, updating }: CardProps) {
             disabled={updating}
           >Reopen</button>
         )}
+        {idea.status === 'open' && (
+          idea.bot_status ? (
+            <BotStatusChip idea={idea} />
+          ) : (
+            <button
+              className="ideas-action-btn ideas-action-btn--bot"
+              onClick={onRunBot}
+              disabled={botRunning || updating}
+              title="Assign AI bot to implement this idea"
+            >
+              ⚡ Assign Bot
+            </button>
+          )
+        )}
         <div style={{ flex: 1 }} />
         <button
           className="ideas-action-btn ideas-action-btn--delete"
@@ -380,6 +437,7 @@ function Ideas() {
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState<SortOrder>('newest');
   const [updating, setUpdating] = useState<string | null>(null);
+  const [botRunning, setBotRunning] = useState<string | null>(null);
   const [composerOpen, setComposerOpen] = useState(false);
   const [editing, setEditing] = useState<Idea | null>(null);
 
@@ -432,6 +490,48 @@ function Ideas() {
     fetchIdeas();
     fetchProjects().then(names => setProjects(names));
   }, [isAuthenticated, fetchIdeas, fetchProjects]);
+
+  const runBot = useCallback(async (idea: Idea) => {
+    if (!BASE_URL || botRunning) return;
+    setBotRunning(idea.id);
+    setIdeas(prev => prev.map(i => i.id === idea.id ? { ...i, bot_status: 'queued' as BotStatus } : i));
+    try {
+      const token = await getToken();
+      const resp = await fetch(`${BASE_URL}/api/ideas/${idea.id}/run-bot`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!resp.ok) throw new Error(`${resp.status}`);
+      const json = await resp.json();
+      setIdeas(prev => prev.map(i => i.id === idea.id ? { ...i, ...json.idea } : i));
+    } catch (e: any) {
+      setIdeas(prev => prev.map(i => i.id === idea.id ? { ...i, bot_status: null } : i));
+      setError('Failed to start bot: ' + e.message);
+    } finally {
+      setBotRunning(null);
+    }
+  }, [botRunning, getToken]);
+
+  // Poll for bot status updates while any idea is queued or running
+  useEffect(() => {
+    const hasPending = ideas.some(i => i.bot_status === 'queued' || i.bot_status === 'running');
+    if (!hasPending || !BASE_URL) return;
+
+    const poll = async () => {
+      try {
+        const token = await getToken();
+        const resp = await fetch(`${BASE_URL}/api/ideas`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!resp.ok) return;
+        const json = await resp.json();
+        setIdeas(json.ideas ?? []);
+      } catch {}
+    };
+
+    const id = setInterval(poll, 10000);
+    return () => clearInterval(id);
+  }, [ideas, getToken]);
 
   const handleLogin = () => {
     instance.loginRedirect({ ...ideasApiRequest, redirectUri: window.location.origin + '/ideas' });
@@ -663,7 +763,9 @@ function Ideas() {
                 onEdit={() => openEdit(idea)}
                 onDelete={() => handleDelete(idea)}
                 onSetState={s => handleSetState(idea, s)}
+                onRunBot={() => runBot(idea)}
                 updating={updating === idea.id}
+                botRunning={botRunning === idea.id}
               />
             ))
           )}

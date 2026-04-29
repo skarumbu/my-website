@@ -610,6 +610,49 @@
 .ideas-submit-btn:hover:not(:disabled) { background: #185858; }
 .ideas-submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
+/* ── Bot button & chip ───────────────────────────────────── */
+.ideas-action-btn--bot {
+  color: #6d28d9;
+  border-color: rgba(109, 40, 217, 0.3);
+}
+.ideas-action-btn--bot:hover:not(:disabled) {
+  background: rgba(109, 40, 217, 0.08);
+  border-color: rgba(109, 40, 217, 0.5);
+}
+
+.ideas-bot-chip {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+
+.ideas-bot-pr-link {
+  color: inherit;
+  text-decoration: underline;
+  font-weight: 700;
+}
+.ideas-bot-pr-link:hover { opacity: 0.8; }
+
+@keyframes ideas-bot-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+.ideas-bot-spinner {
+  width: 8px;
+  height: 8px;
+  border: 1.5px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: ideas-bot-spin 700ms linear infinite;
+  flex-shrink: 0;
+}
+
 /* ── Misc ────────────────────────────────────────────────── */
 .ideas-error {
   font-size: 13px;
