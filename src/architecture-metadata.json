@@ -1,7 +1,7 @@
 {
   "digits": {
-    "lastDeploy": null,
-    "commitSha": null
+    "lastDeploy": "2026-04-30",
+    "commitSha": "2e2d413"
   },
   "momentum-finder": {
     "lastDeploy": "2026-04-01",
