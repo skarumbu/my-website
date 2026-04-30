@@ -20,7 +20,8 @@ type BotStatus = 'queued' | 'running' | 'completed' | 'failed';
 
 interface Idea {
   id: string;
-  feature_name: string;
+  project: string;
+  project_id: string | null;
   title: string;
   body: string;
   status: 'open' | 'done' | 'dismissed';
@@ -69,16 +70,16 @@ interface ComposerProps {
   open: boolean;
   onClose: () => void;
   onSubmit: (
-    data: { feature_name: string; title: string; body: string; status: Idea['status'] },
+    data: { project: string; project_id: string | null; title: string; body: string; status: Idea['status'] },
     newProjectName?: string
   ) => void;
   initial: Idea | null;
-  projects: string[];
+  projects: Project[];
 }
 
 function Composer({ open, onClose, onSubmit, initial, projects }: ComposerProps) {
   const isEdit = !!initial;
-  const [project, setProject] = useState(initial?.feature_name || projects[0] || 'Digits');
+  const [project, setProject] = useState(initial?.project || projects[0]?.name || '');
   const [title, setTitle] = useState(initial?.title || '');
   const [body, setBody] = useState(initial?.body || '');
   const [status, setStatus] = useState<Idea['status']>(initial?.status || 'open');
@@ -87,7 +88,7 @@ function Composer({ open, onClose, onSubmit, initial, projects }: ComposerProps)
 
   useEffect(() => {
     if (open) {
-      setProject(initial?.feature_name || projects[0] || 'Digits');
+      setProject(initial?.project || projects[0]?.name || '');
       setTitle(initial?.title || '');
       setBody(initial?.body || '');
       setStatus(initial?.status || 'open');
@@ -106,10 +107,11 @@ function Composer({ open, onClose, onSubmit, initial, projects }: ComposerProps)
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return;
-    const effectiveProject = showNewInput ? newProjectName.trim() : project;
-    if (!effectiveProject) return;
+    const effectiveProjectName = showNewInput ? newProjectName.trim() : project;
+    if (!effectiveProjectName) return;
+    const matched = projects.find(p => p.name === effectiveProjectName);
     onSubmit(
-      { feature_name: effectiveProject, title: title.trim(), body: body.trim(), status },
+      { project: effectiveProjectName, project_id: matched?.id ?? null, title: title.trim(), body: body.trim(), status },
       showNewInput ? newProjectName.trim() : undefined
     );
     onClose();
@@ -142,7 +144,7 @@ function Composer({ open, onClose, onSubmit, initial, projects }: ComposerProps)
                 }
               }}
             >
-              {projects.map(p => <option key={p} value={p}>{p}</option>)}
+              {projects.map(p => <option key={p.id || p.name} value={p.name}>{p.name}</option>)}
               <option value={NEW_PROJECT_SENTINEL}>+ New project…</option>
             </select>
             {showNewInput && (
@@ -278,7 +280,7 @@ interface CardProps {
 
 function IdeaCard({ idea, onEdit, onDelete, onSetState, onRunBot, updating, botRunning }: CardProps) {
   const [hover, setHover] = useState(false);
-  const tint = tintFor(idea.feature_name);
+  const tint = tintFor(idea.project);
   const isDone = idea.status === 'done';
   const isDismissed = idea.status === 'dismissed';
   const rot = cardRot(idea.id);
@@ -302,7 +304,7 @@ function IdeaCard({ idea, onEdit, onDelete, onSetState, onRunBot, updating, botR
       <div className="ideas-card-top">
         <div className="ideas-card-badges">
           <span className="ideas-project-badge" style={{ background: tint.bg, color: tint.fg }}>
-            {idea.feature_name}
+            {idea.project}
           </span>
           {idea.status !== 'open' && <StatusBadge status={idea.status} />}
         </div>
@@ -431,7 +433,7 @@ function Ideas() {
   const isAuthenticated = useIsAuthenticated();
 
   const [ideas, setIdeas] = useState<Idea[]>([]);
-  const [projects, setProjects] = useState<string[]>(PROJECTS);
+  const [projects, setProjects] = useState<Project[]>(PROJECTS.map(name => ({ id: '', name })));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<StatusFilter>('open');
@@ -470,11 +472,11 @@ function Ideas() {
       const resp = await fetch(`${BASE_URL}/api/projects`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (!resp.ok) return PROJECTS;
+      if (!resp.ok) return PROJECTS.map(name => ({ id: '', name }));
       const json = await resp.json();
-      return (json.projects as Project[]).map(p => p.name);
+      return json.projects as Project[];
     } catch {
-      return PROJECTS;
+      return PROJECTS.map(name => ({ id: '', name }));
     }
   }, [getToken]);
 
@@ -500,7 +502,7 @@ function Ideas() {
   useEffect(() => {
     if (!isAuthenticated) return;
     fetchIdeas();
-    fetchProjects().then(names => setProjects(names));
+    fetchProjects().then(ps => setProjects(ps));
   }, [isAuthenticated, fetchIdeas, fetchProjects]);
 
   const runBot = useCallback(async (idea: Idea) => {
@@ -550,14 +552,14 @@ function Ideas() {
     instance.loginRedirect({ ...ideasApiRequest, redirectUri: window.location.origin + '/ideas' });
   };
 
-  const handleCreate = async (data: { feature_name: string; title: string; body: string; status: Idea['status'] }) => {
+  const handleCreate = async (data: { project: string; project_id: string | null; title: string; body: string; status: Idea['status'] }) => {
     if (!BASE_URL) return;
     try {
       const token = await getToken();
       const resp = await fetch(`${BASE_URL}/api/ideas`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ feature_name: data.feature_name, title: data.title, body: data.body }),
+        body: JSON.stringify({ project: data.project, project_id: data.project_id, title: data.title, body: data.body }),
       });
       if (!resp.ok) throw new Error(`${resp.status}`);
       await fetchIdeas();
@@ -566,7 +568,7 @@ function Ideas() {
     }
   };
 
-  const handleEdit = async (idea: Idea, data: { feature_name: string; title: string; body: string; status: Idea['status'] }) => {
+  const handleEdit = async (idea: Idea, data: { project: string; project_id: string | null; title: string; body: string; status: Idea['status'] }) => {
     if (!BASE_URL || updating) return;
     setUpdating(idea.id);
     try {
@@ -622,8 +624,8 @@ function Ideas() {
   const openNew = () => { setEditing(null); setComposerOpen(true); };
   const openEdit = (idea: Idea) => { setEditing(idea); setComposerOpen(true); };
 
-  const createProject = useCallback(async (name: string): Promise<void> => {
-    if (!BASE_URL) return;
+  const createProject = useCallback(async (name: string): Promise<Project> => {
+    if (!BASE_URL) throw new Error('BASE_URL not configured');
     const token = await getToken();
     const resp = await fetch(`${BASE_URL}/api/projects`, {
       method: 'POST',
@@ -631,23 +633,27 @@ function Ideas() {
       body: JSON.stringify({ name }),
     });
     if (!resp.ok) throw new Error(`${resp.status}`);
+    const json = await resp.json();
+    return json as Project;
   }, [getToken]);
 
   const handleComposerSubmit = async (
-    data: { feature_name: string; title: string; body: string; status: Idea['status'] },
+    data: { project: string; project_id: string | null; title: string; body: string; status: Idea['status'] },
     newProjectName?: string
   ) => {
+    let finalData = data;
     if (newProjectName) {
       try {
-        await createProject(newProjectName);
-        setProjects(prev => [...prev, newProjectName]);
+        const newProject = await createProject(newProjectName);
+        setProjects(prev => [...prev, newProject]);
+        finalData = { ...data, project_id: newProject.id };
       } catch (e: any) {
         setError('Failed to create project: ' + e.message);
         return;
       }
     }
-    if (editing) handleEdit(editing, data);
-    else handleCreate(data);
+    if (editing) handleEdit(editing, finalData);
+    else handleCreate(finalData);
   };
 
   // Client-side filter + sort
@@ -658,12 +664,12 @@ function Ideas() {
     visible = visible.filter(i =>
       i.title.toLowerCase().includes(q) ||
       i.body.toLowerCase().includes(q) ||
-      i.feature_name.toLowerCase().includes(q)
+      i.project.toLowerCase().includes(q)
     );
   }
   visible = [...visible];
   if (sort === 'oldest') visible.sort((a, b) => a.created_at.localeCompare(b.created_at));
-  else if (sort === 'project') visible.sort((a, b) => a.feature_name.localeCompare(b.feature_name));
+  else if (sort === 'project') visible.sort((a, b) => a.project.localeCompare(b.project));
   else visible.sort((a, b) => b.created_at.localeCompare(a.created_at));
 
   const counts = {
