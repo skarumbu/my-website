@@ -223,6 +223,7 @@ function BotStatusChip({ idea }: { idea: Idea }) {
     failed:    { fg: '#991b1b', bg: 'rgba(239,68,68,0.15)',   label: 'Failed' },
   };
   const s = map[status];
+  if (!s) return null;
 
   return (
     <span
