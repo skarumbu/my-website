@@ -2,6 +2,7 @@ import React from 'react';
 import NavBar from './components/nav-bar.tsx';
 import './styling/architecture.css';
 import metadata from './architecture-metadata.json';
+import ArchDiagram from './architecture/ArchDiagram.tsx';
 
 type ServiceMeta = { lastDeploy: string | null; commitSha: string | null };
 const meta = metadata as Record<string, ServiceMeta>;
@@ -74,91 +75,7 @@ const Architecture: React.FC = () => {
         {/* ── 2. System Diagram ── */}
         <section className="arch-section" id="diagram">
           <h2>2. System Diagram</h2>
-
-          {/* Top: browser */}
-          <div className="arch-flow">
-            <div className="arch-flow-box blue" style={{ width: '100%', boxSizing: 'border-box' }}>
-              User Browser
-            </div>
-            <div className="arch-flow-down">↓</div>
-
-            {/* Middle: SPA */}
-            <div className="arch-flow-box" style={{ width: '100%', boxSizing: 'border-box', padding: '1rem 1.25rem' }}>
-              <div style={{ fontWeight: 700, marginBottom: '0.75rem' }}>
-                Azure Static Web Apps — <code style={{ fontWeight: 400 }}>my-website</code>
-              </div>
-              <div className="arch-route-grid" style={{ gridTemplateColumns: 'repeat(5, 1fr)' }}>
-                <div className="arch-flow-box blue">
-                  <div className="arch-route-path">/</div>
-                  <div className="arch-route-label">Landing page</div>
-                </div>
-                <div className="arch-flow-box green">
-                  <div className="arch-route-path">/digits</div>
-                  <div className="arch-route-label">Puzzle game</div>
-                </div>
-                <div className="arch-flow-box orange">
-                  <div className="arch-route-path">/momentum-finder</div>
-                  <div className="arch-route-label">NBA games view</div>
-                </div>
-                <div className="arch-flow-box" style={{ borderColor: '#388bfd', color: '#58a6ff' }}>
-                  <div className="arch-route-path">/trail-finder</div>
-                  <div className="arch-route-label">Trail recommendations</div>
-                </div>
-                <div className="arch-flow-box purple">
-                  <div className="arch-route-path">/dashboard</div>
-                  <div className="arch-route-label">Ops dashboard</div>
-                </div>
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', width: '100%', justifyContent: 'space-around' }}>
-              <div style={{ width: '20%' }} />
-              <div className="arch-flow-down">↓</div>
-              <div className="arch-flow-down">↓</div>
-              <div className="arch-flow-down">↓</div>
-              <div style={{ width: '20%' }} />
-            </div>
-
-            {/* Bottom: four APIs */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '1rem', width: '100%' }}>
-              <div className="arch-flow-box green" style={{ padding: '0.75rem 1rem', whiteSpace: 'normal' }}>
-                <div style={{ fontWeight: 700 }}>digits</div>
-                <div style={{ fontSize: '0.72rem', marginTop: '0.2rem', opacity: 0.8 }}>Azure Functions</div>
-                <div style={{ fontSize: '0.72rem', marginTop: '0.35rem', color: '#8b949e' }}>
-                  Generates and stores Digits puzzles · writes metrics to Table Storage
-                </div>
-              </div>
-              <div className="arch-flow-box orange" style={{ padding: '0.75rem 1rem', whiteSpace: 'normal' }}>
-                <div style={{ fontWeight: 700 }}>momentum-finder</div>
-                <div style={{ fontSize: '0.72rem', marginTop: '0.2rem', opacity: 0.8 }}>Container App</div>
-                <div style={{ fontSize: '0.72rem', marginTop: '0.35rem', color: '#8b949e' }}>
-                  Detects NBA momentum shifts · structured JSON logs → Log Analytics
-                </div>
-              </div>
-              <div className="arch-flow-box" style={{ padding: '0.75rem 1rem', whiteSpace: 'normal', borderColor: '#388bfd', color: '#58a6ff' }}>
-                <div style={{ fontWeight: 700 }}>trail-finder</div>
-                <div style={{ fontSize: '0.72rem', marginTop: '0.2rem', opacity: 0.8 }}>Container App</div>
-                <div style={{ fontSize: '0.72rem', marginTop: '0.35rem', color: '#8b949e' }}>
-                  Google Places · Open-Meteo weather · Azure OpenAI synthesis · 24h cache
-                </div>
-              </div>
-              <div className="arch-flow-box purple" style={{ padding: '0.75rem 1rem', whiteSpace: 'normal' }}>
-                <div style={{ fontWeight: 700 }}>dashboard-api</div>
-                <div style={{ fontSize: '0.72rem', marginTop: '0.2rem', opacity: 0.8 }}>Azure Functions</div>
-                <div style={{ fontSize: '0.72rem', marginTop: '0.35rem', color: '#8b949e' }}>
-                  Aggregates health checks, Log Analytics, Table Storage metrics, and Cost Management
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Infrastructure underline */}
-          <div className="arch-flow-box purple" style={{ width: '100%', boxSizing: 'border-box', marginTop: '0.5rem', padding: '0.6rem 1rem', whiteSpace: 'normal', textAlign: 'center' }}>
-            <span style={{ fontWeight: 700 }}>azure-infrastructure</span>
-            <span style={{ fontSize: '0.75rem', marginLeft: '0.75rem', opacity: 0.8 }}>
-              Provisions and configures all Azure resources used by the packages above · Bicep · subscription scope
-            </span>
-          </div>
+          <ArchDiagram />
         </section>
 
         {/* ── 3. Packages ── */}
