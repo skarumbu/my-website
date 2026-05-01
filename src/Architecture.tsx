@@ -34,6 +34,7 @@ const Architecture: React.FC = () => {
             <li><a href="#packages">Packages</a></li>
             <li><a href="#data-flows">Data Flows</a></li>
             <li><a href="#cicd">CI/CD &amp; Deployment</a></li>
+            <li><a href="#design-docs">Design Doc Generation</a></li>
           </ol>
         </div>
 
@@ -41,10 +42,10 @@ const Architecture: React.FC = () => {
         <section className="arch-section" id="overview">
           <h2>1. Overview</h2>
           <p>
-            The system is made up of six packages. The frontend is a React SPA hosted on
-            Azure Static Web Apps. It talks to four backend services — two Azure Functions
-            apps and two Azure Container Apps. A separate infrastructure package defines
-            all cloud resources.
+            The system is made up of eight packages. The frontend is a React SPA hosted on
+            Azure Static Web Apps. It talks to five backend services — three Azure Functions
+            apps, two Azure Container Apps, and one Container App Job. A separate
+            infrastructure package defines all cloud resources.
           </p>
           <table className="arch-table">
             <thead>
@@ -57,6 +58,8 @@ const Architecture: React.FC = () => {
                 ['momentum-finder',      'Identifies momentum shifts in live NBA games',                  'Azure Container Apps',  'momentum-finder'],
                 ['trail-finder',         'Trail recommendations + conditions via Google Places & AI',     'Azure Container Apps',  'trail-finder'],
                 ['dashboard-api',        'Aggregates health, metrics, and cost across all services',      'Azure Functions',       'dashboard-api'],
+                ['ideas-api',            'Stores/serves AI-generated feature ideas; triggers ideas-bot',  'Azure Functions',       'ideas-api'],
+                ['ideas-bot',            'Autonomous agent: implements features and opens draft PRs',      'Container App Job',     null],
                 ['azure-infrastructure', 'Defines all Azure cloud resources (infra-as-code)',             'Provisioning only',     null],
               ].map(([pkg, role, runs, metaKey]) => (
                 <tr key={pkg as string}>
@@ -149,6 +152,35 @@ const Architecture: React.FC = () => {
             )}
           </div>
 
+          <h3>ideas-api — Ideas Board API</h3>
+          <p>
+            Stores and serves AI-generated feature ideas in Azure Table Storage.
+            Accepts browser JWT tokens via EasyAuth for read access and an
+            <code className="arch-inline-code">X-Ideas-Key</code> machine write-key for
+            automated writes. Exposes endpoints to list and create ideas, manage projects,
+            and trigger the ideas-bot Container App Job via{' '}
+            <code className="arch-inline-code">POST /api/ideas/{'{id}'}/run-bot</code>.
+          </p>
+          <div className="arch-tech-stack">
+            {['Azure Functions v2', 'Python 3.11', 'Azure Table Storage', 'EasyAuth', 'Managed Identity'].map(t =>
+              <span key={t} className="arch-tech-item">{t}</span>
+            )}
+          </div>
+
+          <h3>ideas-bot — Autonomous Feature Agent</h3>
+          <p>
+            Container App Job triggered by ideas-api. Clones the target repository, then
+            runs a GPT-4o tool-use loop that reads and writes files and runs shell commands
+            to implement the requested feature. Commits the result and opens a draft pull
+            request on GitHub. The job scales to zero between invocations — each trigger
+            spins up a fresh container.
+          </p>
+          <div className="arch-tech-stack">
+            {['Python 3.11', 'Azure Container App Job', 'Azure OpenAI (GPT-4o)', 'GitHub API'].map(t =>
+              <span key={t} className="arch-tech-item">{t}</span>
+            )}
+          </div>
+
           <h3>azure-infrastructure — Infrastructure as Code</h3>
           <p>
             Defines and provisions all Azure resources at subscription scope using Bicep.
@@ -225,6 +257,28 @@ const Architecture: React.FC = () => {
             </div>
           </div>
 
+          <h3>Ideas Board flow</h3>
+          <div className="arch-flow">
+            <div className="arch-flow-box purple">User opens /ideas</div>
+            <div className="arch-flow-down">↓</div>
+            <div className="arch-flow-box purple">
+              ideas-api (Azure Functions)
+              <small>GET /api/ideas — reads Azure Table Storage (EasyAuth JWT)</small>
+              <small>GET /api/projects — project list</small>
+            </div>
+            <div className="arch-flow-down">↓</div>
+            <div className="arch-flow-box purple">
+              Ideas board rendered
+              <small>user clicks "Assign Bot" → POST /api/ideas/{'{id}'}/run-bot</small>
+            </div>
+            <div className="arch-flow-down">↓  (on Assign Bot)</div>
+            <div className="arch-flow-box" style={{ borderColor: '#30363d', color: '#8b949e' }}>
+              ideas-bot (Container App Job)
+              <small>clones target repo · GPT-4o tool-use loop · read/write files</small>
+              <small>commits changes · opens draft PR on GitHub</small>
+            </div>
+          </div>
+
           <h3>Dashboard flow</h3>
           <div className="arch-flow">
             <div className="arch-flow-box purple">User opens /dashboard (60s poll)</div>
@@ -289,6 +343,30 @@ const Architecture: React.FC = () => {
             <div className="arch-pipeline-box green">{'Live on\nContainer Apps'}</div>
           </div>
 
+          <h3>ideas-api (Azure Functions)</h3>
+          <div className="arch-pipeline">
+            <div className="arch-pipeline-box">{'git push\nmain'}</div>
+            <span className="arch-pipeline-arrow">→</span>
+            <div className="arch-pipeline-box blue">{'GitHub Actions'}</div>
+            <span className="arch-pipeline-arrow">→</span>
+            <div className="arch-pipeline-box">{'func publish\n--python'}</div>
+            <span className="arch-pipeline-arrow">→</span>
+            <div className="arch-pipeline-box green">{'Live on\nAzure Functions'}</div>
+          </div>
+
+          <h3>ideas-bot (Container App Job)</h3>
+          <div className="arch-pipeline">
+            <div className="arch-pipeline-box">{'git push\nmain'}</div>
+            <span className="arch-pipeline-arrow">→</span>
+            <div className="arch-pipeline-box blue">{'GitHub Actions'}</div>
+            <span className="arch-pipeline-arrow">→</span>
+            <div className="arch-pipeline-box">{'docker build\n& push to ACR'}</div>
+            <span className="arch-pipeline-arrow">→</span>
+            <div className="arch-pipeline-box orange">{'az containerapp\njob update'}</div>
+            <span className="arch-pipeline-arrow">→</span>
+            <div className="arch-pipeline-box green">{'Live as\nContainer App Job'}</div>
+          </div>
+
           <h3>Cross-repo rebuild</h3>
           <div className="arch-pipeline">
             <div className="arch-pipeline-box">{'any backend\nrepo push'}</div>
@@ -306,6 +384,98 @@ const Architecture: React.FC = () => {
             <li>Container Apps scale to zero when idle — expect cold starts on first request</li>
             <li>dashboard-api uses a system-assigned managed identity; no secrets stored in app settings</li>
           </ul>
+        </section>
+
+        {/* ── 6. Design Doc Generation ── */}
+        <section className="arch-section" id="design-docs">
+          <h2>6. Design Doc Generation</h2>
+          <p>
+            Every pull request to any backend repo triggers a GitHub Actions workflow that
+            uses Azure OpenAI (GPT-4o) to decide whether the change warrants an Architecture
+            Decision Record (ADR). Significant changes — new endpoints, external integrations,
+            schema changes, security changes — get an ADR automatically generated and committed
+            as a second draft PR to <code className="arch-inline-code">docs/design/</code> in
+            that repo.
+          </p>
+
+          <h3>How it works</h3>
+          <div className="arch-pipeline" style={{ flexWrap: 'wrap', gap: '0.35rem' }}>
+            <div className="arch-pipeline-box">{'PR opened /\nupdated'}</div>
+            <span className="arch-pipeline-arrow">→</span>
+            <div className="arch-pipeline-box blue">{'design-doc-check.yml\n(caller, per repo)'}</div>
+            <span className="arch-pipeline-arrow">→</span>
+            <div className="arch-pipeline-box blue">{'reusable workflow\n@ my-website/main'}</div>
+            <span className="arch-pipeline-arrow">→</span>
+            <div className="arch-pipeline-box">{'git diff\nbase..HEAD'}</div>
+            <span className="arch-pipeline-arrow">→</span>
+            <div className="arch-pipeline-box orange">{'GPT-4o\nsignificance check'}</div>
+            <span className="arch-pipeline-arrow">→</span>
+            <div className="arch-pipeline-box orange">{'GPT-4o\ngenerates ADR'}</div>
+            <span className="arch-pipeline-arrow">→</span>
+            <div className="arch-pipeline-box green">{'draft PR with\ndocs/design/YYYY-MM-DD-name.md'}</div>
+          </div>
+
+          <h3>Significance criteria</h3>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '0.5rem' }}>
+            <div>
+              <p style={{ color: '#3fb950', fontWeight: 600, marginBottom: '0.4rem', fontSize: '0.85rem' }}>Generates an ADR</p>
+              <ul style={{ margin: 0, paddingLeft: '1.2rem', fontSize: '0.85rem', color: '#c9d1d9', lineHeight: 1.7 }}>
+                <li>New API endpoints or routes</li>
+                <li>New external integrations or dependencies</li>
+                <li>Data model / schema changes</li>
+                <li>Security or authentication changes</li>
+                <li>Significant new user-facing features</li>
+              </ul>
+            </div>
+            <div>
+              <p style={{ color: '#8b949e', fontWeight: 600, marginBottom: '0.4rem', fontSize: '0.85rem' }}>Skipped</p>
+              <ul style={{ margin: 0, paddingLeft: '1.2rem', fontSize: '0.85rem', color: '#8b949e', lineHeight: 1.7 }}>
+                <li>Bug fixes</li>
+                <li>Dependency version bumps</li>
+                <li>UI tweaks (colour, spacing, copy)</li>
+                <li>Test-only changes</li>
+                <li>Lint or formatting</li>
+              </ul>
+            </div>
+          </div>
+
+          <h3>ADR format</h3>
+          <pre style={{
+            background: '#161b22',
+            border: '1px solid #30363d',
+            borderRadius: 6,
+            padding: '0.85rem 1rem',
+            fontSize: '0.78rem',
+            color: '#8b949e',
+            lineHeight: 1.6,
+            overflowX: 'auto',
+            marginTop: '0.5rem',
+          }}>{`# ADR: [Feature Name]
+**Date:** YYYY-MM-DD  **Status:** Proposed  **PR:** [repo#N](url)
+
+## Context
+## Decision
+## Alternatives Considered
+## Consequences (Positive / Trade-offs)
+## Relevant Code (GitHub permalink links)`}</pre>
+
+          <h3>Adding a new repo</h3>
+          <ol style={{ fontSize: '0.88rem', color: '#c9d1d9', lineHeight: 1.8, paddingLeft: '1.4rem' }}>
+            <li>
+              Copy <code className="arch-inline-code">.github/workflows/design-doc-check.yml</code> from
+              any backend repo; update the <code className="arch-inline-code">repo_name</code> input to
+              match the new repo's short name.
+            </li>
+            <li>
+              Add <code className="arch-inline-code">AZURE_OPENAI_API_KEY</code> and{' '}
+              <code className="arch-inline-code">DESIGN_DOC_GH_TOKEN</code> secrets in the repo's
+              GitHub Settings → Secrets.
+            </li>
+            <li>
+              Create <code className="arch-inline-code">docs/design/.gitkeep</code> to initialise
+              the ADR directory.
+            </li>
+          </ol>
         </section>
 
         <p className="arch-footer">Last updated: {today}</p>
