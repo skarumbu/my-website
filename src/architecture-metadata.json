@@ -14,5 +14,9 @@
   "dashboard-api": {
     "lastDeploy": "2026-04-30",
     "commitSha": "c1519e7"
+  },
+  "ideas-bot": {
+    "lastDeploy": "2026-05-01",
+    "commitSha": "19d9690"
   }
 }
