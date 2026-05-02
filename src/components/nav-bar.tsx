@@ -17,6 +17,9 @@ const NavBar: React.FC = () => {
       <a href="/ideas" className="button">
         Ideas
       </a>
+      <a href="/learning-plan" className="button">
+        Learning Plan
+      </a>
     </nav>
   );
 };
