@@ -179,7 +179,7 @@ function LearningPlan() {
 
   const initGoogleSignIn = useCallback(() => {
     const g = (window as any).google;
-    if (!g) return;
+    if (!g?.accounts) return;
     g.accounts.id.initialize({
       client_id: process.env.REACT_APP_GOOGLE_CLIENT_ID,
       callback: handleCredentialResponse,
@@ -226,7 +226,7 @@ function LearningPlan() {
     if (authState !== 'unauthenticated') return;
 
     const g = (window as any).google;
-    if (g) {
+    if (g?.accounts) {
       initGoogleSignIn();
       return;
     }
@@ -247,7 +247,7 @@ function LearningPlan() {
 
   // Re-render button when ref is available
   useEffect(() => {
-    if (authState === 'unauthenticated' && (window as any).google) {
+    if (authState === 'unauthenticated' && (window as any).google?.accounts) {
       initGoogleSignIn();
     }
   }, [authState, googleBtnRef.current, initGoogleSignIn]); // eslint-disable-line
