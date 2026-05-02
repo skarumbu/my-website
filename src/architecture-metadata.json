@@ -22,5 +22,9 @@
   "ideas-api": {
     "lastDeploy": "2026-05-01",
     "commitSha": "45aed8e"
+  },
+  "learning-plan-api": {
+    "lastDeploy": "2026-05-02",
+    "commitSha": "45a9fec"
   }
 }
