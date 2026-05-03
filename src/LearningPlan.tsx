@@ -160,6 +160,7 @@ function LearningPlan() {
   // Viewing a plan
   const [viewingPlan, setViewingPlan] = useState<PlanFull | null>(null);
   const [viewLoading, setViewLoading] = useState(false);
+  const [viewError, setViewError] = useState<string | null>(null);
 
   const googleBtnRef = useRef<HTMLDivElement>(null);
 
@@ -353,14 +354,18 @@ function LearningPlan() {
   const handleViewPlan = async (plan: PlanMeta) => {
     setView('viewing');
     setViewingPlan(null);
+    setViewError(null);
     setViewLoading(true);
     try {
       const res = await apiFetch(`/api/plans/${plan.id}`);
-      if (!res.ok) throw new Error(`${res.status}`);
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error ?? `${res.status} ${res.statusText}`);
+      }
       const data = await res.json();
       setViewingPlan(data);
     } catch (e: any) {
-      setViewingPlan(null);
+      setViewError(e.message);
     } finally {
       setViewLoading(false);
     }
@@ -538,7 +543,7 @@ function LearningPlan() {
       <div className="lp-page">
         <NavBar />
         <div className="lp-content">
-          <button className="lp-btn-ghost" onClick={() => { setView('list'); setViewingPlan(null); }}>
+          <button className="lp-btn-ghost" onClick={() => { setView('list'); setViewingPlan(null); setViewError(null); }}>
             ← Back to plans
           </button>
 
@@ -546,6 +551,10 @@ function LearningPlan() {
             <div className="lp-generating" style={{ marginTop: 32 }}>
               <div className="lp-generating-spinner" />
             </div>
+          )}
+
+          {viewError && !viewLoading && (
+            <div className="lp-error" style={{ marginTop: 24 }}>{viewError}</div>
           )}
 
           {viewingPlan && !viewLoading && (
