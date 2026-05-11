@@ -401,8 +401,8 @@ function LearningPlan() {
         <NavBar />
         <div className="lp-content">
           <div className="lp-login-view">
-            <div className="lp-eyebrow">AI-Powered</div>
-            <h1 className="lp-heading">Learning Plan</h1>
+            <div className="lp-eyebrow">Learning Plan Builder</div>
+            <h1 className="lp-heading">What do you want<br />to understand?</h1>
             <p className="lp-login-sub">
               Sign in with Google to generate and save personalised study plans.
             </p>
@@ -424,14 +424,19 @@ function LearningPlan() {
         <div className="lp-content">
           <div className="lp-header">
             <button className="lp-btn-ghost" onClick={() => { setView('list'); setGeneratedPlan(null); setGenerateError(null); }}>
-              ← Back
+              ← Back to plans
             </button>
           </div>
 
           {!generatedPlan && !generating && (
             <form className="lp-form-card" onSubmit={handleGenerate}>
+              <div>
+                <span className="lp-kicker">New Plan</span>
+                <h2 className="lp-form-headline">What do you want<br />to understand?</h2>
+              </div>
+
               <div className="lp-field">
-                <label className="lp-field-label">What do you want to learn?</label>
+                <label className="lp-field-label">Topic</label>
                 <textarea
                   className="lp-textarea"
                   value={topic}
@@ -482,7 +487,7 @@ function LearningPlan() {
                 className="lp-btn-primary"
                 disabled={!topic.trim()}
               >
-                Generate Plan
+                Generate →
               </button>
             </form>
           )}
@@ -559,21 +564,25 @@ function LearningPlan() {
 
           {viewingPlan && !viewLoading && (
             <>
-              <div className="lp-detail-header" style={{ marginTop: 24 }}>
-                <div>
-                  <h1 className="lp-detail-title">{viewingPlan.topic}</h1>
-                  <div className="lp-detail-meta">
-                    {viewingPlan.duration && <span className="lp-badge">{viewingPlan.duration}</span>}
-                    {viewingPlan.depth && <span className="lp-badge">{viewingPlan.depth}</span>}
-                    <span className="lp-detail-date">{fmtDate(viewingPlan.created_at)}</span>
+              <div style={{ marginTop: 24 }}>
+                <span className="lp-kicker">Learning Plan</span>
+                <div className="lp-detail-header">
+                  <div>
+                    <h1 className="lp-detail-title">{viewingPlan.topic}</h1>
+                    <div className="lp-detail-meta">
+                      {viewingPlan.duration && <span className="lp-badge">{viewingPlan.duration}</span>}
+                      {viewingPlan.depth && <span className="lp-badge">{viewingPlan.depth}</span>}
+                      <span className="lp-detail-date">{fmtDate(viewingPlan.created_at)}</span>
+                    </div>
                   </div>
+                  <button
+                    className="lp-btn-danger"
+                    onClick={() => handleDelete(viewingPlan.id, viewingPlan.topic)}
+                  >
+                    Delete
+                  </button>
                 </div>
-                <button
-                  className="lp-btn-danger"
-                  onClick={() => handleDelete(viewingPlan.id, viewingPlan.topic)}
-                >
-                  Delete
-                </button>
+                <hr className="lp-detail-rule" />
               </div>
               <div className="lp-plan-card">
                 {renderMarkdown(viewingPlan.plan_markdown)}
@@ -594,9 +603,9 @@ function LearningPlan() {
         <div className="lp-header">
           <div className="lp-header-row">
             <div>
-              <div className="lp-eyebrow">AI-Powered</div>
-              <h1 className="lp-heading">Learning Plan</h1>
-              <div className="lp-header-meta">Signed in as {currentUser?.email}</div>
+              <div className="lp-eyebrow">Learning Plan Builder</div>
+              <h1 className="lp-heading">Your Plans</h1>
+              <div className="lp-header-meta">{currentUser?.email}</div>
             </div>
             <button
               className="lp-btn-primary"
@@ -605,6 +614,7 @@ function LearningPlan() {
               + New Plan
             </button>
           </div>
+          <hr className="lp-header-rule" />
         </div>
 
         {plansError && <div className="lp-error">{plansError}</div>}
@@ -633,9 +643,6 @@ function LearningPlan() {
 
         {!plansLoading && plans.length > 0 && (
           <div className="lp-plans-grid">
-            <div className="lp-list-header">
-              <h2 className="lp-list-title">Your Plans</h2>
-            </div>
             {plans.map(plan => (
               <div
                 key={plan.id}
