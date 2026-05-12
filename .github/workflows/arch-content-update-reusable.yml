@@ -44,9 +44,6 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install dependencies
-        run: python -m pip install openai
-
       - name: Run architecture content update
         env:
           ARCH_CONTENT_FOUNDRY_KEY: ${{ secrets.ARCH_CONTENT_FOUNDRY_KEY }}
@@ -56,4 +53,6 @@ jobs:
           COMMIT_SHA: ${{ inputs.commit_sha }}
           COMMIT_MESSAGE: ${{ inputs.commit_message }}
           REPO_FULL: ${{ github.repository }}
-        run: python /tmp/arch_content_update.py
+        run: |
+          python -m pip install openai
+          python /tmp/arch_content_update.py
