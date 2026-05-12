@@ -81,10 +81,30 @@ const SERVICE_NAMES: Record<string, string> = {
   'trail-finder': 'Trail Finder',
 };
 
-function StatusPill({ health }: { health: HealthStatus }) {
-  const cls = health.cold_start ? 'cold' : health.status === 'up' ? 'up' : health.status === 'unknown' ? 'unknown' : 'down';
-  const label = health.cold_start ? 'Cold Start' : health.status === 'up' ? 'Up' : health.status === 'unknown' ? 'Unknown' : 'Down';
-  return <span className={`dash-status-pill ${cls}`}>{label}</span>;
+function relTime(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const m = Math.floor(diff / 60000);
+  const h = Math.floor(m / 60);
+  if (h >= 24) return `${Math.floor(h / 24)}d ago`;
+  if (h > 0) return `${h}h ago`;
+  if (m > 0) return `${m}m ago`;
+  return 'just now';
+}
+
+function fmt(n: number): string { return n.toLocaleString(); }
+
+function hClass(h: HealthStatus): string {
+  if (h.status === 'down') return 'dn';
+  if (h.cold_start) return 'cold';
+  if (h.status === 'up') return 'up';
+  return 'unk';
+}
+
+function hLabel(h: HealthStatus): string {
+  if (h.status === 'down') return 'Down';
+  if (h.cold_start) return 'Cold start';
+  if (h.status === 'up') return 'Up';
+  return 'Unknown';
 }
 
 function Dashboard() {
@@ -94,6 +114,7 @@ function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [regOpen, setRegOpen] = useState(false);
 
   const [discoverData, setDiscoverData] = useState<DiscoveredResource[] | null>(null);
   const [discoverLoading, setDiscoverLoading] = useState(false);
@@ -172,7 +193,6 @@ function Dashboard() {
     setRegisterError(null);
     try {
       const token = await getToken();
-      const resource = discoverData?.find(r => r.id === registeringId);
       const body = {
         resource_id: registeringId,
         name: registerForm.name,
@@ -210,244 +230,280 @@ function Dashboard() {
     return (
       <div className="main dash-page">
         <header className="Main-text"><NavBar /></header>
-        <div className="dash-content" style={{ textAlign: 'center', paddingTop: '4rem' }}>
-          <h1 className="dash-title">Operations Dashboard</h1>
-          <p className="dash-subtitle">Sign in with your Microsoft account to continue</p>
-          <button
-            className="dash-login-btn"
-            onClick={() => instance.loginRedirect(dashboardApiRequest)}
-          >
-            Sign in with Microsoft
+        <main className="dash-content dash-login-view">
+          <p className="dash-slabel">Operations Dashboard</p>
+          <h1 className="dash-login-heading">API Ops</h1>
+          <p className="dash-login-sub">Sign in with your Microsoft account to continue</p>
+          <button className="dash-login-btn" onClick={() => instance.loginRedirect(dashboardApiRequest)}>
+            Sign in with Microsoft →
           </button>
-        </div>
+        </main>
       </div>
     );
   }
 
+  const hasDown = data ? Object.values(data.health).some(h => h.status === 'down') : false;
+  const hasCold = data ? Object.values(data.health).some(h => h.cold_start) : false;
+  const allStatusCls = hasDown ? 'sys-dn' : hasCold ? 'sys-cold' : 'sys-up';
+  const allStatusText = hasDown ? 'Incident detected' : hasCold ? 'Cold start detected' : 'All systems operational';
+
   const unregistered = discoverData?.filter(r => !r.already_registered) ?? [];
-  const registered = discoverData?.filter(r => r.already_registered) ?? [];
+  const registered   = discoverData?.filter(r => r.already_registered) ?? [];
 
   return (
     <div className="main dash-page">
-      <header className="Main-text">
-        <NavBar />
-      </header>
-      <div className="dash-content">
-        <h1 className="dash-title">Operations Dashboard</h1>
-        <p className="dash-subtitle">Internal · refreshes every 60s</p>
+      <header className="Main-text"><NavBar /></header>
 
-        {lastUpdated && (
-          <p className="dash-last-updated">Last updated: {lastUpdated.toLocaleTimeString()}</p>
-        )}
+      <div className="dash-infobar">
+        <span className="dash-infobar-ts">
+          {lastUpdated
+            ? `Updated ${lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`
+            : '—'}
+        </span>
+        <div className="dash-infobar-right">
+          {data && <span className={`dash-allstatus ${allStatusCls}`}>{allStatusText}</span>}
+          <button className="dash-hdr-btn" onClick={fetchData} disabled={loading}>
+            {loading ? 'Refreshing…' : 'Refresh'}
+          </button>
+        </div>
+      </div>
 
-        {loading && <p className="dash-note">Loading...</p>}
-        {error && <p className="dash-note" style={{color: '#f85149'}}>Error: {error}</p>}
+      <main className="dash-content">
+        {error && <div className="dash-error-banner">Error: {error}</div>}
+        {loading && !data && <div className="dash-loader">Loading…</div>}
 
         {data && (
           <>
             {/* Health */}
-            <div className="dash-section">
-              <h2>Health</h2>
-              <div className="dash-service-grid">
-                {Object.entries(data.health).map(([svc, h]) => (
-                  <div key={svc} className="dash-health-card">
-                    <span className="dash-service-name">{SERVICE_NAMES[svc] ?? svc}</span>
-                    <StatusPill health={h} />
+            <p className="dash-slabel">Health</p>
+            <div className="dash-health-row">
+              {Object.entries(data.health).map(([svc, h]) => {
+                const cls = hClass(h);
+                const meta = h.last_run ? `Last job: ${relTime(h.last_run)}` : 'HTTP health check';
+                return (
+                  <div key={svc} className={`dash-hcard ${cls}`}>
+                    <div className="dash-hcard-top">
+                      <span className="dash-hcard-name">{SERVICE_NAMES[svc] ?? svc}</span>
+                      <span className={`dash-spill ${cls}`}>{hLabel(h)}</span>
+                    </div>
                     {h.latency_ms !== undefined && (
-                      <span className="dash-latency">{h.latency_ms}ms</span>
+                      <div className="dash-hcard-latency">
+                        <span className="dash-hcard-num">
+                          {h.latency_ms >= 1000 ? (h.latency_ms / 1000).toFixed(1) : h.latency_ms}
+                        </span>
+                        <span className="dash-hcard-unit">{h.latency_ms >= 1000 ? 's' : 'ms'}</span>
+                      </div>
                     )}
-                    {h.last_run && (
-                      <span className="dash-latency">{new Date(h.last_run).toLocaleDateString()}</span>
-                    )}
+                    <div className="dash-hcard-meta">{meta}</div>
                   </div>
-                ))}
-              </div>
+                );
+              })}
             </div>
 
             {/* Metrics */}
-            <div className="dash-section">
-              <h2>Request Volume & Latency (24h)</h2>
-              {data.note && <p className="dash-note">{data.note}</p>}
-              {Object.entries(data.metrics).map(([svc, rows]) => (
-                <div key={svc}>
-                  <h3>{SERVICE_NAMES[svc] ?? svc}</h3>
-                  {rows.length === 0 ? (
-                    <p className="dash-note">No data yet</p>
-                  ) : (
-                    <table className="dash-table">
-                      <thead>
-                        <tr><th>Endpoint</th><th>Requests</th><th>Avg Latency</th><th>Errors</th></tr>
-                      </thead>
+            <p className="dash-slabel">Request volume &amp; latency — 24h</p>
+            {data.note && <p className="dash-note" style={{ marginBottom: 16 }}>{data.note}</p>}
+            <div className="dash-metrics-stack">
+              {Object.entries(data.metrics).map(([svc, rows]) => {
+                const total = rows.reduce((a, r) => a + r.requests_24h, 0);
+                const errs  = rows.reduce((a, r) => a + r.errors_24h, 0);
+                return (
+                  <div key={svc}>
+                    <div className="dash-mtbl-row">
+                      <span className="dash-mtbl-svc">{SERVICE_NAMES[svc] ?? svc}</span>
+                      <span className="dash-mtbl-line"></span>
+                      <span className="dash-mtbl-sum">{fmt(total)} req · {errs} err</span>
+                    </div>
+                    <div className="dash-tbl-wrap">
+                      <table>
+                        <thead>
+                          <tr><th>Endpoint</th><th>Requests</th><th>Avg latency</th><th>Errors</th></tr>
+                        </thead>
+                        <tbody>
+                          {rows.length === 0 ? (
+                            <tr><td colSpan={4} className="dash-mono dash-muted">No data yet</td></tr>
+                          ) : rows.map((r, i) => (
+                            <tr key={i}>
+                              <td className="dash-mono">{r.endpoint}</td>
+                              <td className="dash-mono">{fmt(r.requests_24h)}</td>
+                              <td className="dash-mono">{r.avg_latency_ms}ms</td>
+                              <td className={r.errors_24h > 0 ? 'dash-err-pos' : 'dash-zero'}>{r.errors_24h}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Errors + Cost */}
+            <div className="dash-two-col">
+              <div>
+                <p className="dash-slabel">Recent errors</p>
+                {data.errors.length === 0 ? (
+                  <div className="dash-empty-state">No errors in the last 24 hours</div>
+                ) : (
+                  <div className="dash-elist">
+                    {data.errors.map((e, i) => (
+                      <div key={i} className="dash-eitem">
+                        <span className="dash-eitem-time">{relTime(e.timestamp)}</span>
+                        <span className="dash-ebadge">{SERVICE_NAMES[e.service] ?? e.service}</span>
+                        <div className="dash-eitem-info">
+                          <div className="dash-eitem-ep">{e.endpoint}</div>
+                          <div className="dash-eitem-msg">{e.message}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div>
+                <p className="dash-slabel">Azure cost</p>
+                {data.cost.error ? (
+                  <div className="dash-cost-card">
+                    <p className="dash-note" style={{ padding: '20px' }}>{data.cost.error}</p>
+                  </div>
+                ) : (
+                  <div className="dash-cost-card">
+                    <div className="dash-cost-hero">
+                      <div className="dash-cost-lbl">Month to date</div>
+                      <div className="dash-cost-val">
+                        <span className="dash-cost-curr">{data.cost.currency}</span>
+                        <span className="dash-cost-num">{data.cost.month_to_date.toFixed(2)}</span>
+                      </div>
+                      <div className="dash-cost-period">
+                        {new Date().toLocaleString('default', { month: 'long', year: 'numeric' })}
+                      </div>
+                    </div>
+                    <table>
+                      <thead><tr><th>Service</th><th>Cost</th></tr></thead>
                       <tbody>
-                        {rows.map((r, i) => (
+                        {data.cost.by_service.map((r, i) => (
                           <tr key={i}>
-                            <td>{r.endpoint}</td>
-                            <td>{r.requests_24h}</td>
-                            <td>{r.avg_latency_ms}ms</td>
-                            <td style={{color: r.errors_24h > 0 ? '#f85149' : 'inherit'}}>{r.errors_24h}</td>
+                            <td>{r.service}</td>
+                            <td className="dash-mono">{r.cost.toFixed(2)}</td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
-                  )}
-                </div>
-              ))}
-            </div>
-
-            {/* Errors */}
-            <div className="dash-section">
-              <h2>Most Recent Errors</h2>
-              {data.errors.length === 0 ? (
-                <p className="dash-note">No errors in the last 24 hours</p>
-              ) : (
-                <ul className="dash-error-list">
-                  {data.errors.map((e, i) => (
-                    <li key={i} className="dash-error-item">
-                      <span className="dash-error-time">{new Date(e.timestamp).toLocaleString()}</span>
-                      <span className={`dash-service-badge dash-service-badge--${e.service}`}>{SERVICE_NAMES[e.service] ?? e.service}</span>
-                      <span className="dash-error-endpoint">{e.endpoint}</span>
-                      <span className="dash-error-message">{e.message}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-
-            {/* Cost */}
-            <div className="dash-section">
-              <h2>Cost (Month to Date)</h2>
-              {'error' in data.cost ? (
-                <p className="dash-note">{data.cost.error}</p>
-              ) : (
-                <>
-                  <p className="dash-cost-total">{data.cost.currency} {data.cost.month_to_date.toFixed(2)}</p>
-                  <table className="dash-table">
-                    <thead><tr><th>Azure Service</th><th>Cost</th></tr></thead>
-                    <tbody>
-                      {data.cost.by_service.map((r, i) => (
-                        <tr key={i}><td>{r.service}</td><td>{data.cost.currency} {r.cost.toFixed(4)}</td></tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </>
-              )}
+                  </div>
+                )}
+              </div>
             </div>
           </>
         )}
 
-        {/* Register Services */}
-        <div className="dash-section">
-          <h2>Register Services</h2>
-          {!discoverData && (
-            <button className="dash-action-btn" onClick={fetchDiscover} disabled={discoverLoading}>
-              {discoverLoading ? 'Discovering...' : 'Discover Azure Resources'}
-            </button>
-          )}
-          {discoverError && <p className="dash-note" style={{color: '#f85149'}}>Error: {discoverError}</p>}
-
-          {discoverData && (
-            <>
-              <button className="dash-action-btn dash-action-btn--secondary" onClick={fetchDiscover} disabled={discoverLoading}>
-                {discoverLoading ? 'Refreshing...' : 'Refresh'}
+        {/* Register panel */}
+        <div className={`dash-reg-panel${regOpen ? ' open' : ''}`}>
+          <div className="dash-reg-hdr" onClick={() => setRegOpen(o => !o)}>
+            <span className="dash-reg-title">Register Azure Resources</span>
+            <span className="dash-reg-count">
+              {data ? Object.keys(data.health).length : 0} services monitored
+            </span>
+            <span className="dash-reg-arrow">▾</span>
+          </div>
+          <div className="dash-reg-body">
+            {!discoverData && (
+              <button className="dash-action-btn" onClick={fetchDiscover} disabled={discoverLoading}>
+                {discoverLoading ? 'Discovering…' : 'Discover Resources'}
               </button>
+            )}
+            {!discoverData && (
+              <p className="dash-reg-note">
+                Scans your Azure subscription for Function Apps, Container Apps, and APIM services not yet registered with this dashboard.
+              </p>
+            )}
+            {discoverError && <p className="dash-note" style={{ color: 'var(--dn)', marginTop: 8 }}>Error: {discoverError}</p>}
 
-              {unregistered.length === 0 && (
-                <p className="dash-note" style={{ marginTop: '1rem' }}>All discovered resources are already registered.</p>
-              )}
+            {discoverData && (
+              <>
+                <button className="dash-action-btn--secondary dash-action-btn" onClick={fetchDiscover} disabled={discoverLoading}>
+                  {discoverLoading ? 'Refreshing…' : 'Refresh'}
+                </button>
 
-              {unregistered.length > 0 && (
-                <div className="dash-resource-list">
-                  <p className="dash-note" style={{ marginBottom: '0.75rem' }}>
-                    {unregistered.length} resource{unregistered.length !== 1 ? 's' : ''} available to register:
-                  </p>
-                  {unregistered.map(resource => (
-                    <div key={resource.id} className="dash-resource-item">
-                      <div className="dash-resource-header">
-                        <div className="dash-resource-meta">
-                          <span className="dash-resource-name">{resource.name}</span>
-                          <span className="dash-tag">{TYPE_FROM_AZURE[resource.type] ?? resource.type}</span>
-                          <span className="dash-tag dash-tag--muted">{resource.resource_group}</span>
+                {unregistered.length === 0 && (
+                  <p className="dash-note" style={{ marginTop: 12 }}>All discovered resources are already registered.</p>
+                )}
+
+                {unregistered.length > 0 && (
+                  <div className="dash-resource-list">
+                    <p className="dash-note">{unregistered.length} resource{unregistered.length !== 1 ? 's' : ''} available to register:</p>
+                    {unregistered.map(resource => (
+                      <div key={resource.id} className="dash-resource-item">
+                        <div className="dash-resource-header">
+                          <div className="dash-resource-meta">
+                            <span className="dash-resource-name">{resource.name}</span>
+                            <span className="dash-tag">{TYPE_FROM_AZURE[resource.type] ?? resource.type}</span>
+                            <span className="dash-tag dash-tag--muted">{resource.resource_group}</span>
+                          </div>
+                          {registeringId === resource.id ? (
+                            <button className="dash-action-btn dash-action-btn--ghost" onClick={() => setRegisteringId(null)}>Cancel</button>
+                          ) : (
+                            <button className="dash-action-btn" onClick={() => openRegisterForm(resource)}>Register</button>
+                          )}
                         </div>
-                        {registeringId === resource.id ? (
-                          <button className="dash-action-btn dash-action-btn--ghost" onClick={() => setRegisteringId(null)}>
-                            Cancel
-                          </button>
-                        ) : (
-                          <button className="dash-action-btn" onClick={() => openRegisterForm(resource)}>
-                            Register
-                          </button>
+
+                        {registeringId === resource.id && (
+                          <div className="dash-register-form">
+                            <div className="dash-form-row">
+                              <label className="dash-form-label">Name</label>
+                              <input className="dash-input" value={registerForm.name}
+                                onChange={e => setRegisterForm(f => ({ ...f, name: e.target.value }))} />
+                            </div>
+                            <div className="dash-form-row">
+                              <label className="dash-form-label">Type</label>
+                              <select className="dash-input" value={registerForm.type}
+                                onChange={e => setRegisterForm(f => ({ ...f, type: e.target.value }))}>
+                                {VALID_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                              </select>
+                            </div>
+                            <div className="dash-form-row">
+                              <label className="dash-form-label">Health URL <span className="dash-form-optional">(optional)</span></label>
+                              <input className="dash-input" placeholder="https://my-api.example.com"
+                                value={registerForm.health_url}
+                                onChange={e => setRegisterForm(f => ({ ...f, health_url: e.target.value }))} />
+                            </div>
+                            <div className="dash-form-row">
+                              <label className="dash-form-label">Log Workspace ID <span className="dash-form-optional">(optional)</span></label>
+                              <input className="dash-input" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                                value={registerForm.log_workspace_id}
+                                onChange={e => setRegisterForm(f => ({ ...f, log_workspace_id: e.target.value }))} />
+                            </div>
+                            {registerError && <p className="dash-note" style={{ color: 'var(--dn)' }}>{registerError}</p>}
+                            <button className="dash-action-btn" onClick={submitRegister}
+                              disabled={registerLoading || !registerForm.name || !registerForm.type}>
+                              {registerLoading ? 'Registering…' : 'Confirm Registration'}
+                            </button>
+                          </div>
                         )}
-                      </div>
-
-                      {registeringId === resource.id && (
-                        <div className="dash-register-form">
-                          <div className="dash-form-row">
-                            <label className="dash-form-label">Name</label>
-                            <input
-                              className="dash-input"
-                              value={registerForm.name}
-                              onChange={e => setRegisterForm(f => ({ ...f, name: e.target.value }))}
-                            />
-                          </div>
-                          <div className="dash-form-row">
-                            <label className="dash-form-label">Type</label>
-                            <select
-                              className="dash-input"
-                              value={registerForm.type}
-                              onChange={e => setRegisterForm(f => ({ ...f, type: e.target.value }))}
-                            >
-                              {VALID_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-                            </select>
-                          </div>
-                          <div className="dash-form-row">
-                            <label className="dash-form-label">Health URL <span className="dash-form-optional">(optional)</span></label>
-                            <input
-                              className="dash-input"
-                              placeholder="https://my-api.example.com"
-                              value={registerForm.health_url}
-                              onChange={e => setRegisterForm(f => ({ ...f, health_url: e.target.value }))}
-                            />
-                          </div>
-                          <div className="dash-form-row">
-                            <label className="dash-form-label">Log Workspace ID <span className="dash-form-optional">(optional)</span></label>
-                            <input
-                              className="dash-input"
-                              placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-                              value={registerForm.log_workspace_id}
-                              onChange={e => setRegisterForm(f => ({ ...f, log_workspace_id: e.target.value }))}
-                            />
-                          </div>
-                          {registerError && <p className="dash-note" style={{ color: '#f85149' }}>{registerError}</p>}
-                          <button className="dash-action-btn" onClick={submitRegister} disabled={registerLoading || !registerForm.name || !registerForm.type}>
-                            {registerLoading ? 'Registering...' : 'Confirm Registration'}
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {registered.length > 0 && (
-                <details className="dash-already-registered">
-                  <summary className="dash-note" style={{ cursor: 'pointer' }}>
-                    {registered.length} already registered
-                  </summary>
-                  <div className="dash-resource-list" style={{ marginTop: '0.5rem' }}>
-                    {registered.map(resource => (
-                      <div key={resource.id} className="dash-resource-item dash-resource-item--registered">
-                        <span className="dash-resource-name">{resource.name}</span>
-                        <span className="dash-tag">{TYPE_FROM_AZURE[resource.type] ?? resource.type}</span>
-                        <span className="dash-status-pill up" style={{ fontSize: '0.65rem' }}>Registered</span>
                       </div>
                     ))}
                   </div>
-                </details>
-              )}
-            </>
-          )}
+                )}
+
+                {registered.length > 0 && (
+                  <details className="dash-already-registered">
+                    <summary className="dash-note" style={{ cursor: 'pointer' }}>
+                      {registered.length} already registered
+                    </summary>
+                    <div className="dash-resource-list" style={{ marginTop: 8 }}>
+                      {registered.map(resource => (
+                        <div key={resource.id} className="dash-resource-item dash-resource-item--registered">
+                          <span className="dash-resource-name">{resource.name}</span>
+                          <span className="dash-tag">{TYPE_FROM_AZURE[resource.type] ?? resource.type}</span>
+                          <span className="dash-spill up" style={{ fontSize: '10px' }}>Registered</span>
+                        </div>
+                      ))}
+                    </div>
+                  </details>
+                )}
+              </>
+            )}
+          </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }
