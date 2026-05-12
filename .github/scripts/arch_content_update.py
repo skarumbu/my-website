@@ -20,17 +20,22 @@ import sys
 import tempfile
 from datetime import date
 
-from azure.ai.inference import ChatCompletionsClient
-from azure.core.credentials import AzureKeyCredential
+from openai import AzureOpenAI
 
-ENDPOINT = "https://arch-content-foundry.services.ai.azure.com/openai/deployments/gpt-4o"
+# arch-content-foundry is an AIServices (Foundry) resource in eastus.
+# Its custom domain (arch-content-foundry.services.ai.azure.com) is a CNAME for the
+# regional endpoint below; using the regional URL avoids DNS propagation delays.
+ENDPOINT = "https://eastus.api.cognitive.microsoft.com/"
+DEPLOYMENT = "gpt-4o"
+API_VERSION = "2024-02-01"
 MY_WEBSITE_REPO = "skarumbu/my-website"
 CONTENT_FILE = "src/architecture-content.json"
 HISTORY_DIR = "src/architecture-history"
 
-client = ChatCompletionsClient(
-    endpoint=ENDPOINT,
-    credential=AzureKeyCredential(os.environ["ARCH_CONTENT_FOUNDRY_KEY"]),
+client = AzureOpenAI(
+    azure_endpoint=ENDPOINT,
+    api_key=os.environ["ARCH_CONTENT_FOUNDRY_KEY"],
+    api_version=API_VERSION,
 )
 
 diff_file = os.environ["DIFF_FILE"]
@@ -90,7 +95,8 @@ Respond with a JSON object (no markdown fences):
 Only include sections in affected_sections that actually changed.
 affected_sections may be empty if needs_update is false."""
 
-resp1 = client.complete(
+resp1 = client.chat.completions.create(
+    model=DEPLOYMENT,
     messages=[{"role": "user", "content": significance_prompt}],
     temperature=0,
     max_tokens=300,
@@ -164,7 +170,8 @@ Example output (only changed fields):
   }}
 }}"""
 
-resp2 = client.complete(
+resp2 = client.chat.completions.create(
+    model=DEPLOYMENT,
     messages=[{"role": "user", "content": update_prompt}],
     temperature=0.2,
     max_tokens=1500,
