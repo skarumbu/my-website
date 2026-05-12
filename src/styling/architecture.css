@@ -315,6 +315,162 @@
   font-family: 'SF Mono', Consolas, monospace;
 }
 
+/* ── Package detail navigation ──────────────────────────── */
+.arch-table-row-clickable {
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.arch-table-row-clickable:hover td {
+  background: #161b22;
+}
+
+.arch-pkg-link {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+}
+
+.arch-pkg-link:hover .arch-inline-code {
+  color: #58a6ff;
+  border-color: #58a6ff;
+}
+
+.arch-pkg-h3-link {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #3fb950;
+  font-family: inherit;
+  transition: color 0.12s;
+}
+
+.arch-pkg-h3-link:hover {
+  color: #58a6ff;
+}
+
+/* ── Package detail page ─────────────────────────────────── */
+.arch-pkg-back {
+  background: none;
+  border: none;
+  color: #8b949e;
+  font-size: 0.82rem;
+  font-family: 'SF Mono', Consolas, monospace;
+  cursor: pointer;
+  padding: 0 0 1.5rem;
+  display: block;
+  transition: color 0.12s;
+}
+
+.arch-pkg-back:hover { color: #58a6ff; }
+
+.arch-pkg-header {
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  padding: 1.25rem 1.5rem 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.arch-pkg-header-top {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.arch-pkg-name {
+  font-family: 'SF Mono', Consolas, monospace;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #e6edf3;
+  background: #21262d;
+  border: 1px solid #30363d;
+  border-radius: 4px;
+  padding: 0.15em 0.5em;
+}
+
+.arch-pkg-runs-on {
+  font-size: 0.75rem;
+  color: #8b949e;
+  background: #21262d;
+  border: 1px solid #30363d;
+  border-radius: 20px;
+  padding: 0.15em 0.75em;
+  font-family: 'SF Mono', Consolas, monospace;
+}
+
+.arch-pkg-role {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #3fb950;
+  margin: 0 0 0.35rem;
+}
+
+.arch-pkg-deploy {
+  font-size: 0.75rem;
+  color: #8b949e;
+  font-family: 'SF Mono', Consolas, monospace;
+  margin: 0 0 0.75rem;
+}
+
+.arch-pkg-desc {
+  font-size: 0.9rem;
+  color: #c9d1d9;
+  line-height: 1.65;
+  margin: 0;
+  max-width: 720px;
+}
+
+.arch-pkg-body {
+  max-width: 860px;
+}
+
+.arch-pkg-features {
+  color: #c9d1d9;
+  padding-left: 1.4rem;
+  line-height: 1.75;
+}
+
+.arch-pkg-features li {
+  margin: 0.35rem 0;
+  font-size: 0.9rem;
+}
+
+.arch-pkg-keypoints {
+  color: #c9d1d9;
+  padding-left: 1.4rem;
+  line-height: 1.75;
+}
+
+.arch-pkg-keypoints li {
+  margin: 0.35rem 0;
+  font-size: 0.88rem;
+}
+
+.arch-pkg-overview-summary {
+  color: #c9d1d9;
+  font-size: 0.88rem;
+  line-height: 1.65;
+  margin: 0 0 0.6rem;
+}
+
+.arch-pkg-ai-badge {
+  font-size: 0.68rem;
+  font-family: 'SF Mono', Consolas, monospace;
+  color: #d29922;
+  background: #2c1f00;
+  border: 1px solid #9e6a03;
+  border-radius: 20px;
+  padding: 0.1em 0.6em;
+}
+
 /* ── Service Panel (react-flow detail drawer) ────────────── */
 .arch-panel {
   position: absolute;

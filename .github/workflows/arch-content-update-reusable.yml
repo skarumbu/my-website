@@ -1,0 +1,59 @@
+name: Architecture Content Update (reusable)
+
+on:
+  workflow_call:
+    inputs:
+      repo_name:
+        required: true
+        type: string
+        description: "Package key matching architecture-content.json (e.g. 'digits')"
+      commit_sha:
+        required: true
+        type: string
+      commit_message:
+        required: true
+        type: string
+    secrets:
+      AZURE_OPENAI_API_KEY:
+        required: true
+      ARCH_UPDATE_GH_TOKEN:
+        required: true
+
+jobs:
+  arch-content-update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Compute deploy diff
+        run: |
+          git diff HEAD~1..HEAD | head -c 81920 > /tmp/deploy.diff
+          echo "Diff size: $(wc -c < /tmp/deploy.diff) bytes"
+
+      - name: Fetch arch content update script
+        run: |
+          curl -fsSL \
+            "https://raw.githubusercontent.com/skarumbu/my-website/main/.github/scripts/arch_content_update.py" \
+            -o /tmp/arch_content_update.py
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install openai
+
+      - name: Run architecture content update
+        env:
+          AZURE_OPENAI_API_KEY: ${{ secrets.AZURE_OPENAI_API_KEY }}
+          GH_TOKEN: ${{ secrets.ARCH_UPDATE_GH_TOKEN }}
+          DIFF_FILE: /tmp/deploy.diff
+          REPO_NAME: ${{ inputs.repo_name }}
+          COMMIT_SHA: ${{ inputs.commit_sha }}
+          COMMIT_MESSAGE: ${{ inputs.commit_message }}
+          REPO_FULL: ${{ github.repository }}
+        run: python /tmp/arch_content_update.py

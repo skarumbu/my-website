@@ -1,8 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import NavBar from './components/nav-bar.tsx';
 import './styling/architecture.css';
 import metadata from './architecture-metadata.json';
+import archContent from './architecture-content.json';
 import ArchDiagram from './architecture/ArchDiagram.tsx';
+import PackageDetail from './architecture/PackageDetail.tsx';
+
+type GeneratedSummary = { summary?: string };
+const pkgSummary = archContent as Record<string, GeneratedSummary>;
 
 type ServiceMeta = { lastDeploy: string | null; commitSha: string | null };
 const meta = metadata as Record<string, ServiceMeta>;
@@ -15,6 +20,18 @@ function deployLabel(key: string) {
 
 const Architecture: React.FC = () => {
   const today = new Date().toISOString().split('T')[0];
+  const [selectedPkg, setSelectedPkg] = useState<string | null>(null);
+
+  if (selectedPkg) {
+    return (
+      <div className="arch-page">
+        <NavBar />
+        <div className="arch-content">
+          <PackageDetail packageKey={selectedPkg} onBack={() => setSelectedPkg(null)} />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="arch-page">
@@ -61,9 +78,14 @@ const Architecture: React.FC = () => {
                 ['ideas-api',            'Stores/serves AI-generated feature ideas; triggers ideas-bot',  'Azure Functions',       'ideas-api'],
                 ['ideas-bot',            'Autonomous agent: implements features and opens draft PRs',      'Container App Job',     null],
                 ['azure-infrastructure', 'Defines all Azure cloud resources (infra-as-code)',             'Provisioning only',     null],
+                ['learning-plan-api',    'Generates and stores AI-powered personalised learning plans',   'Azure Functions',       'learning-plan-api'],
               ].map(([pkg, role, runs, metaKey]) => (
-                <tr key={pkg as string}>
-                  <td><code className="arch-inline-code">{pkg}</code></td>
+                <tr key={pkg as string} className="arch-table-row-clickable" onClick={() => setSelectedPkg(pkg as string)}>
+                  <td>
+                    <button className="arch-pkg-link">
+                      <code className="arch-inline-code">{pkg}</code>
+                    </button>
+                  </td>
                   <td>{role}</td>
                   <td>{runs}</td>
                   <td style={{ fontSize: '0.78rem', color: '#8b949e', whiteSpace: 'nowrap' }}>
@@ -85,114 +107,31 @@ const Architecture: React.FC = () => {
         <section className="arch-section" id="packages">
           <h2>3. Packages</h2>
 
-          <h3>my-website — Frontend SPA</h3>
-          <p>
-            A React (TypeScript) single-page application. Handles all user interaction.
-            Deployed to Azure Static Web Apps, which serves the static build and rewrites
-            all navigation to <code className="arch-inline-code">index.html</code> so
-            client-side routing works on deep links. Autocomplete on the Trail Finder
-            search bar is powered by the Google Maps JS SDK running entirely in the browser.
-          </p>
-          <div className="arch-tech-stack">
-            {['React 18', 'TypeScript', 'React Router v6', 'Create React App', 'Azure Static Web Apps', 'Google Maps JS SDK'].map(t =>
-              <span key={t} className="arch-tech-item">{t}</span>
-            )}
-          </div>
-
-          <h3>digits — Puzzle API</h3>
-          <p>
-            Generates, stores, and serves daily Digits puzzles via Azure Table Storage.
-            Each invocation writes a metrics row (duration, status) to a <code className="arch-inline-code">metrics</code> table
-            so the dashboard can track request volume. In local development the frontend
-            bypasses this API and uses hardcoded stub data instead.
-          </p>
-          <div className="arch-tech-stack">
-            {['Azure Functions v2', 'Python 3.11', 'Azure Table Storage'].map(t =>
-              <span key={t} className="arch-tech-item">{t}</span>
-            )}
-          </div>
-
-          <h3>momentum-finder — NBA Momentum API</h3>
-          <p>
-            Analyses live NBA game data to surface momentum shifts. Runs as a Container App
-            (FastAPI + Uvicorn on port 80, scales 0–10 replicas). Emits structured JSON logs
-            on every request that flow into Log Analytics for the dashboard to query.
-          </p>
-          <div className="arch-tech-stack">
-            {['FastAPI', 'Python 3.11', 'Azure Container Apps', 'Log Analytics'].map(t =>
-              <span key={t} className="arch-tech-item">{t}</span>
-            )}
-          </div>
-
-          <h3>trail-finder — Trail Recommendations API</h3>
-          <p>
-            Given a city, geocodes it, searches Google Places for nearby trails, fetches
-            weather from Open-Meteo, pulls AllTrails snippets via Google Custom Search, then
-            synthesizes a condition summary and gear list with Azure OpenAI. Results are cached
-            in memory for 24 hours. Runs as a Container App with the same logging middleware
-            as momentum-finder.
-          </p>
-          <div className="arch-tech-stack">
-            {['FastAPI', 'Python 3.11', 'Azure Container Apps', 'Google Places API', 'Open-Meteo', 'Azure OpenAI', 'Log Analytics'].map(t =>
-              <span key={t} className="arch-tech-item">{t}</span>
-            )}
-          </div>
-
-          <h3>dashboard-api — Ops Dashboard API</h3>
-          <p>
-            Single aggregator endpoint that fans out in parallel to: health-check
-            momentum-finder and trail-finder, query Log Analytics (KQL) for request counts,
-            latency, and recent errors, query the Digits metrics Table Storage table, and
-            fetch Azure Cost Management MTD spend. Uses a system-assigned managed identity
-            with Log Analytics Reader and Cost Management Reader roles — no stored credentials.
-          </p>
-          <div className="arch-tech-stack">
-            {['Azure Functions v2', 'Python 3.11', 'Managed Identity', 'azure-monitor-query', 'Azure Cost Management'].map(t =>
-              <span key={t} className="arch-tech-item">{t}</span>
-            )}
-          </div>
-
-          <h3>ideas-api — Ideas Board API</h3>
-          <p>
-            Stores and serves AI-generated feature ideas in Azure Table Storage.
-            Accepts browser JWT tokens via EasyAuth for read access and an
-            <code className="arch-inline-code">X-Ideas-Key</code> machine write-key for
-            automated writes. Exposes endpoints to list and create ideas, manage projects,
-            and trigger the ideas-bot Container App Job via{' '}
-            <code className="arch-inline-code">POST /api/ideas/{'{id}'}/run-bot</code>.
-          </p>
-          <div className="arch-tech-stack">
-            {['Azure Functions v2', 'Python 3.11', 'Azure Table Storage', 'EasyAuth', 'Managed Identity'].map(t =>
-              <span key={t} className="arch-tech-item">{t}</span>
-            )}
-          </div>
-
-          <h3>ideas-bot — Autonomous Feature Agent</h3>
-          <p>
-            Container App Job triggered by ideas-api. Clones the target repository, then
-            runs a GPT-4o tool-use loop that reads and writes files and runs shell commands
-            to implement the requested feature. Commits the result and opens a draft pull
-            request on GitHub. The job scales to zero between invocations — each trigger
-            spins up a fresh container.
-          </p>
-          <div className="arch-tech-stack">
-            {['Python 3.11', 'Azure Container App Job', 'Azure OpenAI (GPT-4o)', 'GitHub API'].map(t =>
-              <span key={t} className="arch-tech-item">{t}</span>
-            )}
-          </div>
-
-          <h3>azure-infrastructure — Infrastructure as Code</h3>
-          <p>
-            Defines and provisions all Azure resources at subscription scope using Bicep.
-            Modules cover the Static Web App, Container Registry, Container App Environment
-            (shared Log Analytics workspace), momentum-finder and trail-finder Container Apps,
-            Digits and Dashboard Azure Functions apps, and all RBAC role assignments.
-          </p>
-          <div className="arch-tech-stack">
-            {['Azure Bicep', 'Azure RBAC', 'Managed Identity', 'Container Registry'].map(t =>
-              <span key={t} className="arch-tech-item">{t}</span>
-            )}
-          </div>
+          {[
+            { key: 'my-website',           label: 'my-website — Frontend SPA',               tech: ['React 18', 'TypeScript', 'React Router v6', 'Create React App', 'Azure Static Web Apps', 'Google Maps JS SDK'] },
+            { key: 'digits',               label: 'digits — Puzzle API',                      tech: ['Azure Functions v2', 'Python 3.11', 'Azure Table Storage'] },
+            { key: 'momentum-finder',      label: 'momentum-finder — NBA Momentum API',        tech: ['FastAPI', 'Python 3.11', 'Azure Container Apps', 'Log Analytics'] },
+            { key: 'trail-finder',         label: 'trail-finder — Trail Recommendations API',  tech: ['FastAPI', 'Python 3.11', 'Azure Container Apps', 'Google Places API', 'Open-Meteo', 'Azure OpenAI', 'Log Analytics'] },
+            { key: 'dashboard-api',        label: 'dashboard-api — Ops Dashboard API',         tech: ['Azure Functions v2', 'Python 3.11', 'Managed Identity', 'azure-monitor-query', 'Azure Cost Management'] },
+            { key: 'ideas-api',            label: 'ideas-api — Ideas Board API',               tech: ['Azure Functions v2', 'Python 3.11', 'Azure Table Storage', 'EasyAuth', 'Managed Identity'] },
+            { key: 'ideas-bot',            label: 'ideas-bot — Autonomous Feature Agent',      tech: ['Python 3.11', 'Azure Container App Job', 'Azure OpenAI (GPT-4o)', 'GitHub API'] },
+            { key: 'azure-infrastructure', label: 'azure-infrastructure — Infrastructure as Code', tech: ['Azure Bicep', 'Azure RBAC', 'Managed Identity', 'Container Registry'] },
+            { key: 'learning-plan-api',    label: 'learning-plan-api — Learning Plan API',     tech: ['Azure Functions v2', 'Python 3.11', 'Azure Table Storage', 'Claude API', 'Google OAuth'] },
+          ].map(({ key, label, tech }) => (
+            <React.Fragment key={key}>
+              <h3>
+                <button className="arch-pkg-h3-link" onClick={() => setSelectedPkg(key)}>
+                  {label} ↗
+                </button>
+              </h3>
+              <p className="arch-pkg-overview-summary">
+                {pkgSummary[key]?.summary ?? ''}
+              </p>
+              <div className="arch-tech-stack">
+                {tech.map(t => <span key={t} className="arch-tech-item">{t}</span>)}
+              </div>
+            </React.Fragment>
+          ))}
         </section>
 
         {/* ── 4. Data Flows ── */}
