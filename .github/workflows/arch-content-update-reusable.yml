@@ -14,7 +14,7 @@ on:
         required: true
         type: string
     secrets:
-      AZURE_OPENAI_API_KEY:
+      ARCH_CONTENT_FOUNDRY_KEY:
         required: true
       ARCH_UPDATE_GH_TOKEN:
         required: true
@@ -45,11 +45,11 @@ jobs:
           python-version: '3.11'
 
       - name: Install dependencies
-        run: pip install openai
+        run: pip install azure-ai-inference
 
       - name: Run architecture content update
         env:
-          AZURE_OPENAI_API_KEY: ${{ secrets.AZURE_OPENAI_API_KEY }}
+          ARCH_CONTENT_FOUNDRY_KEY: ${{ secrets.ARCH_CONTENT_FOUNDRY_KEY }}
           GH_TOKEN: ${{ secrets.ARCH_UPDATE_GH_TOKEN }}
           DIFF_FILE: /tmp/deploy.diff
           REPO_NAME: ${{ inputs.repo_name }}

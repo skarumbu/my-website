@@ -4,13 +4,13 @@ Analyses a post-deploy git diff and, when the changes are significant,
 regenerates the architecture documentation for that package in my-website.
 
 Required env vars:
-  AZURE_OPENAI_API_KEY  - API key for ideas-bot-oai-c4aqfdfs.openai.azure.com
-  GH_TOKEN              - Fine-grained PAT with contents write access to skarumbu/my-website
-  DIFF_FILE             - Path to the unified diff file
-  REPO_NAME             - Package key matching architecture-content.json (e.g. "digits")
-  COMMIT_SHA            - Full SHA of the deployed commit
-  COMMIT_MESSAGE        - Commit message of the deployed commit
-  REPO_FULL             - Full repo slug of the backend repo (e.g. "skarumbu/digits")
+  ARCH_CONTENT_FOUNDRY_KEY  - API key for arch-content-foundry.services.ai.azure.com
+  GH_TOKEN                  - Fine-grained PAT with contents write access to skarumbu/my-website
+  DIFF_FILE                 - Path to the unified diff file
+  REPO_NAME                 - Package key matching architecture-content.json (e.g. "digits")
+  COMMIT_SHA                - Full SHA of the deployed commit
+  COMMIT_MESSAGE            - Commit message of the deployed commit
+  REPO_FULL                 - Full repo slug of the backend repo (e.g. "skarumbu/digits")
 """
 
 import json
@@ -20,19 +20,17 @@ import sys
 import tempfile
 from datetime import date
 
-from openai import AzureOpenAI
+from azure.ai.inference import ChatCompletionsClient
+from azure.core.credentials import AzureKeyCredential
 
-ENDPOINT = "https://ideas-bot-oai-c4aqfdfs.openai.azure.com"
-DEPLOYMENT = "gpt-4o"
-API_VERSION = "2024-02-01"
+ENDPOINT = "https://arch-content-foundry.services.ai.azure.com/openai/deployments/gpt-4o"
 MY_WEBSITE_REPO = "skarumbu/my-website"
 CONTENT_FILE = "src/architecture-content.json"
 HISTORY_DIR = "src/architecture-history"
 
-client = AzureOpenAI(
-    azure_endpoint=ENDPOINT,
-    api_key=os.environ["AZURE_OPENAI_API_KEY"],
-    api_version=API_VERSION,
+client = ChatCompletionsClient(
+    endpoint=ENDPOINT,
+    credential=AzureKeyCredential(os.environ["ARCH_CONTENT_FOUNDRY_KEY"]),
 )
 
 diff_file = os.environ["DIFF_FILE"]
@@ -92,8 +90,7 @@ Respond with a JSON object (no markdown fences):
 Only include sections in affected_sections that actually changed.
 affected_sections may be empty if needs_update is false."""
 
-resp1 = client.chat.completions.create(
-    model=DEPLOYMENT,
+resp1 = client.complete(
     messages=[{"role": "user", "content": significance_prompt}],
     temperature=0,
     max_tokens=300,
@@ -167,8 +164,7 @@ Example output (only changed fields):
   }}
 }}"""
 
-resp2 = client.chat.completions.create(
-    model=DEPLOYMENT,
+resp2 = client.complete(
     messages=[{"role": "user", "content": update_prompt}],
     temperature=0.2,
     max_tokens=1500,
