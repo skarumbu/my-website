@@ -20,7 +20,15 @@
         "Cross-repo deploy: after each backend service deploys, it commits updated metadata to this repo, triggering a frontend rebuild so the Architecture page stays current"
       ]
     },
-    "dataFlow": null
+    "dataFlow": null,
+    "designDocs": [
+      {
+        "title": "ADR: Per-Idea Status Updates",
+        "href": "https://github.com/skarumbu/my-website/blob/main/docs/design/2026-05-12-per-idea-status-updates.md",
+        "date": "2026-05-12",
+        "description": "Adds a threaded updates log to each idea, backed by a new Azure Table Storage table and a detail slide-over panel in the frontend."
+      }
+    ]
   },
   "digits": {
     "summary": "Generates, stores, and serves daily Digits puzzles via Azure Table Storage. Each invocation writes a metrics row (duration, status) to a metrics table so the dashboard can track request volume. In local development the frontend bypasses this API and uses hardcoded stub data instead.",
@@ -273,7 +281,15 @@
       }
     ],
     "updatedAt": "2026-05-13",
-    "updatedBySha": "b62fc85"
+    "updatedBySha": "b62fc85",
+    "designDocs": [
+      {
+        "title": "ADR: Per-Idea Status Updates",
+        "href": "https://github.com/skarumbu/my-website/blob/main/docs/design/2026-05-12-per-idea-status-updates.md",
+        "date": "2026-05-12",
+        "description": "Adds a threaded updates log to each idea, backed by a new Azure Table Storage table and a detail slide-over panel in the frontend."
+      }
+    ]
   },
   "ideas-bot": {
     "summary": "Container App Job triggered by ideas-api. Clones the target repository, then runs a GPT-4o tool-use loop that reads and writes files and runs shell commands to implement the requested feature. Commits the result and opens a draft pull request on GitHub. The job scales to zero between invocations.",

@@ -580,6 +580,35 @@
 }
 .arch-panel-repo-link:hover { text-decoration: underline; }
 
+/* ── Design Docs section ──────────────────────────── */
+.arch-design-docs {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.arch-design-docs li {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.arch-design-docs a {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #58a6ff;
+  text-decoration: none;
+}
+.arch-design-docs a:hover { text-decoration: underline; }
+
+.arch-design-doc-meta {
+  font-size: 0.78rem;
+  color: #8b949e;
+}
+
 @media (max-width: 640px) {
   .arch-panel {
     position: static;

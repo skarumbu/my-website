@@ -441,6 +441,8 @@ const PackageDetail: React.FC<Props> = ({ packageKey, onBack }) => {
     },
     dataFlow: gen.dataFlow !== undefined ? (gen.dataFlow ?? staticPkg.dataFlow) : staticPkg.dataFlow,
   };
+  const designDocs: { title: string; href: string; date: string; description: string }[] =
+    (gen as any).designDocs ?? [];
 
   const m = staticPkg.metaKey ? meta[staticPkg.metaKey] : null;
 
@@ -527,6 +529,21 @@ const PackageDetail: React.FC<Props> = ({ packageKey, onBack }) => {
             ))}
           </div>
         </section>
+
+        {/* ── Design Docs ── */}
+        {designDocs.length > 0 && (
+          <section className="arch-section">
+            <h2>Design Docs</h2>
+            <ul className="arch-design-docs">
+              {designDocs.map((d, i) => (
+                <li key={i}>
+                  <a href={d.href} target="_blank" rel="noopener noreferrer">{d.title}</a>
+                  <span className="arch-design-doc-meta">{d.date} — {d.description}</span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
 
       </div>
     </div>
