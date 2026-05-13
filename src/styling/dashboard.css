@@ -518,6 +518,20 @@
 }
 .dash-tag--muted { background: transparent; font-weight: 400; }
 
+.dash-type-tag {
+  display: inline-block;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+.dash-type-tag.api { background: color-mix(in oklch, var(--up) 10%, transparent); color: var(--muted); }
+.dash-type-tag.job { background: color-mix(in oklch, var(--cold) 10%, transparent); color: var(--muted); }
+.dash-hcard-meta { display: flex; align-items: center; gap: 6px; }
+.dash-hcard-meta-text { font-size: 0.78rem; color: var(--muted); }
+
 .dash-register-form {
   margin-top: 12px;
   padding-top: 12px;

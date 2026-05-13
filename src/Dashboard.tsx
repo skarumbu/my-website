@@ -114,12 +114,6 @@ function hClass(h: HealthStatus): string {
   return 'unk';
 }
 
-function hLabel(h: HealthStatus): string {
-  if (h.status === 'down') return 'Down';
-  if (h.cold_start) return 'Cold start';
-  if (h.status === 'up') return 'Up';
-  return 'Unknown';
-}
 
 function Dashboard() {
   const { instance, accounts } = useMsal();
@@ -343,7 +337,7 @@ function Dashboard() {
             <div className="dash-health-row">
               {Object.entries(data.health).map(([svc, h]) => {
                 const cls = hClass(h);
-                const meta = h.last_run ? `Last job: ${relTime(h.last_run)}` : 'HTTP health check';
+                const isJob = h.last_run !== undefined;
                 const isExpanded = expandedCard === svc;
                 const gh = data.github_actions?.[svc];
                 const svcMetrics = data.metrics[svc] ?? [];
@@ -367,7 +361,6 @@ function Dashboard() {
                   >
                     <div className="dash-hcard-top">
                       <span className="dash-hcard-name">{SERVICE_NAMES[svc] ?? svc}</span>
-                      <span className={`dash-spill ${cls}`}>{hLabel(h)}</span>
                       <span className="dash-hcard-chevron">{isExpanded ? '▾' : '▸'}</span>
                     </div>
                     {h.latency_ms !== undefined && (
@@ -378,7 +371,12 @@ function Dashboard() {
                         <span className="dash-hcard-unit">{h.latency_ms >= 1000 ? 's' : 'ms'}</span>
                       </div>
                     )}
-                    <div className="dash-hcard-meta">{meta}</div>
+                    <div className="dash-hcard-meta">
+                      <span className={`dash-type-tag ${isJob ? 'job' : 'api'}`}>{isJob ? 'JOB' : 'API'}</span>
+                      {isJob && h.last_run && (
+                        <span className="dash-hcard-meta-text">{h.last_run_status ?? 'Unknown'} · {relTime(h.last_run)}</span>
+                      )}
+                    </div>
 
                     {isExpanded && (
                       <div className="dash-hcard-detail" onClick={e => e.stopPropagation()}>
