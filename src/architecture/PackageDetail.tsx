@@ -1,6 +1,10 @@
 import React from 'react';
 import metadata from '../architecture-metadata.json';
 import archContent from '../architecture-content.json';
+import historyIndex from '../architecture-history-index.json';
+
+type HistoryEntry = { package: string; capturedAt: string; commitSha: string; commitMessage: string };
+const allHistory = historyIndex as HistoryEntry[];
 
 type ServiceMeta = { lastDeploy: string | null; commitSha: string | null };
 const meta = metadata as Record<string, ServiceMeta>;
@@ -445,6 +449,7 @@ const PackageDetail: React.FC<Props> = ({ packageKey, onBack }) => {
     (gen as any).designDocs ?? [];
 
   const m = staticPkg.metaKey ? meta[staticPkg.metaKey] : null;
+  const pkgHistory = allHistory.filter(e => e.package === packageKey);
 
   return (
     <div>
@@ -542,6 +547,26 @@ const PackageDetail: React.FC<Props> = ({ packageKey, onBack }) => {
                 </li>
               ))}
             </ul>
+          </section>
+        )}
+
+        {/* ── Change History ── */}
+        {pkgHistory.length > 0 && (
+          <section className="arch-section">
+            <details className="arch-history">
+              <summary className="arch-history-summary">
+                Change history <span className="arch-history-count">({pkgHistory.length})</span>
+              </summary>
+              <ul className="arch-history-list">
+                {pkgHistory.map((e, i) => (
+                  <li key={i} className="arch-history-entry">
+                    <span className="arch-history-date">{e.capturedAt}</span>
+                    <code className="arch-history-sha">{e.commitSha}</code>
+                    <span className="arch-history-msg">{e.commitMessage.split('\n')[0]}</span>
+                  </li>
+                ))}
+              </ul>
+            </details>
           </section>
         )}
 

@@ -609,6 +609,39 @@
   color: #8b949e;
 }
 
+/* ── Change history accordion ─────────────────────────────── */
+.arch-history { margin-top: 0; }
+.arch-history-summary {
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #e6edf3;
+  list-style: none;
+  user-select: none;
+}
+.arch-history-summary::-webkit-details-marker { display: none; }
+.arch-history-summary::before { content: '▸ '; font-size: 0.7rem; color: #8b949e; }
+details[open] .arch-history-summary::before { content: '▾ '; }
+.arch-history-count { font-weight: 400; color: #8b949e; }
+
+.arch-history-list {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.arch-history-entry {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 0.8rem;
+}
+.arch-history-date { color: #8b949e; white-space: nowrap; min-width: 6rem; }
+.arch-history-sha { font-size: 0.72rem; color: #8b949e; }
+.arch-history-msg { color: #e6edf3; }
+
 @media (max-width: 640px) {
   .arch-panel {
     position: static;

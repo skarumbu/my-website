@@ -225,6 +225,24 @@ with tempfile.TemporaryDirectory() as tmpdir:
             f.write("\n")
         print(f"Saved history snapshot: {HISTORY_DIR}/{repo_name}/{history_filename}")
 
+        # Maintain aggregated history index for the frontend
+        history_index_path = os.path.join(tmpdir, "src", "architecture-history-index.json")
+        try:
+            with open(history_index_path, "r", encoding="utf-8") as f:
+                history_index = json.load(f)
+        except (FileNotFoundError, json.JSONDecodeError):
+            history_index = []
+        history_index.insert(0, {
+            "package": repo_name,
+            "capturedAt": today,
+            "commitSha": short_sha,
+            "commitMessage": commit_message,
+        })
+        with open(history_index_path, "w", encoding="utf-8") as f:
+            json.dump(history_index, f, indent=2)
+            f.write("\n")
+        run(["git", "add", "src/architecture-history-index.json"], cwd=tmpdir)
+
     # Merge updates into the package's content
     pkg = full_content.get(repo_name, {})
     for key, value in updates.items():

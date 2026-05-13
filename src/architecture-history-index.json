@@ -1,0 +1,14 @@
+[
+  {
+    "package": "ideas-api",
+    "capturedAt": "2026-05-13",
+    "commitSha": "b62fc85",
+    "commitMessage": "feat: add per-idea status updates (comments section)\n\nAdds GET/POST/DELETE endpoints under /api/ideas/{id}/updates backed by\na new Azure Table Storage table. Updates table is declared in\nazure-infrastructure rather than created lazily. CLAUDE.md updated to\nreflect current architecture, endpoints, and infra conventions.\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>"
+  },
+  {
+    "package": "dashboard-api",
+    "capturedAt": "2026-05-13",
+    "commitSha": "8ad2734",
+    "commitMessage": "feat: add GitHub Actions run data to DashboardGetter\n\n- New github_checks.py: fetch_github_run() calls GitHub Actions API for\n  the latest non-PR workflow run; includes failed job names on failure\n- registry.py: add github_repo to UPDATABLE_FIELDS and _entity_to_dict\n- function_app.py: submit github_futures in the existing ThreadPoolExecutor;\n  github_actions key added to DashboardGetter payload\n- CLAUDE.md: document github_repo field, github_checks module, GITHUB_TOKEN\n\nRequires GITHUB_TOKEN env var (actions:read PAT); degrades gracefully\nwithout it.\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>"
+  }
+]
