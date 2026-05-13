@@ -436,7 +436,7 @@
   opacity: 0;
   pointer-events: none;
   transition: opacity 240ms ease;
-  z-index: 50;
+  z-index: 1100;
 }
 .ideas-overlay--open {
   opacity: 1;
@@ -456,7 +456,7 @@
   transform: translateX(110%);
   transition: transform 320ms cubic-bezier(.2, .8, .2, 1);
   box-shadow: -20px 0 60px rgba(0, 0, 0, 0.18);
-  z-index: 60;
+  z-index: 1200;
   display: flex;
   flex-direction: column;
   font-family: 'Inter', system-ui, sans-serif;
