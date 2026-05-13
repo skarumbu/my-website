@@ -247,7 +247,10 @@ function Dashboard() {
       if (resp.ok) {
         const json = await resp.json();
         const app = (json.apps ?? []).find((a: any) => a.name === name);
-        if (app) setEditForm({ github_repo: app.github_repo ?? '', health_url: app.health_url ?? '', log_workspace_id: app.log_workspace_id ?? '', type: app.type ?? '' });
+        if (app) {
+          setEditingApp(app.name);
+          setEditForm({ github_repo: app.github_repo ?? '', health_url: app.health_url ?? '', log_workspace_id: app.log_workspace_id ?? '', type: app.type ?? '' });
+        }
       }
     } catch {} finally {
       setEditLoading(false);
