@@ -3,19 +3,19 @@
     "summary": "A React (TypeScript) single-page application that handles all user interaction. Deployed to Azure Static Web Apps, which serves the static build and rewrites all navigation to index.html so client-side routing works on deep links. Autocomplete on the Trail Finder search bar is powered by the Google Maps JS SDK running entirely in the browser.",
     "description": "A React (TypeScript) single-page application that hosts all user-facing features. Deployed to Azure Static Web Apps with a rewrite rule that sends all navigation to index.html so client-side routing works on deep links.",
     "features": [
-      "Digits — daily number puzzle game. Uses hardcoded stub data in development (no API call needed)",
-      "Momentum Finder — live NBA game cards with momentum shift indicators",
-      "Trail Finder — city search with Google Maps autocomplete (browser-side), trail recommendations, weather, and AI-generated gear list",
-      "Ideas Board — EasyAuth sign-in, feature idea list and project management, one-click bot trigger",
-      "Learning Plan — Google OAuth sign-in, AI-generated personalised study plans, save and review history",
-      "Architecture reference — internal system documentation (not linked from the main nav)"
+      "Digits \u2014 daily number puzzle game. Uses hardcoded stub data in development (no API call needed)",
+      "Momentum Finder \u2014 live NBA game cards with momentum shift indicators",
+      "Trail Finder \u2014 city search with Google Maps autocomplete (browser-side), trail recommendations, weather, and AI-generated gear list",
+      "Ideas Board \u2014 EasyAuth sign-in, feature idea list and project management, one-click bot trigger",
+      "Learning Plan \u2014 Google OAuth sign-in, AI-generated personalised study plans, save and review history",
+      "Architecture reference \u2014 internal system documentation (not linked from the main nav)"
     ],
     "architecture": {
       "overview": "Create React App with TypeScript and client-side routing via react-router-dom. Each route maps to a top-level TSX + CSS pair. A shared NavBar component appears on every view. REACT_APP_* environment variables are injected at build time by GitHub Actions.",
       "keyPoints": [
-        "public/staticwebapp.config.json rewrites all routes to index.html — required for deep-link navigation on Azure SWA",
+        "public/staticwebapp.config.json rewrites all routes to index.html \u2014 required for deep-link navigation on Azure SWA",
         "Digits uses process.env.NODE_ENV === \"development\" to skip the API and use hardcoded stub data locally",
-        "Trail Finder autocomplete uses the Google Maps JS SDK entirely in the browser — no backend round-trip, 300ms debounce",
+        "Trail Finder autocomplete uses the Google Maps JS SDK entirely in the browser \u2014 no backend round-trip, 300ms debounce",
         "Every PR to main gets an isolated SWA preview environment, torn down automatically when the PR closes",
         "Cross-repo deploy: after each backend service deploys, it commits updated metadata to this repo, triggering a frontend rebuild so the Architecture page stays current"
       ]
@@ -30,26 +30,45 @@
       "Stores puzzles in Azure Table Storage partitioned by date",
       "Serves the current day's puzzles via a single HTTP GET endpoint",
       "Writes per-request metrics rows (duration, status, puzzle count) to a metrics table",
-      "Three difficulty tiers returned in a single response — frontend sorts easy → medium → hard"
+      "Three difficulty tiers returned in a single response \u2014 frontend sorts easy \u2192 medium \u2192 hard"
     ],
     "architecture": {
       "overview": "Two Azure Function triggers: a timer trigger that generates the day's puzzles at midnight UTC and writes them to Table Storage, and an HTTP trigger that reads and returns them. Table Storage acts as both puzzle store and metrics sink.",
       "keyPoints": [
-        "Frontend skips this API in development — NODE_ENV=development activates hardcoded stub data",
+        "Frontend skips this API in development \u2014 NODE_ENV=development activates hardcoded stub data",
         "Metrics rows are picked up by dashboard-api via Azure Table Storage queries",
         "Timer trigger uses a cron expression: \"0 0 * * *\" (midnight UTC daily)",
-        "Puzzles are keyed by ISO date string — no cleanup needed, old rows simply age out"
+        "Puzzles are keyed by ISO date string \u2014 no cleanup needed, old rows simply age out"
       ]
     },
     "dataFlow": [
-      { "label": "User opens /digits", "color": "blue" },
-      { "label": "Frontend checks NODE_ENV", "sublines": ["development → hardcoded stub data (no API call)", "production → call Digits API"] },
-      { "label": "Digits API (Azure Functions)", "color": "green", "sublines": ["returns puzzles sorted by difficulty", "writes metrics row to Table Storage"] },
-      { "label": "Puzzles rendered — easy → medium → hard", "color": "blue" }
+      {
+        "label": "User opens /digits",
+        "color": "blue"
+      },
+      {
+        "label": "Frontend checks NODE_ENV",
+        "sublines": [
+          "development \u2192 hardcoded stub data (no API call)",
+          "production \u2192 call Digits API"
+        ]
+      },
+      {
+        "label": "Digits API (Azure Functions)",
+        "color": "green",
+        "sublines": [
+          "returns puzzles sorted by difficulty",
+          "writes metrics row to Table Storage"
+        ]
+      },
+      {
+        "label": "Puzzles rendered \u2014 easy \u2192 medium \u2192 hard",
+        "color": "blue"
+      }
     ]
   },
   "momentum-finder": {
-    "summary": "Analyses live NBA game data to surface momentum shifts. Runs as a Container App (FastAPI + Uvicorn on port 80, scales 0–10 replicas). Emits structured JSON logs on every request that flow into Log Analytics for the dashboard to query.",
+    "summary": "Analyses live NBA game data to surface momentum shifts. Runs as a Container App (FastAPI + Uvicorn on port 80, scales 0\u201310 replicas). Emits structured JSON logs on every request that flow into Log Analytics for the dashboard to query.",
     "description": "FastAPI Container App that analyses live NBA game data to detect and surface momentum shifts. Scales automatically between 0 and 10 replicas and emits structured JSON logs for dashboard monitoring.",
     "features": [
       "Fetches live NBA game scores and play-by-play data",
@@ -61,79 +80,127 @@
     "architecture": {
       "overview": "FastAPI on Uvicorn (port 80), containerised and deployed as an Azure Container App. Shares a Log Analytics workspace with trail-finder for unified observability. The app scales to zero replicas when idle.",
       "keyPoints": [
-        "Scales 0–10 replicas — expect a cold start (~5–10s) on first request after idle",
+        "Scales 0\u201310 replicas \u2014 expect a cold start (~5\u201310s) on first request after idle",
         "Shared Log Analytics workspace with trail-finder; KQL queries in dashboard-api span both services",
         "REACT_APP_API_BASE_URL must be set in the frontend build for this feature to work",
         "Structured logging middleware attaches request_id, duration_ms, and status_code to every log line"
       ]
     },
     "dataFlow": [
-      { "label": "User opens /momentum-finder", "color": "blue" },
-      { "label": "GET {REACT_APP_API_BASE_URL}/get-current-games", "color": "orange" },
-      { "label": "momentum-finder Container App", "color": "orange", "sublines": ["fetches live NBA data", "analyses scoring runs and momentum"] },
-      { "label": "Live game cards rendered — teams, score, momentum indicators", "color": "blue" }
+      {
+        "label": "User opens /momentum-finder",
+        "color": "blue"
+      },
+      {
+        "label": "GET {REACT_APP_API_BASE_URL}/get-current-games",
+        "color": "orange"
+      },
+      {
+        "label": "momentum-finder Container App",
+        "color": "orange",
+        "sublines": [
+          "fetches live NBA data",
+          "analyses scoring runs and momentum"
+        ]
+      },
+      {
+        "label": "Live game cards rendered \u2014 teams, score, momentum indicators",
+        "color": "blue"
+      }
     ]
   },
   "trail-finder": {
     "summary": "Given a city, geocodes it, searches Google Places for nearby trails, fetches weather from Open-Meteo, pulls AllTrails snippets via Google Custom Search, then synthesizes a condition summary and gear list with Azure OpenAI. Results are cached in memory for 24 hours. Runs as a Container App with the same logging middleware as momentum-finder.",
     "description": "FastAPI Container App that generates personalised trail recommendations for a given city. Fans out across Google Places, weather, and search APIs, then synthesizes a condition summary and gear list with Azure OpenAI. Results are cached 24h per location.",
     "features": [
-      "City search with Google Maps JS SDK autocomplete — runs entirely in the browser, zero backend cost",
+      "City search with Google Maps JS SDK autocomplete \u2014 runs entirely in the browser, zero backend cost",
       "Geocodes the city and searches Google Places for nearby hiking trails",
       "Fetches weekend weather forecast from Open-Meteo (free, no API key)",
       "Pulls AllTrails snippets via Google Custom Search for additional trail context",
       "Azure OpenAI synthesizes a condition summary and gear list from all sources",
-      "In-memory result cache keyed by normalised city name — 24h TTL",
+      "In-memory result cache keyed by normalised city name \u2014 24h TTL",
       "/health endpoint for dashboard monitoring"
     ],
     "architecture": {
-      "overview": "FastAPI app with a sequential pipeline of external API calls fanned out where possible. Azure OpenAI synthesizes the final output from all gathered context. The in-memory cache is a Python dict — cleared on container restart.",
+      "overview": "FastAPI app with a sequential pipeline of external API calls fanned out where possible. Azure OpenAI synthesizes the final output from all gathered context. The in-memory cache is a Python dict \u2014 cleared on container restart.",
       "keyPoints": [
-        "Autocomplete is browser-side (Google Maps JS SDK) — 300ms debounce, no backend request until search is submitted",
+        "Autocomplete is browser-side (Google Maps JS SDK) \u2014 300ms debounce, no backend request until search is submitted",
         "24h cache TTL balances freshness with API cost; weather is the most volatile component",
-        "Identical structured JSON logging middleware to momentum-finder — same KQL queries work for both",
-        "Scales to zero when idle — same cold start caveat as momentum-finder",
+        "Identical structured JSON logging middleware to momentum-finder \u2014 same KQL queries work for both",
+        "Scales to zero when idle \u2014 same cold start caveat as momentum-finder",
         "Google Places and Custom Search quotas are the primary cost driver; OpenAI is secondary"
       ]
     },
     "dataFlow": [
-      { "label": "User types city → Google Maps JS SDK autocomplete (browser)", "color": "blue" },
-      { "label": "User submits → trail-finder API (Container App)", "color": "orange" },
-      { "label": "Geocode city → lat/lon", "sublines": ["Google Places text search for nearby trails", "Open-Meteo weekend weather forecast", "Google Custom Search for AllTrails snippets"] },
-      { "label": "Azure OpenAI synthesizes condition summary + gear list", "color": "orange" },
-      { "label": "Result cached 24h · trail cards rendered", "color": "blue" }
+      {
+        "label": "User types city \u2192 Google Maps JS SDK autocomplete (browser)",
+        "color": "blue"
+      },
+      {
+        "label": "User submits \u2192 trail-finder API (Container App)",
+        "color": "orange"
+      },
+      {
+        "label": "Geocode city \u2192 lat/lon",
+        "sublines": [
+          "Google Places text search for nearby trails",
+          "Open-Meteo weekend weather forecast",
+          "Google Custom Search for AllTrails snippets"
+        ]
+      },
+      {
+        "label": "Azure OpenAI synthesizes condition summary + gear list",
+        "color": "orange"
+      },
+      {
+        "label": "Result cached 24h \u00b7 trail cards rendered",
+        "color": "blue"
+      }
     ]
   },
   "dashboard-api": {
-    "summary": "Single aggregator endpoint that fans out in parallel to health-check momentum-finder and trail-finder, query Log Analytics (KQL) for request counts, latency, and recent errors, query the Digits metrics Table Storage table, and fetch Azure Cost Management MTD spend. Uses a system-assigned managed identity — no stored credentials.",
-    "description": "Azure Functions app that fans out in parallel to health-check all services, query Log Analytics for request metrics, pull Digits Table Storage metrics, and fetch Azure Cost Management spend — returning everything in a single aggregated response.",
+    "summary": "Single aggregator endpoint that fans out in parallel to health-check momentum-finder and trail-finder, query Log Analytics (KQL) for request counts, latency, and recent errors, query the Digits metrics Table Storage table, and fetch Azure Cost Management MTD spend. Uses a system-assigned managed identity \u2014 no stored credentials.",
+    "description": "Azure Functions app that fans out in parallel to health-check all services, query Log Analytics for request metrics, pull Digits Table Storage metrics, and fetch Azure Cost Management spend \u2014 returning everything in a single aggregated response.",
     "features": [
       "Health checks for momentum-finder and trail-finder (HTTP /health)",
       "Log Analytics KQL queries for request counts, average latency, and errors per service (24h window)",
       "Digits metrics from Table Storage (request volume, error rate)",
-      "Azure Cost Management MTD spend breakdown — cached 1h due to API rate limits",
-      "All data returned in a single response — frontend polls every 60 seconds"
+      "Azure Cost Management MTD spend breakdown \u2014 cached 1h due to API rate limits",
+      "All data returned in a single response \u2014 frontend polls every 60 seconds"
     ],
     "architecture": {
-      "overview": "Single HTTP-triggered function that executes all sub-queries in parallel via asyncio.gather. Uses a system-assigned Managed Identity — no credentials stored in app settings. RBAC roles are assigned by the azure-infrastructure package.",
+      "overview": "Single HTTP-triggered function that executes all sub-queries in parallel via asyncio.gather. Uses a system-assigned Managed Identity \u2014 no credentials stored in app settings. RBAC roles are assigned by the azure-infrastructure package.",
       "keyPoints": [
         "Managed Identity holds Log Analytics Reader (scoped to the shared workspace) and Cost Management Reader (scoped to subscription)",
-        "No API keys in environment variables — all Azure SDK auth flows through Managed Identity",
+        "No API keys in environment variables \u2014 all Azure SDK auth flows through Managed Identity",
         "Cost Management responses cached for 1h in memory; all other queries are live",
         "Frontend dashboard polls /api/dashboard every 60 seconds",
         "Parallel fan-out keeps response time under 3s even with 5+ downstream calls"
       ]
     },
     "dataFlow": [
-      { "label": "Dashboard frontend (60s poll)", "color": "blue" },
-      { "label": "dashboard-api (Azure Functions) — parallel fan-out", "color": "purple", "sublines": [
-        "Health: GET momentum-finder /health, trail-finder /health",
-        "Log Analytics KQL: request counts, latency, errors (24h)",
-        "Table Storage: digits metrics rows (24h)",
-        "Cost Management: MTD spend by service (1h cache)"
-      ]},
-      { "label": "Aggregated JSON response", "color": "green" },
-      { "label": "Dashboard renders health pills, metrics tables, cost breakdown", "color": "blue" }
+      {
+        "label": "Dashboard frontend (60s poll)",
+        "color": "blue"
+      },
+      {
+        "label": "dashboard-api (Azure Functions) \u2014 parallel fan-out",
+        "color": "purple",
+        "sublines": [
+          "Health: GET momentum-finder /health, trail-finder /health",
+          "Log Analytics KQL: request counts, latency, errors (24h)",
+          "Table Storage: digits metrics rows (24h)",
+          "Cost Management: MTD spend by service (1h cache)"
+        ]
+      },
+      {
+        "label": "Aggregated JSON response",
+        "color": "green"
+      },
+      {
+        "label": "Dashboard renders health pills, metrics tables, cost breakdown",
+        "color": "blue"
+      }
     ]
   },
   "ideas-api": {
@@ -141,45 +208,88 @@
     "description": "Azure Functions app that stores and serves feature ideas in Table Storage. Supports two auth modes: browser JWT tokens via EasyAuth for read access, and an X-Ideas-Key machine write-key for automated writes. Exposes a trigger endpoint for the ideas-bot.",
     "features": [
       "List and create ideas in Azure Table Storage",
-      "List and create projects — ideas are grouped under projects",
+      "List and create projects \u2014 ideas are grouped under projects",
+      "List, create, and delete per-idea status updates (comments section)",
       "EasyAuth JWT authentication for browser access (read)",
       "X-Ideas-Key machine write-key for automated idea creation (write)",
-      "POST /api/ideas/{id}/run-bot — triggers the ideas-bot Container App Job for a specific idea",
-      "Ideas and projects stored in separate Table Storage tables"
+      "POST /api/ideas/{id}/run-bot \u2014 triggers the ideas-bot Container App Job for a specific idea",
+      "Ideas, projects, and updates stored in separate Table Storage tables"
     ],
     "architecture": {
-      "overview": "HTTP-triggered Azure Functions backed by Table Storage. EasyAuth handles browser auth transparently at the Azure layer — no auth code in the application. A separate machine key enables automation (ideas-bot, external scripts) to write ideas without user credentials.",
+      "overview": "HTTP-triggered Azure Functions backed by Table Storage. EasyAuth handles browser auth transparently at the Azure layer \u2014 no auth code in the application. A separate machine key enables automation (ideas-bot, external scripts) to write ideas without user credentials.",
       "keyPoints": [
-        "EasyAuth injects the validated Google ID token as a request header — the function reads sub and email from it",
+        "EasyAuth injects the validated Google ID token as a request header \u2014 the function reads sub and email from it",
         "X-Ideas-Key is a long-lived secret stored as a Function App setting (not in the codebase)",
         "run-bot endpoint starts a Container App Job execution via the Azure SDK and returns immediately",
-        "No compute runs between requests — fully serverless, scales to zero",
-        "Table Storage partition key = project ID; row key = idea ID (UUID)"
+        "No compute runs between requests \u2014 fully serverless, scales to zero",
+        "Table Storage partition key = project ID; row key = idea ID (UUID)",
+        "Updates table uses idea ID as the partition key and UUID as the row key"
       ]
     },
     "dataFlow": [
-      { "label": "User opens /ideas — EasyAuth validates Google JWT", "color": "purple" },
-      { "label": "GET /api/ideas + GET /api/projects", "color": "purple", "sublines": ["reads Azure Table Storage", "returns idea and project lists"] },
-      { "label": "User clicks \"Assign Bot\"", "color": "purple" },
-      { "label": "POST /api/ideas/{id}/run-bot", "color": "orange", "sublines": ["triggers Container App Job execution via Azure SDK", "returns job execution ID immediately"] },
-      { "label": "ideas-bot runs asynchronously → opens draft PR", "color": "green" }
-    ]
+      {
+        "label": "User opens /ideas \u2014 EasyAuth validates Google JWT",
+        "color": "purple"
+      },
+      {
+        "label": "GET /api/ideas + GET /api/projects",
+        "color": "purple",
+        "sublines": [
+          "reads Azure Table Storage",
+          "returns idea and project lists"
+        ]
+      },
+      {
+        "label": "User clicks \"Assign Bot\"",
+        "color": "purple"
+      },
+      {
+        "label": "POST /api/ideas/{id}/run-bot",
+        "color": "orange",
+        "sublines": [
+          "triggers Container App Job execution via Azure SDK",
+          "returns job execution ID immediately"
+        ]
+      },
+      {
+        "label": "ideas-bot runs asynchronously \u2192 opens draft PR",
+        "color": "green"
+      },
+      {
+        "label": "User posts a status update for an idea",
+        "color": "purple",
+        "sublines": [
+          "POST /api/ideas/{id}/updates",
+          "writes to the updates table"
+        ]
+      },
+      {
+        "label": "User deletes a status update",
+        "color": "purple",
+        "sublines": [
+          "DELETE /api/ideas/{id}/updates/{update_id}",
+          "removes entry from the updates table"
+        ]
+      }
+    ],
+    "updatedAt": "2026-05-13",
+    "updatedBySha": "b62fc85"
   },
   "ideas-bot": {
     "summary": "Container App Job triggered by ideas-api. Clones the target repository, then runs a GPT-4o tool-use loop that reads and writes files and runs shell commands to implement the requested feature. Commits the result and opens a draft pull request on GitHub. The job scales to zero between invocations.",
     "description": "A containerised Python agent that autonomously implements feature ideas. Triggered on demand by ideas-api, it clones the target repo, runs a GPT-4o tool-use loop to read/write files and execute shell commands, commits the result, and opens a draft pull request.",
     "features": [
-      "Triggered on demand via ideas-api — one job execution per idea",
+      "Triggered on demand via ideas-api \u2014 one job execution per idea",
       "Clones the target GitHub repository fresh on each run",
       "GPT-4o tool-use loop with file read/write and shell execution tools",
       "Commits implemented changes with a descriptive commit message",
       "Opens a draft pull request on GitHub with a summary of changes",
-      "Scales to zero between invocations — no idle cost"
+      "Scales to zero between invocations \u2014 no idle cost"
     ],
     "architecture": {
       "overview": "A Python script packaged as a Docker container and registered as a Container App Job. Each trigger spins up a fresh job execution from scratch. The GPT-4o agent loop iterates until the feature is implemented or a maximum iteration limit is reached, then commits and creates the PR.",
       "keyPoints": [
-        "Fresh container per invocation — no shared state between runs",
+        "Fresh container per invocation \u2014 no shared state between runs",
         "GitHub PAT stored as a Container App secret (not an environment variable in the image)",
         "GPT-4o tool-use loop has a hard iteration cap to prevent runaway API cost",
         "Shell execution tool runs in a sandboxed subprocess within the container",
@@ -187,10 +297,25 @@
       ]
     },
     "dataFlow": [
-      { "label": "ideas-api receives POST /run-bot", "color": "purple" },
-      { "label": "Container App Job starts — fresh container", "color": "orange" },
-      { "label": "Clone target repo · read idea description", "sublines": ["GPT-4o tool-use loop", "read files · write files · run shell commands"] },
-      { "label": "Commit changes · open draft PR on GitHub", "color": "green" }
+      {
+        "label": "ideas-api receives POST /run-bot",
+        "color": "purple"
+      },
+      {
+        "label": "Container App Job starts \u2014 fresh container",
+        "color": "orange"
+      },
+      {
+        "label": "Clone target repo \u00b7 read idea description",
+        "sublines": [
+          "GPT-4o tool-use loop",
+          "read files \u00b7 write files \u00b7 run shell commands"
+        ]
+      },
+      {
+        "label": "Commit changes \u00b7 open draft PR on GitHub",
+        "color": "green"
+      }
     ]
   },
   "azure-infrastructure": {
@@ -208,7 +333,7 @@
     "architecture": {
       "overview": "Modular Bicep files deployed at subscription scope. Each service has its own module. The Container App Environment module creates the shared Log Analytics workspace used for unified observability across all Container Apps.",
       "keyPoints": [
-        "Subscription-scope deployment — all resources land in a single resource group",
+        "Subscription-scope deployment \u2014 all resources land in a single resource group",
         "Managed Identity role assignments are defined alongside the resources that need them",
         "Container Registry uses admin credentials (not Managed Identity) for simplicity",
         "Log Analytics workspace is shared by momentum-finder, trail-finder, and dashboard-api",
@@ -222,28 +347,52 @@
     "description": "Azure Functions app that generates structured learning plans via the Claude API and stores them per user in Azure Table Storage. Google ID tokens are verified server-side for every request.",
     "features": [
       "Generates structured learning plans (phases, steps, resources) via Claude API",
-      "User authentication via Google OAuth — ID token verified server-side on every request",
+      "User authentication via Google OAuth \u2014 ID token verified server-side on every request",
       "Stores plans per user in Azure Table Storage (partition key = Google sub claim)",
       "List, create, retrieve, and delete plans per authenticated user",
       "Plan content stored as markdown; frontend renders it with a lightweight parser"
     ],
     "architecture": {
-      "overview": "HTTP-triggered Azure Functions backed by Table Storage. Google ID tokens are validated using Google's public key endpoint. The Claude API generates the plan as markdown given a topic, duration, and depth. No session state — fully stateless JWT verification per request.",
+      "overview": "HTTP-triggered Azure Functions backed by Table Storage. Google ID tokens are validated using Google's public key endpoint. The Claude API generates the plan as markdown given a topic, duration, and depth. No session state \u2014 fully stateless JWT verification per request.",
       "keyPoints": [
         "User isolation enforced at the storage level: partition key = Google sub claim",
         "Google token verification hits accounts.google.com/o/oauth2/v3/certs on each request (cached by the SDK)",
         "Claude API called with a structured prompt; plan markdown is stored as-is",
         "Frontend sends the Google ID token in Authorization: Bearer header",
-        "No admin interface — plan deletion is user-self-service only"
+        "No admin interface \u2014 plan deletion is user-self-service only"
       ]
     },
     "dataFlow": [
-      { "label": "User signs in — Google ID token returned to browser", "color": "blue" },
-      { "label": "GET /api/plans — Authorization: Bearer {token}", "color": "green" },
-      { "label": "learning-plan-api verifies Google token · reads Table Storage", "color": "green", "sublines": ["returns plans for this user (partition = sub claim)"] },
-      { "label": "User submits topic + duration + depth", "color": "blue" },
-      { "label": "POST /api/plans/generate → Claude API", "color": "orange", "sublines": ["structured prompt → markdown learning plan returned"] },
-      { "label": "POST /api/plans saves plan to Table Storage", "color": "green" }
+      {
+        "label": "User signs in \u2014 Google ID token returned to browser",
+        "color": "blue"
+      },
+      {
+        "label": "GET /api/plans \u2014 Authorization: Bearer {token}",
+        "color": "green"
+      },
+      {
+        "label": "learning-plan-api verifies Google token \u00b7 reads Table Storage",
+        "color": "green",
+        "sublines": [
+          "returns plans for this user (partition = sub claim)"
+        ]
+      },
+      {
+        "label": "User submits topic + duration + depth",
+        "color": "blue"
+      },
+      {
+        "label": "POST /api/plans/generate \u2192 Claude API",
+        "color": "orange",
+        "sublines": [
+          "structured prompt \u2192 markdown learning plan returned"
+        ]
+      },
+      {
+        "label": "POST /api/plans saves plan to Table Storage",
+        "color": "green"
+      }
     ]
   }
 }

@@ -1,0 +1,58 @@
+{
+  "package": "ideas-api",
+  "capturedAt": "2026-05-13",
+  "commitSha": "b62fc85",
+  "commitMessage": "feat: add per-idea status updates (comments section)\n\nAdds GET/POST/DELETE endpoints under /api/ideas/{id}/updates backed by\na new Azure Table Storage table. Updates table is declared in\nazure-infrastructure rather than created lazily. CLAUDE.md updated to\nreflect current architecture, endpoints, and infra conventions.\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>",
+  "content": {
+    "summary": "Stores and serves AI-generated feature ideas in Azure Table Storage. Accepts browser JWT tokens via EasyAuth for read access and an X-Ideas-Key machine write-key for automated writes. Exposes endpoints to list and create ideas, manage projects, and trigger the ideas-bot Container App Job.",
+    "description": "Azure Functions app that stores and serves feature ideas in Table Storage. Supports two auth modes: browser JWT tokens via EasyAuth for read access, and an X-Ideas-Key machine write-key for automated writes. Exposes a trigger endpoint for the ideas-bot.",
+    "features": [
+      "List and create ideas in Azure Table Storage",
+      "List and create projects \u2014 ideas are grouped under projects",
+      "EasyAuth JWT authentication for browser access (read)",
+      "X-Ideas-Key machine write-key for automated idea creation (write)",
+      "POST /api/ideas/{id}/run-bot \u2014 triggers the ideas-bot Container App Job for a specific idea",
+      "Ideas and projects stored in separate Table Storage tables"
+    ],
+    "architecture": {
+      "overview": "HTTP-triggered Azure Functions backed by Table Storage. EasyAuth handles browser auth transparently at the Azure layer \u2014 no auth code in the application. A separate machine key enables automation (ideas-bot, external scripts) to write ideas without user credentials.",
+      "keyPoints": [
+        "EasyAuth injects the validated Google ID token as a request header \u2014 the function reads sub and email from it",
+        "X-Ideas-Key is a long-lived secret stored as a Function App setting (not in the codebase)",
+        "run-bot endpoint starts a Container App Job execution via the Azure SDK and returns immediately",
+        "No compute runs between requests \u2014 fully serverless, scales to zero",
+        "Table Storage partition key = project ID; row key = idea ID (UUID)"
+      ]
+    },
+    "dataFlow": [
+      {
+        "label": "User opens /ideas \u2014 EasyAuth validates Google JWT",
+        "color": "purple"
+      },
+      {
+        "label": "GET /api/ideas + GET /api/projects",
+        "color": "purple",
+        "sublines": [
+          "reads Azure Table Storage",
+          "returns idea and project lists"
+        ]
+      },
+      {
+        "label": "User clicks \"Assign Bot\"",
+        "color": "purple"
+      },
+      {
+        "label": "POST /api/ideas/{id}/run-bot",
+        "color": "orange",
+        "sublines": [
+          "triggers Container App Job execution via Azure SDK",
+          "returns job execution ID immediately"
+        ]
+      },
+      {
+        "label": "ideas-bot runs asynchronously \u2192 opens draft PR",
+        "color": "green"
+      }
+    ]
+  }
+}
