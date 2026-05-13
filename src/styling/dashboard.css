@@ -591,6 +591,110 @@
 }
 .dash-login-btn:hover { filter: brightness(.91); }
 
+/* ── Expandable card detail ──────────────────────────────── */
+.dash-hcard { cursor: pointer; }
+.dash-hcard.expanded { grid-column: 1 / -1; }
+
+.dash-hcard-chevron {
+  margin-left: auto;
+  font-size: 0.7rem;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+
+.dash-hcard-detail {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.dash-hcard-detail-section h4 {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0 0 8px;
+}
+
+/* GitHub Actions */
+.dash-gh-run {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
+  flex-wrap: wrap;
+}
+
+.dash-gh-chip {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+.dash-gh-chip.success { background: color-mix(in oklch, var(--up) 18%, transparent); color: var(--up); }
+.dash-gh-chip.failure { background: color-mix(in oklch, var(--dn) 18%, transparent); color: var(--dn); }
+.dash-gh-chip.running { background: color-mix(in oklch, var(--cold) 18%, transparent); color: var(--cold); }
+.dash-gh-chip.muted   { background: color-mix(in oklch, var(--muted) 18%, transparent); color: var(--muted); }
+
+.dash-gh-link {
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 0.75rem;
+  margin-left: auto;
+}
+.dash-gh-link:hover { color: var(--fg); }
+
+.dash-gh-failed-jobs {
+  margin-top: 5px;
+  font-size: 0.75rem;
+  color: var(--dn);
+}
+
+/* Per-service metrics in expanded card */
+.dash-hcard-metrics {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.dash-hcard-metric-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-size: 0.8rem;
+  flex-wrap: wrap;
+}
+
+.dash-hcard-metric-ep {
+  flex-shrink: 0;
+  color: var(--fg);
+}
+
+.dash-hcard-metric-stats {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+/* Per-service errors in expanded card */
+.dash-hcard-errors {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dash-hcard-error-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 0.78rem;
+  flex-wrap: wrap;
+}
+
 /* ── Responsive ──────────────────────────────────────────── */
 @media (max-width: 768px) {
   .dash-health-row  { grid-template-columns: 1fr; }

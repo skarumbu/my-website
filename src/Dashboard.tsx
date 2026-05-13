@@ -37,11 +37,24 @@ interface CostRow {
   cost: number;
 }
 
+interface GitHubRun {
+  repo: string;
+  run_id: number;
+  workflow_name: string;
+  status: 'queued' | 'in_progress' | 'completed';
+  conclusion: 'success' | 'failure' | 'cancelled' | 'skipped' | null;
+  branch: string;
+  created_at: string;
+  html_url: string;
+  failed_jobs?: string[];
+}
+
 interface DashboardData {
   health: Record<string, HealthStatus>;
   metrics: Record<string, MetricRow[]>;
   errors: ErrorRow[];
   cost: { currency: string; month_to_date: number; by_service: CostRow[]; error?: string };
+  github_actions?: Record<string, GitHubRun>;
   generated_at: string;
   note?: string;
 }
@@ -63,6 +76,7 @@ interface RegisterForm {
   type: string;
   health_url: string;
   log_workspace_id: string;
+  github_repo: string;
 }
 
 const TYPE_FROM_AZURE: Record<string, string> = {
@@ -120,7 +134,8 @@ function Dashboard() {
   const [discoverLoading, setDiscoverLoading] = useState(false);
   const [discoverError, setDiscoverError] = useState<string | null>(null);
   const [registeringId, setRegisteringId] = useState<string | null>(null);
-  const [registerForm, setRegisterForm] = useState<RegisterForm>({ name: '', type: '', health_url: '', log_workspace_id: '' });
+  const [registerForm, setRegisterForm] = useState<RegisterForm>({ name: '', type: '', health_url: '', log_workspace_id: '', github_repo: '' });
+  const [expandedCard, setExpandedCard] = useState<string | null>(null);
   const [registerLoading, setRegisterLoading] = useState(false);
   const [registerError, setRegisterError] = useState<string | null>(null);
 
@@ -183,6 +198,7 @@ function Dashboard() {
       type: TYPE_FROM_AZURE[resource.type] ?? 'custom',
       health_url: resource.health_url ?? '',
       log_workspace_id: resource.log_workspace_id ?? '',
+      github_repo: '',
     });
     setRegisterError(null);
   };
@@ -193,13 +209,14 @@ function Dashboard() {
     setRegisterError(null);
     try {
       const token = await getToken();
-      const body = {
+      const body: Record<string, string> = {
         resource_id: registeringId,
         name: registerForm.name,
         type: registerForm.type,
         health_url: registerForm.health_url,
         log_workspace_id: registerForm.log_workspace_id,
       };
+      if (registerForm.github_repo.trim()) body.github_repo = registerForm.github_repo.trim();
       const resp = await fetch(APPS_URL, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
@@ -280,11 +297,31 @@ function Dashboard() {
               {Object.entries(data.health).map(([svc, h]) => {
                 const cls = hClass(h);
                 const meta = h.last_run ? `Last job: ${relTime(h.last_run)}` : 'HTTP health check';
+                const isExpanded = expandedCard === svc;
+                const gh = data.github_actions?.[svc];
+                const svcMetrics = data.metrics[svc] ?? [];
+                const svcErrors = data.errors.filter(e => e.service === svc);
+
+                const ghConclusion = gh?.status !== 'completed' ? gh?.status ?? null : gh.conclusion;
+                const ghChipCls = ghConclusion === 'success' ? 'success'
+                  : ghConclusion === 'failure' ? 'failure'
+                  : (ghConclusion === 'in_progress' || ghConclusion === 'queued') ? 'running'
+                  : 'muted';
+                const ghChipLabel = ghConclusion === 'success' ? '✓'
+                  : ghConclusion === 'failure' ? '✗'
+                  : ghConclusion === 'in_progress' ? '⟳'
+                  : ghConclusion === 'queued' ? '…' : '?';
+
                 return (
-                  <div key={svc} className={`dash-hcard ${cls}`}>
+                  <div
+                    key={svc}
+                    className={`dash-hcard ${cls}${isExpanded ? ' expanded' : ''}`}
+                    onClick={() => setExpandedCard(e => e === svc ? null : svc)}
+                  >
                     <div className="dash-hcard-top">
                       <span className="dash-hcard-name">{SERVICE_NAMES[svc] ?? svc}</span>
                       <span className={`dash-spill ${cls}`}>{hLabel(h)}</span>
+                      <span className="dash-hcard-chevron">{isExpanded ? '▾' : '▸'}</span>
                     </div>
                     {h.latency_ms !== undefined && (
                       <div className="dash-hcard-latency">
@@ -295,44 +332,61 @@ function Dashboard() {
                       </div>
                     )}
                     <div className="dash-hcard-meta">{meta}</div>
-                  </div>
-                );
-              })}
-            </div>
 
-            {/* Metrics */}
-            <p className="dash-slabel">Request volume &amp; latency — 24h</p>
-            {data.note && <p className="dash-note" style={{ marginBottom: 16 }}>{data.note}</p>}
-            <div className="dash-metrics-stack">
-              {Object.entries(data.metrics).map(([svc, rows]) => {
-                const total = rows.reduce((a, r) => a + r.requests_24h, 0);
-                const errs  = rows.reduce((a, r) => a + r.errors_24h, 0);
-                return (
-                  <div key={svc}>
-                    <div className="dash-mtbl-row">
-                      <span className="dash-mtbl-svc">{SERVICE_NAMES[svc] ?? svc}</span>
-                      <span className="dash-mtbl-line"></span>
-                      <span className="dash-mtbl-sum">{fmt(total)} req · {errs} err</span>
-                    </div>
-                    <div className="dash-tbl-wrap">
-                      <table>
-                        <thead>
-                          <tr><th>Endpoint</th><th>Requests</th><th>Avg latency</th><th>Errors</th></tr>
-                        </thead>
-                        <tbody>
-                          {rows.length === 0 ? (
-                            <tr><td colSpan={4} className="dash-mono dash-muted">No data yet</td></tr>
-                          ) : rows.map((r, i) => (
-                            <tr key={i}>
-                              <td className="dash-mono">{r.endpoint}</td>
-                              <td className="dash-mono">{fmt(r.requests_24h)}</td>
-                              <td className="dash-mono">{r.avg_latency_ms}ms</td>
-                              <td className={r.errors_24h > 0 ? 'dash-err-pos' : 'dash-zero'}>{r.errors_24h}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
+                    {isExpanded && (
+                      <div className="dash-hcard-detail" onClick={e => e.stopPropagation()}>
+                        {gh && (
+                          <div className="dash-hcard-detail-section">
+                            <h4>GitHub Actions</h4>
+                            <div className="dash-gh-run">
+                              <span className={`dash-gh-chip ${ghChipCls}`}>{ghChipLabel}</span>
+                              <span>{gh.workflow_name}</span>
+                              <span className="dash-muted">· {gh.branch} · {relTime(gh.created_at)}</span>
+                              <a href={gh.html_url} target="_blank" rel="noopener noreferrer" className="dash-gh-link">↗</a>
+                            </div>
+                            {gh.failed_jobs && gh.failed_jobs.length > 0 && (
+                              <div className="dash-gh-failed-jobs">Failed: {gh.failed_jobs.join(', ')}</div>
+                            )}
+                          </div>
+                        )}
+
+                        {svcMetrics.length > 0 && (
+                          <div className="dash-hcard-detail-section">
+                            <h4>Request metrics — 24h</h4>
+                            <div className="dash-hcard-metrics">
+                              {svcMetrics.map((r, i) => (
+                                <div key={i} className="dash-hcard-metric-row">
+                                  <span className="dash-mono dash-hcard-metric-ep">{r.endpoint}</span>
+                                  <span className="dash-hcard-metric-stats">
+                                    {fmt(r.requests_24h)} req · {r.avg_latency_ms}ms avg ·{' '}
+                                    <span className={r.errors_24h > 0 ? 'dash-err-pos' : 'dash-zero'}>{r.errors_24h} err</span>
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {svcErrors.length > 0 && (
+                          <div className="dash-hcard-detail-section">
+                            <h4>Recent errors</h4>
+                            <div className="dash-hcard-errors">
+                              {svcErrors.slice(0, 5).map((e, i) => (
+                                <div key={i} className="dash-hcard-error-row">
+                                  <span className="dash-eitem-time">{relTime(e.timestamp)}</span>
+                                  <span className="dash-mono dash-muted">{e.endpoint}</span>
+                                  <span className="dash-eitem-msg">{e.message}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {!gh && svcMetrics.length === 0 && svcErrors.length === 0 && (
+                          <p className="dash-muted" style={{ fontSize: '0.8rem', margin: 0 }}>No additional data available.</p>
+                        )}
+                      </div>
+                    )}
                   </div>
                 );
               })}
@@ -470,6 +524,12 @@ function Dashboard() {
                               <input className="dash-input" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
                                 value={registerForm.log_workspace_id}
                                 onChange={e => setRegisterForm(f => ({ ...f, log_workspace_id: e.target.value }))} />
+                            </div>
+                            <div className="dash-form-row">
+                              <label className="dash-form-label">GitHub Repo <span className="dash-form-optional">(optional)</span></label>
+                              <input className="dash-input" placeholder="owner/repo"
+                                value={registerForm.github_repo}
+                                onChange={e => setRegisterForm(f => ({ ...f, github_repo: e.target.value }))} />
                             </div>
                             {registerError && <p className="dash-note" style={{ color: 'var(--dn)' }}>{registerError}</p>}
                             <button className="dash-action-btn" onClick={submitRegister}
