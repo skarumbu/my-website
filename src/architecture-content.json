@@ -180,6 +180,7 @@
       "Log Analytics KQL queries for request counts, average latency, and errors per service (24h window)",
       "Digits metrics from Table Storage (request volume, error rate)",
       "Azure Cost Management MTD spend breakdown \u2014 cached 1h due to API rate limits",
+      "GitHub Actions API integration for latest workflow run status and failed jobs (optional per app)",
       "All data returned in a single response \u2014 frontend polls every 60 seconds"
     ],
     "architecture": {
@@ -188,6 +189,7 @@
         "Managed Identity holds Log Analytics Reader (scoped to the shared workspace) and Cost Management Reader (scoped to subscription)",
         "No API keys in environment variables \u2014 all Azure SDK auth flows through Managed Identity",
         "Cost Management responses cached for 1h in memory; all other queries are live",
+        "GitHub Actions API requires GITHUB_TOKEN env var; gracefully degrades if unset",
         "Frontend dashboard polls /api/dashboard every 60 seconds",
         "Parallel fan-out keeps response time under 3s even with 5+ downstream calls"
       ]
@@ -204,7 +206,8 @@
           "Health: GET momentum-finder /health, trail-finder /health",
           "Log Analytics KQL: request counts, latency, errors (24h)",
           "Table Storage: digits metrics rows (24h)",
-          "Cost Management: MTD spend by service (1h cache)"
+          "Cost Management: MTD spend by service (1h cache)",
+          "GitHub Actions: latest workflow run status (optional per app)"
         ]
       },
       {
@@ -212,7 +215,7 @@
         "color": "green"
       },
       {
-        "label": "Dashboard renders health pills, metrics tables, cost breakdown",
+        "label": "Dashboard renders health pills, metrics tables, cost breakdown, GitHub Actions status",
         "color": "blue"
       }
     ],
@@ -223,7 +226,9 @@
         "date": "2026-05-12",
         "description": "Adds GitHub Actions last-run status to each service card, replaces the flat metrics table with inline accordion expansion."
       }
-    ]
+    ],
+    "updatedAt": "2026-05-13",
+    "updatedBySha": "8ad2734"
   },
   "ideas-api": {
     "summary": "Stores and serves AI-generated feature ideas in Azure Table Storage. Accepts browser JWT tokens via EasyAuth for read access and an X-Ideas-Key machine write-key for automated writes. Exposes endpoints to list and create ideas, manage projects, and trigger the ideas-bot Container App Job.",

@@ -1,0 +1,59 @@
+{
+  "package": "dashboard-api",
+  "capturedAt": "2026-05-13",
+  "commitSha": "8ad2734",
+  "commitMessage": "feat: add GitHub Actions run data to DashboardGetter\n\n- New github_checks.py: fetch_github_run() calls GitHub Actions API for\n  the latest non-PR workflow run; includes failed job names on failure\n- registry.py: add github_repo to UPDATABLE_FIELDS and _entity_to_dict\n- function_app.py: submit github_futures in the existing ThreadPoolExecutor;\n  github_actions key added to DashboardGetter payload\n- CLAUDE.md: document github_repo field, github_checks module, GITHUB_TOKEN\n\nRequires GITHUB_TOKEN env var (actions:read PAT); degrades gracefully\nwithout it.\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>",
+  "content": {
+    "summary": "Single aggregator endpoint that fans out in parallel to health-check momentum-finder and trail-finder, query Log Analytics (KQL) for request counts, latency, and recent errors, query the Digits metrics Table Storage table, and fetch Azure Cost Management MTD spend. Uses a system-assigned managed identity \u2014 no stored credentials.",
+    "description": "Azure Functions app that fans out in parallel to health-check all services, query Log Analytics for request metrics, pull Digits Table Storage metrics, and fetch Azure Cost Management spend \u2014 returning everything in a single aggregated response.",
+    "features": [
+      "Health checks for momentum-finder and trail-finder (HTTP /health)",
+      "Log Analytics KQL queries for request counts, average latency, and errors per service (24h window)",
+      "Digits metrics from Table Storage (request volume, error rate)",
+      "Azure Cost Management MTD spend breakdown \u2014 cached 1h due to API rate limits",
+      "All data returned in a single response \u2014 frontend polls every 60 seconds"
+    ],
+    "architecture": {
+      "overview": "Single HTTP-triggered function that executes all sub-queries in parallel via asyncio.gather. Uses a system-assigned Managed Identity \u2014 no credentials stored in app settings. RBAC roles are assigned by the azure-infrastructure package.",
+      "keyPoints": [
+        "Managed Identity holds Log Analytics Reader (scoped to the shared workspace) and Cost Management Reader (scoped to subscription)",
+        "No API keys in environment variables \u2014 all Azure SDK auth flows through Managed Identity",
+        "Cost Management responses cached for 1h in memory; all other queries are live",
+        "Frontend dashboard polls /api/dashboard every 60 seconds",
+        "Parallel fan-out keeps response time under 3s even with 5+ downstream calls"
+      ]
+    },
+    "dataFlow": [
+      {
+        "label": "Dashboard frontend (60s poll)",
+        "color": "blue"
+      },
+      {
+        "label": "dashboard-api (Azure Functions) \u2014 parallel fan-out",
+        "color": "purple",
+        "sublines": [
+          "Health: GET momentum-finder /health, trail-finder /health",
+          "Log Analytics KQL: request counts, latency, errors (24h)",
+          "Table Storage: digits metrics rows (24h)",
+          "Cost Management: MTD spend by service (1h cache)"
+        ]
+      },
+      {
+        "label": "Aggregated JSON response",
+        "color": "green"
+      },
+      {
+        "label": "Dashboard renders health pills, metrics tables, cost breakdown",
+        "color": "blue"
+      }
+    ],
+    "designDocs": [
+      {
+        "title": "ADR: Dashboard GitHub Actions & Expandable Cards",
+        "href": "https://github.com/skarumbu/my-website/blob/main/docs/design/2026-05-12-dashboard-github-actions-expandable-cards.md",
+        "date": "2026-05-12",
+        "description": "Adds GitHub Actions last-run status to each service card, replaces the flat metrics table with inline accordion expansion."
+      }
+    ]
+  }
+}
