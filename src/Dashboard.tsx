@@ -136,6 +136,11 @@ function Dashboard() {
   const [registeringId, setRegisteringId] = useState<string | null>(null);
   const [registerForm, setRegisterForm] = useState<RegisterForm>({ name: '', type: '', health_url: '', log_workspace_id: '', github_repo: '' });
   const [expandedCard, setExpandedCard] = useState<string | null>(null);
+  const [editingApp, setEditingApp] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState<{ github_repo: string; health_url: string; log_workspace_id: string; type: string }>({ github_repo: '', health_url: '', log_workspace_id: '', type: '' });
+  const [editLoading, setEditLoading] = useState(false);
+  const [editSaving, setEditSaving] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
   const [registerLoading, setRegisterLoading] = useState(false);
   const [registerError, setRegisterError] = useState<string | null>(null);
 
@@ -233,6 +238,48 @@ function Dashboard() {
       setRegisterError(e.message);
     } finally {
       setRegisterLoading(false);
+    }
+  };
+
+  const openEditApp = async (name: string) => {
+    setEditingApp(name);
+    setEditError(null);
+    setEditForm({ github_repo: '', health_url: '', log_workspace_id: '', type: '' });
+    if (!APPS_URL) return;
+    setEditLoading(true);
+    try {
+      const token = await getToken();
+      const resp = await fetch(APPS_URL, { headers: { Authorization: `Bearer ${token}` } });
+      if (resp.ok) {
+        const json = await resp.json();
+        const app = (json.apps ?? []).find((a: any) => a.name === name);
+        if (app) setEditForm({ github_repo: app.github_repo ?? '', health_url: app.health_url ?? '', log_workspace_id: app.log_workspace_id ?? '', type: app.type ?? '' });
+      }
+    } catch {} finally {
+      setEditLoading(false);
+    }
+  };
+
+  const saveEditApp = async () => {
+    if (!APPS_URL || !editingApp) return;
+    setEditSaving(true);
+    setEditError(null);
+    try {
+      const token = await getToken();
+      const resp = await fetch(`${APPS_URL}/${editingApp}`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(editForm),
+      });
+      if (!resp.ok) {
+        const err = await resp.json();
+        throw new Error(err.error ?? `${resp.status}`);
+      }
+      setEditingApp(null);
+    } catch (e: any) {
+      setEditError(e.message);
+    } finally {
+      setEditSaving(false);
     }
   };
 
@@ -550,10 +597,59 @@ function Dashboard() {
                     </summary>
                     <div className="dash-resource-list" style={{ marginTop: 8 }}>
                       {registered.map(resource => (
-                        <div key={resource.id} className="dash-resource-item dash-resource-item--registered">
-                          <span className="dash-resource-name">{resource.name}</span>
-                          <span className="dash-tag">{TYPE_FROM_AZURE[resource.type] ?? resource.type}</span>
-                          <span className="dash-spill up" style={{ fontSize: '10px' }}>Registered</span>
+                        <div key={resource.id} className="dash-resource-item">
+                          <div className="dash-resource-header">
+                            <div className="dash-resource-meta">
+                              <span className="dash-resource-name">{resource.name}</span>
+                              <span className="dash-tag">{TYPE_FROM_AZURE[resource.type] ?? resource.type}</span>
+                              <span className="dash-spill up" style={{ fontSize: '10px' }}>Registered</span>
+                            </div>
+                            {editingApp === resource.name ? (
+                              <button className="dash-action-btn dash-action-btn--ghost" onClick={() => setEditingApp(null)}>Cancel</button>
+                            ) : (
+                              <button className="dash-action-btn dash-action-btn--secondary" onClick={() => openEditApp(resource.name)}>Edit</button>
+                            )}
+                          </div>
+
+                          {editingApp === resource.name && (
+                            <div className="dash-register-form">
+                              {editLoading ? (
+                                <p className="dash-note">Loading current values…</p>
+                              ) : (
+                                <>
+                                  <div className="dash-form-row">
+                                    <label className="dash-form-label">GitHub Repo</label>
+                                    <input className="dash-input" placeholder="owner/repo"
+                                      value={editForm.github_repo}
+                                      onChange={e => setEditForm(f => ({ ...f, github_repo: e.target.value }))} />
+                                  </div>
+                                  <div className="dash-form-row">
+                                    <label className="dash-form-label">Health URL</label>
+                                    <input className="dash-input" placeholder="https://my-api.example.com"
+                                      value={editForm.health_url}
+                                      onChange={e => setEditForm(f => ({ ...f, health_url: e.target.value }))} />
+                                  </div>
+                                  <div className="dash-form-row">
+                                    <label className="dash-form-label">Log Workspace ID</label>
+                                    <input className="dash-input" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                                      value={editForm.log_workspace_id}
+                                      onChange={e => setEditForm(f => ({ ...f, log_workspace_id: e.target.value }))} />
+                                  </div>
+                                  <div className="dash-form-row">
+                                    <label className="dash-form-label">Type</label>
+                                    <select className="dash-input" value={editForm.type}
+                                      onChange={e => setEditForm(f => ({ ...f, type: e.target.value }))}>
+                                      {VALID_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                                    </select>
+                                  </div>
+                                  {editError && <p className="dash-note" style={{ color: 'var(--dn)' }}>{editError}</p>}
+                                  <button className="dash-action-btn" onClick={saveEditApp} disabled={editSaving}>
+                                    {editSaving ? 'Saving…' : 'Save changes'}
+                                  </button>
+                                </>
+                              )}
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>
