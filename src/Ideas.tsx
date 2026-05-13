@@ -37,6 +37,15 @@ interface Project {
   name: string;
 }
 
+interface Update {
+  id: string;
+  idea_id: string;
+  content: string;
+  created_at: string;
+  author_email: string;
+  author_name: string;
+}
+
 type StatusFilter = 'open' | 'done' | 'dismissed' | 'all';
 type SortOrder = 'newest' | 'oldest' | 'project';
 
@@ -266,11 +275,190 @@ function StatusBadge({ status }: { status: Idea['status'] }) {
   );
 }
 
+// ── IdeaDetailPanel ───────────────────────────────────────────────────
+
+interface DetailPanelProps {
+  open: boolean;
+  idea: Idea | null;
+  onClose: () => void;
+  onEdit: () => void;
+  getToken: () => Promise<string>;
+}
+
+function IdeaDetailPanel({ open, idea, onClose, onEdit, getToken }: DetailPanelProps) {
+  const [updates, setUpdates] = useState<Update[]>([]);
+  const [loadingUpdates, setLoadingUpdates] = useState(false);
+  const [newContent, setNewContent] = useState('');
+  const [posting, setPosting] = useState(false);
+
+  useEffect(() => {
+    if (!open || !idea) return;
+    setUpdates([]);
+    setNewContent('');
+    setLoadingUpdates(true);
+    (async () => {
+      try {
+        const token = await getToken();
+        const resp = await fetch(`${BASE_URL}/api/ideas/${idea.id}/updates`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (resp.ok) {
+          const json = await resp.json();
+          setUpdates(json.updates ?? []);
+        }
+      } catch {} finally {
+        setLoadingUpdates(false);
+      }
+    })();
+  }, [open, idea, getToken]);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [open, onClose]);
+
+  const handlePost = async () => {
+    if (!idea || !newContent.trim() || posting) return;
+    setPosting(true);
+    try {
+      const token = await getToken();
+      const resp = await fetch(`${BASE_URL}/api/ideas/${idea.id}/updates`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content: newContent.trim() }),
+      });
+      if (!resp.ok) throw new Error(`${resp.status}`);
+      const update: Update = await resp.json();
+      setUpdates(prev => [...prev, update]);
+      setNewContent('');
+    } catch {} finally {
+      setPosting(false);
+    }
+  };
+
+  const handleDeleteUpdate = async (update: Update) => {
+    if (!idea) return;
+    try {
+      const token = await getToken();
+      const resp = await fetch(`${BASE_URL}/api/ideas/${idea.id}/updates/${update.id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (resp.ok || resp.status === 204) {
+        setUpdates(prev => prev.filter(u => u.id !== update.id));
+      }
+    } catch {}
+  };
+
+  if (!idea) return null;
+  const tint = tintFor(idea.project);
+
+  return (
+    <>
+      <div
+        className={`ideas-overlay${open ? ' ideas-overlay--open' : ''}`}
+        onClick={onClose}
+      />
+      <div className={`ideas-composer${open ? ' ideas-composer--open' : ''}`}>
+        <div className="ideas-composer-header">
+          <div className="ideas-detail-badges">
+            <span className="ideas-project-badge" style={{ background: tint.bg, color: tint.fg }}>
+              {idea.project}
+            </span>
+            {idea.status !== 'open' && <StatusBadge status={idea.status} />}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <button className="ideas-detail-edit-btn" onClick={onEdit}>
+              <svg width="12" height="12" viewBox="0 0 24 24">
+                <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              Edit
+            </button>
+            <button className="ideas-composer-close" onClick={onClose} aria-label="Close">×</button>
+          </div>
+        </div>
+
+        <div className="ideas-detail-body">
+          <div className="ideas-detail-meta">
+            <span className="ideas-card-date">{fmtDate(idea.created_at)}</span>
+          </div>
+          <h2 className="ideas-detail-title">{idea.title}</h2>
+          {idea.body && <p className="ideas-detail-text">{idea.body}</p>}
+          {idea.bot_status && (
+            <div style={{ marginBottom: 16 }}>
+              <BotStatusChip idea={idea} />
+            </div>
+          )}
+
+          <div className="ideas-updates-divider">
+            <span className="ideas-updates-label">
+              Updates
+              {updates.length > 0 && (
+                <span className="ideas-updates-count">{updates.length}</span>
+              )}
+            </span>
+          </div>
+
+          <div className="ideas-updates-list">
+            {loadingUpdates && (
+              <p className="ideas-loading" style={{ padding: '8px 0', textAlign: 'center' }}>Loading…</p>
+            )}
+            {!loadingUpdates && updates.length === 0 && (
+              <p className="ideas-updates-empty">No updates yet.</p>
+            )}
+            {updates.map(u => (
+              <div key={u.id} className="ideas-update-item">
+                <div className="ideas-update-header">
+                  <span className="ideas-update-author">{u.author_name || u.author_email}</span>
+                  <span className="ideas-update-date">{fmtDate(u.created_at)}</span>
+                  <button
+                    className="ideas-update-delete"
+                    onClick={() => handleDeleteUpdate(u)}
+                    title="Delete update"
+                    aria-label="Delete update"
+                  >×</button>
+                </div>
+                <p className="ideas-update-content">{u.content}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="ideas-update-compose">
+            <textarea
+              className="ideas-update-input"
+              value={newContent}
+              onChange={e => setNewContent(e.target.value)}
+              placeholder="Post a status update…"
+              rows={3}
+              onKeyDown={e => {
+                if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handlePost();
+              }}
+            />
+            <div className="ideas-update-compose-footer">
+              <span className="ideas-update-hint">⌘↵ to post</span>
+              <button
+                className="ideas-submit-btn"
+                onClick={handlePost}
+                disabled={!newContent.trim() || posting}
+              >
+                {posting ? 'Posting…' : 'Post update'}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
 // ── IdeaCard ──────────────────────────────────────────────────────────
 
 interface CardProps {
   idea: Idea;
-  onEdit: () => void;
+  onView: () => void;
   onDelete: () => void;
   onSetState: (s: Idea['status']) => void;
   onRunBot: () => void;
@@ -278,7 +466,7 @@ interface CardProps {
   botRunning: boolean;
 }
 
-function IdeaCard({ idea, onEdit, onDelete, onSetState, onRunBot, updating, botRunning }: CardProps) {
+function IdeaCard({ idea, onView, onDelete, onSetState, onRunBot, updating, botRunning }: CardProps) {
   const [hover, setHover] = useState(false);
   const tint = tintFor(idea.project);
   const isDone = idea.status === 'done';
@@ -297,7 +485,7 @@ function IdeaCard({ idea, onEdit, onDelete, onSetState, onRunBot, updating, botR
       }}
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
-      onClick={onEdit}
+      onClick={onView}
     >
       <div className="ideas-card-tint" style={{ background: tint.fg }} />
 
@@ -443,6 +631,8 @@ function Ideas() {
   const [botRunning, setBotRunning] = useState<string | null>(null);
   const [composerOpen, setComposerOpen] = useState(false);
   const [editing, setEditing] = useState<Idea | null>(null);
+  const [detailIdea, setDetailIdea] = useState<Idea | null>(null);
+  const [detailOpen, setDetailOpen] = useState(false);
 
   const getToken = useCallback(async (): Promise<string> => {
     try {
@@ -622,7 +812,8 @@ function Ideas() {
   };
 
   const openNew = () => { setEditing(null); setComposerOpen(true); };
-  const openEdit = (idea: Idea) => { setEditing(idea); setComposerOpen(true); };
+  const openDetail = (idea: Idea) => { setDetailIdea(idea); setDetailOpen(true); };
+  const editFromDetail = () => { setDetailOpen(false); setEditing(detailIdea); setComposerOpen(true); };
 
   const createProject = useCallback(async (name: string): Promise<Project> => {
     if (!BASE_URL) throw new Error('BASE_URL not configured');
@@ -779,7 +970,7 @@ function Ideas() {
               <IdeaCard
                 key={idea.id}
                 idea={idea}
-                onEdit={() => openEdit(idea)}
+                onView={() => openDetail(idea)}
                 onDelete={() => handleDelete(idea)}
                 onSetState={s => handleSetState(idea, s)}
                 onRunBot={() => runBot(idea)}
@@ -797,6 +988,14 @@ function Ideas() {
           <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round"/>
         </svg>
       </button>
+
+      <IdeaDetailPanel
+        open={detailOpen}
+        idea={detailIdea}
+        onClose={() => setDetailOpen(false)}
+        onEdit={editFromDetail}
+        getToken={getToken}
+      />
 
       <Composer
         open={composerOpen}
