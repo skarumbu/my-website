@@ -131,6 +131,7 @@ function Dashboard() {
   const [registerForm, setRegisterForm] = useState<RegisterForm>({ name: '', type: '', health_url: '', log_workspace_id: '', github_repo: '' });
   const [expandedCard, setExpandedCard] = useState<string | null>(null);
   const [editingApp, setEditingApp] = useState<string | null>(null);
+  const [editingResourceId, setEditingResourceId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<{ github_repo: string; health_url: string; log_workspace_id: string; type: string }>({ github_repo: '', health_url: '', log_workspace_id: '', type: '' });
   const [editLoading, setEditLoading] = useState(false);
   const [editSaving, setEditSaving] = useState(false);
@@ -235,8 +236,9 @@ function Dashboard() {
     }
   };
 
-  const openEditApp = async (name: string) => {
-    setEditingApp(name);
+  const openEditApp = async (resourceId: string) => {
+    setEditingResourceId(resourceId);
+    setEditingApp(null);
     setEditError(null);
     setEditForm({ github_repo: '', health_url: '', log_workspace_id: '', type: '' });
     if (!APPS_URL) return;
@@ -246,10 +248,12 @@ function Dashboard() {
       const resp = await fetch(APPS_URL, { headers: { Authorization: `Bearer ${token}` } });
       if (resp.ok) {
         const json = await resp.json();
-        const app = (json.apps ?? []).find((a: any) => a.name === name);
+        const app = (json.apps ?? []).find((a: any) => a.resource_id === resourceId);
         if (app) {
           setEditingApp(app.name);
           setEditForm({ github_repo: app.github_repo ?? '', health_url: app.health_url ?? '', log_workspace_id: app.log_workspace_id ?? '', type: app.type ?? '' });
+        } else {
+          setEditError('App not found in registry — it may have been registered with a different resource ID.');
         }
       }
     } catch {} finally {
@@ -273,6 +277,7 @@ function Dashboard() {
         throw new Error(err.error ?? `${resp.status}`);
       }
       setEditingApp(null);
+      setEditingResourceId(null);
     } catch (e: any) {
       setEditError(e.message);
     } finally {
@@ -605,14 +610,14 @@ function Dashboard() {
                               <span className="dash-tag">{TYPE_FROM_AZURE[resource.type] ?? resource.type}</span>
                               <span className="dash-spill up" style={{ fontSize: '10px' }}>Registered</span>
                             </div>
-                            {editingApp === resource.name ? (
-                              <button className="dash-action-btn dash-action-btn--ghost" onClick={() => setEditingApp(null)}>Cancel</button>
+                            {editingResourceId === resource.id ? (
+                              <button className="dash-action-btn dash-action-btn--ghost" onClick={() => { setEditingResourceId(null); setEditingApp(null); }}>Cancel</button>
                             ) : (
-                              <button className="dash-action-btn dash-action-btn--secondary" onClick={() => openEditApp(resource.name)}>Edit</button>
+                              <button className="dash-action-btn dash-action-btn--secondary" onClick={() => openEditApp(resource.id)}>Edit</button>
                             )}
                           </div>
 
-                          {editingApp === resource.name && (
+                          {editingResourceId === resource.id && (
                             <div className="dash-register-form">
                               {editLoading ? (
                                 <p className="dash-note">Loading current values…</p>
