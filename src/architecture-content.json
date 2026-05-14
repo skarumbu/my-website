@@ -180,7 +180,7 @@
       "Log Analytics KQL queries for request counts, average latency, and errors per service (24h window)",
       "Digits metrics from Table Storage (request volume, error rate)",
       "Azure Cost Management MTD spend breakdown \u2014 cached 1h due to API rate limits",
-      "GitHub Actions API integration for latest workflow run status and failed jobs (optional per app); prefers push/dispatch/release events over scheduled runs",
+      "GitHub Actions API integration for latest workflow run status and failed jobs (optional per app); prefers push/dispatch/release events over scheduled runs; skips empty results when GITHUB_TOKEN is unset or API returns nothing",
       "CORS OPTIONS handler added for preflight requests (Access-Control-Allow-Origin: *, Allow-Headers: Authorization Content-Type)",
       "All data returned in a single response \u2014 frontend polls every 60 seconds"
     ],
@@ -190,7 +190,7 @@
         "Managed Identity holds Log Analytics Reader (scoped to the shared workspace) and Cost Management Reader (scoped to subscription)",
         "No API keys in environment variables \u2014 all Azure SDK auth flows through Managed Identity",
         "Cost Management responses cached for 1h in memory; all other queries are live",
-        "GitHub Actions API requires GITHUB_TOKEN env var; gracefully degrades if unset; prefers push/dispatch/release events over scheduled runs",
+        "GitHub Actions API requires GITHUB_TOKEN env var; gracefully degrades if unset; skips empty results when no token or runs are available; prefers push/dispatch/release events over scheduled runs",
         "Frontend dashboard polls /api/dashboard every 60 seconds",
         "Parallel fan-out keeps response time under 3s even with 5+ downstream calls",
         "CORS OPTIONS handler added to support browser preflight requests (Access-Control-Allow-Origin: *, Allow-Headers: Authorization Content-Type)"
@@ -230,7 +230,7 @@
       }
     ],
     "updatedAt": "2026-05-14",
-    "updatedBySha": "a331caf"
+    "updatedBySha": "907ccf1"
   },
   "ideas-api": {
     "summary": "Stores and serves AI-generated feature ideas in Azure Table Storage. Accepts browser JWT tokens via EasyAuth for read access and an X-Ideas-Key machine write-key for automated writes. Exposes endpoints to list and create ideas, manage projects, and trigger the ideas-bot Container App Job.",
