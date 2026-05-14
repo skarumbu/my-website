@@ -1,5 +1,11 @@
 [
   {
+    "package": "dashboard-api",
+    "capturedAt": "2026-05-14",
+    "commitSha": "a331caf",
+    "commitMessage": "fix: prefer push/dispatch runs; add CORS OPTIONS handler\n\ngithub_checks.py: pick the first run with event in (push,\nworkflow_dispatch, release) rather than blindly taking runs[0], which\ncould be a scheduled or bot run. Adds event field to the response.\n\nfunction_app.py: add catch-all OPTIONS handler so browser preflight\nrequests get proper CORS headers (Access-Control-Allow-Origin: *,\nAllow-Headers: Authorization Content-Type). Fixes CORS errors in the\ndashboard frontend.\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>"
+  },
+  {
     "package": "ideas-api",
     "capturedAt": "2026-05-13",
     "commitSha": "b62fc85",
