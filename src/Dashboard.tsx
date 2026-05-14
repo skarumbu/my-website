@@ -42,7 +42,8 @@ interface GitHubRun {
   run_id: number;
   workflow_name: string;
   status: 'queued' | 'in_progress' | 'completed';
-  conclusion: 'success' | 'failure' | 'cancelled' | 'skipped' | null;
+  conclusion: 'success' | 'failure' | 'cancelled' | 'skipped' | 'timed_out' | 'neutral' | 'action_required' | 'stale' | null;
+  event?: string;
   branch: string;
   created_at: string;
   html_url: string;
@@ -353,13 +354,16 @@ function Dashboard() {
 
                 const ghConclusion = gh?.status !== 'completed' ? gh?.status ?? null : gh.conclusion;
                 const ghChipCls = ghConclusion === 'success' ? 'success'
-                  : ghConclusion === 'failure' ? 'failure'
+                  : (ghConclusion === 'failure' || ghConclusion === 'timed_out' || ghConclusion === 'action_required') ? 'failure'
                   : (ghConclusion === 'in_progress' || ghConclusion === 'queued') ? 'running'
                   : 'muted';
                 const ghChipLabel = ghConclusion === 'success' ? '✓'
-                  : ghConclusion === 'failure' ? '✗'
+                  : (ghConclusion === 'failure' || ghConclusion === 'timed_out') ? '✗'
+                  : ghConclusion === 'action_required' ? '!'
                   : ghConclusion === 'in_progress' ? '⟳'
-                  : ghConclusion === 'queued' ? '…' : '?';
+                  : ghConclusion === 'queued' ? '…'
+                  : ghConclusion === 'cancelled' ? '○'
+                  : '—';
 
                 return (
                   <div
@@ -394,8 +398,10 @@ function Dashboard() {
                             <div className="dash-gh-run">
                               <span className={`dash-gh-chip ${ghChipCls}`}>{ghChipLabel}</span>
                               <span>{gh.workflow_name}</span>
-                              <span className="dash-muted">· {gh.branch} · {relTime(gh.created_at)}</span>
-                              <a href={gh.html_url} target="_blank" rel="noopener noreferrer" className="dash-gh-link">↗</a>
+                              <span className="dash-muted">· {gh.branch} · {relTime(gh.created_at)}{gh.event && gh.event !== 'push' ? ` · ${gh.event}` : ''}</span>
+                              {gh.html_url && (
+                                <a href={gh.html_url} target="_blank" rel="noopener noreferrer" className="dash-gh-link">View run →</a>
+                              )}
                             </div>
                             {gh.failed_jobs && gh.failed_jobs.length > 0 && (
                               <div className="dash-gh-failed-jobs">Failed: {gh.failed_jobs.join(', ')}</div>

@@ -656,12 +656,14 @@
 .dash-gh-chip.muted   { background: color-mix(in oklch, var(--muted) 18%, transparent); color: var(--muted); }
 
 .dash-gh-link {
-  color: var(--muted);
+  color: var(--accent);
   text-decoration: none;
+  font-size: 0.75rem;
+  font-weight: 500;
   font-size: 0.75rem;
   margin-left: auto;
 }
-.dash-gh-link:hover { color: var(--fg); }
+.dash-gh-link:hover { color: var(--fg); text-decoration: underline; }
 
 .dash-gh-failed-jobs {
   margin-top: 5px;
