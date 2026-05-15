@@ -1,25 +1,197 @@
 .main {
-    background-color: #add8d2;
-    text-align: center;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    font-size: 2.25rem;
-    font-family: 'Josefin Sans';
-    color: white;
-  }
-  
+  background-color: #FFEFD9;
+  text-align: center;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  font-family: 'DM Sans', 'Josefin Sans', sans-serif;
+  color: #3A2418;
+  padding-top: 20px;
+  padding-bottom: 48px;
+  position: relative;
+}
+
+.main::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 15% 8%, rgba(255,222,120,0.6) 0%, transparent 48%),
+    radial-gradient(ellipse at 85% 88%, rgba(255,165,80,0.38) 0%, transparent 48%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.main::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: radial-gradient(circle, rgba(58,36,24,0.055) 1px, transparent 1px);
+  background-size: 22px 22px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.main > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Puzzle nav pills */
+.puzzle-pills {
+  display: flex;
+  gap: 10px;
+  margin: 14px 0 10px;
+}
+
+.puzzle-pill {
+  padding: 7px 22px;
+  border-radius: 100px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 2px solid rgba(58,36,24,0.22);
+  color: #3A2418;
+  background: rgba(255,255,255,0.55);
+  transition: background 0.18s, border-color 0.18s, color 0.18s;
+  user-select: none;
+}
+
+.puzzle-pill.active {
+  background: #3A2418;
+  color: #FFEFD9;
+  border-color: #3A2418;
+}
+
+.puzzle-pill.solved {
+  background: #C9EBD1;
+  color: #2a5c3a;
+  border-color: #4FA86E;
+}
+
+/* Completion flash overlay */
+.completion-overlay {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: white;
+  color: #3A2418;
+  border-radius: 24px;
+  padding: 32px 52px;
+  text-align: center;
+  z-index: 100;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 1.6rem;
+  font-weight: 700;
+  box-shadow: 0 8px 32px rgba(58,36,24,0.18);
+}
+
+/* Solved state card (already-solved puzzle view) */
+.solved-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  background: white;
+  border: none;
+  border-radius: 20px;
+  padding: 22px 40px;
+  color: #3A2418;
+  margin: 16px;
+  box-shadow: 0 4px 0 rgba(0,0,0,0.08);
+}
+
+.solved-card-header {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+.solved-card-equation {
+  font-size: 1rem;
+  opacity: 0.65;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  font-family: 'DM Sans', sans-serif;
+}
+
+/* Operator frosted-glass tray */
+.operator-tray {
+  display: flex;
+  gap: 14px;
+  background: rgba(255,255,255,0.52);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 100px;
+  padding: 14px 22px;
+  box-shadow: 0 2px 14px rgba(58,36,24,0.09);
+}
+
+/* Action pill (Help me! button) */
+.action-pill {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #3A2418;
+  background: rgba(255,255,255,0.72);
+  border: none;
+  border-radius: 100px;
+  padding: 11px 30px;
+  cursor: pointer;
+  box-shadow: 0 3px 0 rgba(0,0,0,0.1);
+  transition: transform 0.12s, box-shadow 0.12s;
+}
+
+.action-pill:hover {
+  background: rgba(255,255,255,0.9);
+}
+
+.action-pill:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 rgba(0,0,0,0.1);
+}
+
+/* Win overlay */
+.win-overlay {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  position: relative;
+}
+
+.win-card {
+  background: white;
+  border-radius: 28px;
+  padding: 40px 64px;
+  text-align: center;
+  box-shadow: 0 8px 32px rgba(58,36,24,0.18);
+}
+
+.win-title {
+  font-family: 'Caprasimo', cursive;
+  font-size: 3rem;
+  color: #3A2418;
+  margin: 12px 0 6px;
+}
+
+.win-subtitle {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 1rem;
+  color: #7a6255;
+}
+
+/* Ripple effect */
 @keyframes ripple {
-  0% {
-    transform: scale(0);
-    opacity: 0.6;
-  }
-  100% {
-    transform: scale(1);
-    opacity: 0;
-  }
+  0%   { transform: scale(0); opacity: 0.6; }
+  100% { transform: scale(1); opacity: 0; }
 }
 
 .ripple-effect {
@@ -34,87 +206,17 @@
   height: 100%;
   top: 0;
   left: 0;
-  background: rgba(255, 255, 255, 0.5);
+  background: rgba(255,255,255,0.5);
   border-radius: 50%;
   animation: ripple 0.6s ease-out;
 }
 
 @keyframes hint-glow {
-  0%   { box-shadow: 0 0 0 0px rgba(255, 255, 255, 0.9); }
-  50%  { box-shadow: 0 0 0 10px rgba(255, 255, 255, 0.3); }
-  100% { box-shadow: 0 0 0 0px rgba(255, 255, 255, 0); }
+  0%   { box-shadow: 0 0 0 0px rgba(255,255,255,0.9); }
+  50%  { box-shadow: 0 0 0 10px rgba(255,255,255,0.3); }
+  100% { box-shadow: 0 0 0 0px rgba(255,255,255,0); }
 }
 
 .hint-glow {
   animation: hint-glow 0.25s ease-out;
-}
-
-.puzzle-pills {
-  display: flex;
-  gap: 10px;
-  margin: 10px;
-}
-
-.puzzle-pill {
-  padding: 6px 18px;
-  border-radius: 20px;
-  font-size: 0.95rem;
-  cursor: pointer;
-  border: 2px solid #1f7a6e;
-  color: #1f7a6e;
-  background: transparent;
-  transition: background 0.2s, color 0.2s;
-}
-
-.puzzle-pill.active {
-  background: #1f7a6e;
-  color: white;
-}
-
-.puzzle-pill.solved {
-  background: #1f7a6e;
-  color: white;
-  opacity: 0.75;
-}
-
-.solved-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  background: rgba(31, 122, 110, 0.25);
-  border: 2px solid #1f7a6e;
-  border-radius: 14px;
-  padding: 18px 32px;
-  color: white;
-  margin: 16px;
-}
-
-.solved-card-header {
-  display: flex;
-  gap: 14px;
-  align-items: center;
-  font-size: 1.75rem;
-}
-
-.solved-card-equation {
-  font-size: 1.1rem;
-  opacity: 0.85;
-  font-weight: 500;
-  letter-spacing: 0.03em;
-}
-
-.completion-overlay {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: rgba(31, 122, 110, 0.95);
-  color: white;
-  border-radius: 16px;
-  padding: 32px 48px;
-  text-align: center;
-  z-index: 10;
-  font-size: 1.75rem;
-  font-weight: bold;
 }

@@ -396,9 +396,12 @@ function Dashboard() {
                           <div className="dash-hcard-detail-section">
                             <h4>GitHub Actions</h4>
                             <div className="dash-gh-run">
-                              <span className={`dash-gh-chip ${ghChipCls}`}>{ghChipLabel}</span>
+                              <span
+                                className={`dash-gh-chip ${ghChipCls}`}
+                                title={`status: ${gh.status} · conclusion: ${gh.conclusion ?? 'null'}`}
+                              >{ghChipLabel}</span>
                               <span>{gh.workflow_name}</span>
-                              <span className="dash-muted">· {gh.branch} · {relTime(gh.created_at)}{gh.event && gh.event !== 'push' ? ` · ${gh.event}` : ''}</span>
+                              <span className="dash-muted">· {gh.branch} · {relTime(gh.created_at)} · {gh.event ?? '?'}</span>
                               {gh.html_url && (
                                 <a href={gh.html_url} target="_blank" rel="noopener noreferrer" className="dash-gh-link">View run →</a>
                               )}

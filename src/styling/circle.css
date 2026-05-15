@@ -1,7 +1,7 @@
 .Circle {
   display: flex;
-  height: 100px;
-  width: 100px;
+  height: 88px;
+  width: 88px;
   border-radius: 50%;
   text-align: center;
   align-items: center;
@@ -9,23 +9,65 @@
   border: none;
   padding: 0;
   cursor: pointer;
-  font: inherit;
+  font-family: 'Fraunces', 'Josefin Sans', serif;
+  font-size: 1.55rem;
+  font-weight: 700;
+  color: #3A2418;
+  box-shadow: 0 4px 0 rgba(0,0,0,0.16);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.Circle:hover {
+  box-shadow: 0 6px 0 rgba(0,0,0,0.16);
 }
 
 .Circle-Hidden {
   visibility: hidden;
 }
 
+/* Candy number tile colors */
+.circle-mint   { background: #C9EBD1; }
+.circle-butter { background: #FFE793; }
+.circle-sky    { background: #BFE1F2; }
+.circle-lilac  { background: #E1D2F2; }
+.circle-coral  { background: #FFC2B0; }
+.circle-peach  { background: #FCD9A6; }
+.circle-rose   { background: #FFCDD8; }
+.circle-grass  { background: #D4E8A9; }
+
+/* Operator button colors */
+.circle-op-plus  { background: #4FA86E; color: white; font-family: 'DM Sans', sans-serif; font-size: 1.4rem; }
+.circle-op-minus { background: #F2A03F; color: white; font-family: 'DM Sans', sans-serif; font-size: 1.4rem; }
+.circle-op-times { background: #E5533C; color: white; font-family: 'DM Sans', sans-serif; font-size: 1.4rem; }
+.circle-op-div   { background: #7E6EE0; color: white; font-family: 'DM Sans', sans-serif; font-size: 1.4rem; }
+
+.circle-op-plus.selected,
+.circle-op-minus.selected,
+.circle-op-times.selected,
+.circle-op-div.selected {
+  box-shadow: 0 7px 14px rgba(0,0,0,0.28);
+}
+
+/* Retry / action white button */
+.circle-action {
+  background: white;
+  color: #3A2418;
+  box-shadow: 0 4px 0 rgba(0,0,0,0.1);
+}
+
+/* Combine animations — names are hardcoded in Digits.tsx JS, do not rename */
 @keyframes combineOut {
-  0%   { transform: scale(1); opacity: 1; }
-  100% { transform: scale(0); opacity: 0; }
+  0%   { transform: scale(1) rotate(var(--tilt, 0deg)); opacity: 1; }
+  100% { transform: scale(0) rotate(var(--tilt, 0deg)); opacity: 0; }
 }
 
 @keyframes combineIn {
-  0%   { transform: scale(1); }
-  40%  { transform: scale(1.25); }
-  70%  { transform: scale(0.95); }
-  100% { transform: scale(1); }
+  0%   { transform: scale(1) rotate(var(--tilt, 0deg)); }
+  40%  { transform: scale(1.25) rotate(var(--tilt, 0deg)); }
+  70%  { transform: scale(0.95) rotate(var(--tilt, 0deg)); }
+  100% { transform: scale(1) rotate(var(--tilt, 0deg)); }
 }
 
 .combine-out {

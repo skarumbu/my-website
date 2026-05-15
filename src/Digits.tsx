@@ -355,8 +355,12 @@ const Digits: React.FC = () => {
       ) : solvedPuzzles.every(Boolean) ? (
         <div>
           <FireworksComponent />
-          <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', zIndex: 1, fontSize: '2rem', fontWeight: 700, color: '#fff' }}>
-            You Win!
+          <div className="win-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1 }}>
+            <div className="win-card">
+              <div style={{ fontSize: '2.8rem' }}>🎉</div>
+              <div className="win-title">You Win!</div>
+              <div className="win-subtitle">All puzzles solved</div>
+            </div>
           </div>
         </div>
       ) : (
@@ -403,11 +407,13 @@ const Digits: React.FC = () => {
                 <TargetDisplay target={targetList ? targetList[currentPuzzleIndex] : 0} />
               </div>
               <div className='Row'>
-                {signs.map(sign => (
-                  <SignCircle key={sign.id} id={sign.id} selected={sign.selected} onClick={selectSign} />
-                ))}
+                <div className='operator-tray'>
+                  {signs.map(sign => (
+                    <SignCircle key={sign.id} id={sign.id} selected={sign.selected} onClick={selectSign} />
+                  ))}
+                </div>
               </div>
-              <div style={{ color: '#add8d2' }}>
+              <div>
                 <div className='Row'>
                   {numbersList[currentPuzzleIndex].slice(0, 3).map(number => (
                     <NumberCircle key={number.id} {...number} onClick={() => selectNumber(number.id)} />
@@ -423,7 +429,7 @@ const Digits: React.FC = () => {
                 <RetryCircle onClick={retry}/>
               </div>
               <div className='Row'>
-                <div className='button' onClick={helpMe}>Help me!</div>
+                <button className='action-pill' onClick={helpMe}>Help me!</button>
               </div>
             </>
           )}

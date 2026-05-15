@@ -1,5 +1,4 @@
 import React from 'react';
-
 import '../styling/target-display.css';
 
 interface TargetDisplayProps {
@@ -8,11 +7,9 @@ interface TargetDisplayProps {
 
 const TargetDisplay: React.FC<TargetDisplayProps> = ({ target }) => {
   return (
-    <div style={{ color: '#1f7a6e' }}>
-      <div className = 'target-display-words'>
-        Target Number
-      </div>
-      {target}
+    <div className="target-card">
+      <div className="target-card-sticker">GET TO ↓</div>
+      <div className="target-card-number">{target}</div>
     </div>
   );
 };
