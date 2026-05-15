@@ -1,0 +1,71 @@
+.digits-nav {
+  width: 100%;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 20px;
+  box-sizing: border-box;
+  background: rgba(255, 239, 217, 0.72);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(58, 36, 24, 0.08);
+}
+
+/* Logo — red square with rotated D */
+.digits-nav-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: #E85B3A;
+  border-radius: 9px;
+  text-decoration: none;
+  flex-shrink: 0;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.18);
+}
+
+.digits-nav-logo-letter {
+  font-family: 'Caprasimo', cursive;
+  font-size: 1.35rem;
+  color: white;
+  display: block;
+  transform: rotate(-12deg);
+  line-height: 1;
+  margin-top: 2px;
+}
+
+/* Pill links row */
+.digits-nav-links {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.digits-nav-pill {
+  font-family: 'DM Sans', 'Josefin Sans', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #3A2418;
+  text-decoration: none;
+  padding: 5px 14px;
+  border-radius: 100px;
+  border: 1.5px solid transparent;
+  transition: background 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+
+.digits-nav-pill:hover {
+  background: rgba(255, 255, 255, 0.7);
+  border-color: rgba(58, 36, 24, 0.15);
+}
+
+.digits-nav-pill.active {
+  background: #3A2418;
+  color: #FFEFD9;
+  border-color: #3A2418;
+}
