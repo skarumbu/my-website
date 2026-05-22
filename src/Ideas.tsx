@@ -7,11 +7,14 @@ import { ideasApiRequest } from './authConfig.js';
 const BASE_URL = process.env.REACT_APP_IDEAS_API_BASE_URL;
 
 const PROJECT_TINTS: Record<string, { fg: string; bg: string }> = {
-  'Digits':       { fg: '#1f6b6b', bg: '#cfe3db' },
-  'NBA Games':    { fg: '#a86b1f', bg: '#f0dcc4' },
-  'Trail Finder': { fg: '#5a7a2e', bg: '#dde6c4' },
-  'Ideas':        { fg: '#6b3a8a', bg: '#e2d4ec' },
-  'Other':        { fg: '#555555', bg: '#dcdcd6' },
+  'Digits':       { fg: '#A6422F', bg: '#FFC2B0' },
+  'NBA Games':    { fg: '#8A5320', bg: '#FCD9A6' },
+  'Trail Finder': { fg: '#4E6E1E', bg: '#D4E8A9' },
+  'Ideas':        { fg: '#573E89', bg: '#E1D2F2' },
+  'Architecture': { fg: '#2D6E47', bg: '#C9EBD1' },
+  'Dashboard':    { fg: '#2C5F7E', bg: '#BFE1F2' },
+  'Learning':     { fg: '#93384F', bg: '#FFCDD8' },
+  'Other':        { fg: '#7A5B16', bg: '#FFE793' },
 };
 
 const PROJECTS = ['Digits', 'NBA Games', 'Trail Finder', 'Ideas', 'Other'];
@@ -258,6 +261,23 @@ function BotStatusChip({ idea }: { idea: Idea }) {
   );
 }
 
+// ── StatusPill ────────────────────────────────────────────────────────
+
+function StatusPill({ status }: { status: Idea['status'] }) {
+  const map: Record<string, { cls: string; label: string }> = {
+    open:      { cls: 'ideas-status-pill--open',      label: 'Open' },
+    done:      { cls: 'ideas-status-pill--done',      label: 'Done' },
+    dismissed: { cls: 'ideas-status-pill--dismissed', label: 'Shelved' },
+  };
+  const s = map[status] ?? map.open;
+  return (
+    <span className={`ideas-status-pill ${s.cls}`}>
+      <span className="ideas-status-dot" />
+      {s.label}
+    </span>
+  );
+}
+
 // ── StatusBadge ───────────────────────────────────────────────────────
 
 function StatusBadge({ status }: { status: Idea['status'] }) {
@@ -468,104 +488,61 @@ interface CardProps {
 
 function IdeaCard({ idea, onView, onDelete, onSetState, onRunBot, updating, botRunning }: CardProps) {
   const [hover, setHover] = useState(false);
-  const tint = tintFor(idea.project);
   const isDone = idea.status === 'done';
   const isDismissed = idea.status === 'dismissed';
   const rot = cardRot(idea.id);
 
   return (
     <div
-      className="ideas-card"
-      style={{
-        transform: hover ? 'translateY(-3px) rotate(0deg)' : `translateY(0) rotate(${rot}deg)`,
-        opacity: isDismissed ? 0.55 : 1,
-        boxShadow: hover
-          ? '0 18px 36px -12px rgba(20,40,40,0.28), 0 4px 10px rgba(20,40,40,0.08)'
-          : '0 4px 10px -2px rgba(20,40,40,0.08), 0 1px 2px rgba(20,40,40,0.04)',
-      }}
+      className={`ideas-card${isDone ? ' ideas-card--done' : ''}${isDismissed ? ' ideas-card--dismissed' : ''}`}
+      data-project={idea.project}
+      style={{ transform: hover ? 'translateY(-2px)' : `rotate(${rot}deg)` }}
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
       onClick={onView}
     >
-      <div className="ideas-card-tint" style={{ background: tint.fg }} />
+      <div className="ideas-card-tint" />
 
-      <div className="ideas-card-top">
-        <div className="ideas-card-badges">
-          <span className="ideas-project-badge" style={{ background: tint.bg, color: tint.fg }}>
-            {idea.project}
-          </span>
-          {idea.status !== 'open' && <StatusBadge status={idea.status} />}
-        </div>
+      <div className="ideas-card-head">
+        <span className="ideas-tag">
+          <span className="ideas-tag-swatch" />
+          {idea.project}
+        </span>
         <span className="ideas-card-date">{fmtDate(idea.created_at)}</span>
       </div>
 
-      <div
-        className="ideas-card-title"
-        style={{
-          textDecoration: isDone ? 'line-through' : 'none',
-          textDecorationColor: 'rgba(31,107,107,0.5)',
-        }}
-      >
-        {idea.title}
-      </div>
+      <div className="ideas-card-title">{idea.title}</div>
+      {idea.body && <div className="ideas-card-body">{idea.body}</div>}
 
-      {idea.body && (
-        <div className="ideas-card-body">{idea.body}</div>
-      )}
+      <div className="ideas-card-foot">
+        {idea.bot_status && <BotStatusChip idea={idea} />}
+        <div style={{ flex: 1 }} />
+        <StatusPill status={idea.status} />
+      </div>
 
       <div
         className="ideas-card-actions"
-        style={{
-          opacity: hover ? 1 : 0,
-          transform: hover ? 'translateY(0)' : 'translateY(4px)',
-        }}
+        style={{ opacity: hover ? 1 : 0, transform: hover ? 'translateY(0)' : 'translateY(4px)' }}
         onClick={e => e.stopPropagation()}
       >
         {idea.status === 'open' ? (
           <>
-            <button
-              className="ideas-action-btn ideas-action-btn--done"
-              onClick={() => onSetState('done')}
-              disabled={updating}
-            >
+            <button className="ideas-action-btn ideas-action-btn--done" onClick={() => onSetState('done')} disabled={updating}>
               <svg width="11" height="11" viewBox="0 0 24 24">
                 <path d="M4 12l5 5L20 6" stroke="currentColor" strokeWidth="2.6" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
               Done
             </button>
-            <button
-              className="ideas-action-btn ideas-action-btn--dismiss"
-              onClick={() => onSetState('dismissed')}
-              disabled={updating}
-            >Dismiss</button>
+            <button className="ideas-action-btn ideas-action-btn--dismiss" onClick={() => onSetState('dismissed')} disabled={updating}>Dismiss</button>
           </>
         ) : (
-          <button
-            className="ideas-action-btn ideas-action-btn--reopen"
-            onClick={() => onSetState('open')}
-            disabled={updating}
-          >Reopen</button>
+          <button className="ideas-action-btn ideas-action-btn--reopen" onClick={() => onSetState('open')} disabled={updating}>Reopen</button>
         )}
-        {idea.status === 'open' && (
-          idea.bot_status ? (
-            <BotStatusChip idea={idea} />
-          ) : (
-            <button
-              className="ideas-action-btn ideas-action-btn--bot"
-              onClick={onRunBot}
-              disabled={botRunning || updating}
-              title="Assign AI bot to implement this idea"
-            >
-              ⚡ Assign Bot
-            </button>
-          )
+        {idea.status === 'open' && !idea.bot_status && (
+          <button className="ideas-action-btn ideas-action-btn--bot" onClick={onRunBot} disabled={botRunning || updating} title="Assign AI bot">⚡ Bot</button>
         )}
         <div style={{ flex: 1 }} />
-        <button
-          className="ideas-action-btn ideas-action-btn--delete"
-          onClick={onDelete}
-          title="Delete"
-        >
+        <button className="ideas-action-btn ideas-action-btn--delete" onClick={onDelete} title="Delete">
           <svg width="11" height="11" viewBox="0 0 24 24">
             <path d="M5 7h14M9 7V4h6v3M7 7l1 13h8l1-13" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
@@ -875,7 +852,7 @@ function Ideas() {
       <div className="ideas-page">
         <NavBar />
         <div className="ideas-login-view">
-          <div className="ideas-eyebrow">Backlog</div>
+          <div className="ideas-eyebrow">The notebook</div>
           <h1 className="ideas-heading">Feature Ideas</h1>
           <p className="ideas-login-sub">Sign in to view and manage the feature backlog</p>
           <button className="ideas-login-btn" onClick={handleLogin}>Sign in with Microsoft</button>
@@ -893,10 +870,14 @@ function Ideas() {
         {/* Header */}
         <div className="ideas-header">
           <div>
-            <div className="ideas-eyebrow">Backlog</div>
+            <div className="ideas-eyebrow">The notebook</div>
             <h1 className="ideas-heading">Feature Ideas</h1>
             <div className="ideas-counts">
-              {counts.open} open · {counts.done} done · {counts.dismissed} dismissed
+              <span><span className="ideas-count-num ideas-count-num--open">{counts.open}</span>open</span>
+              <span className="ideas-count-sep">·</span>
+              <span><span className="ideas-count-num ideas-count-num--done">{counts.done}</span>done</span>
+              <span className="ideas-count-sep">·</span>
+              <span><span className="ideas-count-num">{counts.dismissed}</span>shelved</span>
             </div>
           </div>
         </div>
@@ -924,15 +905,14 @@ function Ideas() {
           </div>
 
           <div className="ideas-search">
-            <svg width="14" height="14" viewBox="0 0 24 24">
-              <circle cx="10" cy="10" r="6" stroke="#1f3a3a" strokeWidth="2" fill="none" />
-              <line x1="15" y1="15" x2="20" y2="20" stroke="#1f3a3a" strokeWidth="2" strokeLinecap="round" />
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>
             </svg>
             <input
               className="ideas-search-input"
               value={query}
               onChange={e => setQuery(e.target.value)}
-              placeholder="Search ideas"
+              placeholder="Search ideas…"
             />
           </div>
 
@@ -949,9 +929,7 @@ function Ideas() {
           </select>
 
           <button className="ideas-add-btn" onClick={openNew}>
-            <svg width="14" height="14" viewBox="0 0 24 24">
-              <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"/>
-            </svg>
+            <span className="ideas-add-btn-plus">+</span>
             New idea
           </button>
         </div>
@@ -962,21 +940,22 @@ function Ideas() {
         {/* Card grid */}
         <div className="ideas-grid">
           {!loading && visible.length === 0 ? (
-            <div className="ideas-grid-empty">
-              <EmptyState tab={tab} onAdd={openNew} />
-            </div>
+            <EmptyState tab={tab} onAdd={openNew} />
+          ) : tab === 'all' ? (
+            <>
+              {visible.filter(i => i.status === 'open').map(idea => (
+                <IdeaCard key={idea.id} idea={idea} onView={() => openDetail(idea)} onDelete={() => handleDelete(idea)} onSetState={s => handleSetState(idea, s)} onRunBot={() => runBot(idea)} updating={updating === idea.id} botRunning={botRunning === idea.id} />
+              ))}
+              {visible.some(i => i.status !== 'open') && (
+                <div className="ideas-group-label">Recently shipped</div>
+              )}
+              {visible.filter(i => i.status !== 'open').map(idea => (
+                <IdeaCard key={idea.id} idea={idea} onView={() => openDetail(idea)} onDelete={() => handleDelete(idea)} onSetState={s => handleSetState(idea, s)} onRunBot={() => runBot(idea)} updating={updating === idea.id} botRunning={botRunning === idea.id} />
+              ))}
+            </>
           ) : (
             visible.map(idea => (
-              <IdeaCard
-                key={idea.id}
-                idea={idea}
-                onView={() => openDetail(idea)}
-                onDelete={() => handleDelete(idea)}
-                onSetState={s => handleSetState(idea, s)}
-                onRunBot={() => runBot(idea)}
-                updating={updating === idea.id}
-                botRunning={botRunning === idea.id}
-              />
+              <IdeaCard key={idea.id} idea={idea} onView={() => openDetail(idea)} onDelete={() => handleDelete(idea)} onSetState={s => handleSetState(idea, s)} onRunBot={() => runBot(idea)} updating={updating === idea.id} botRunning={botRunning === idea.id} />
             ))
           )}
         </div>
