@@ -59,6 +59,17 @@ function TrailFinder() {
   const wrapperRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    const apiKey = process.env.REACT_APP_GOOGLE_MAPS_API_KEY;
+    if (!apiKey || document.querySelector('script[data-maps-loader]')) return;
+    const script = document.createElement('script');
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
+    script.async = true;
+    script.defer = true;
+    script.dataset.mapsLoader = 'true';
+    document.head.appendChild(script);
+  }, []);
+
+  useEffect(() => {
     if (location.trim().length < 2) {
       setSuggestions([]);
       return;
