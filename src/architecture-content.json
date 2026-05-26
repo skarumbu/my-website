@@ -182,6 +182,7 @@
       "Azure Cost Management MTD spend breakdown \u2014 cached 1h due to API rate limits",
       "GitHub Actions API integration for latest workflow run status and failed jobs (optional per app); prefers push/dispatch/release events over scheduled runs; skips empty results when GITHUB_TOKEN is unset or API returns nothing",
       "CORS OPTIONS handler added for preflight requests (Access-Control-Allow-Origin: *, Allow-Headers: Authorization Content-Type)",
+      "ErrorRow objects now include error_type and status fields for enhanced debugging and analytics",
       "All data returned in a single response \u2014 frontend polls every 60 seconds"
     ],
     "architecture": {
@@ -193,7 +194,8 @@
         "GitHub Actions API requires GITHUB_TOKEN env var; gracefully degrades if unset; skips empty results when no token or runs are available; prefers push/dispatch/release events over scheduled runs",
         "Frontend dashboard polls /api/dashboard every 60 seconds",
         "Parallel fan-out keeps response time under 3s even with 5+ downstream calls",
-        "CORS OPTIONS handler added to support browser preflight requests (Access-Control-Allow-Origin: *, Allow-Headers: Authorization Content-Type)"
+        "CORS OPTIONS handler added to support browser preflight requests (Access-Control-Allow-Origin: *, Allow-Headers: Authorization Content-Type)",
+        "ErrorRow objects now include error_type and status fields, ensuring richer error context across health checks, metrics queries, and GitHub Actions logs"
       ]
     },
     "dataFlow": [
@@ -229,8 +231,8 @@
         "description": "Adds GitHub Actions last-run status to each service card, replaces the flat metrics table with inline accordion expansion."
       }
     ],
-    "updatedAt": "2026-05-14",
-    "updatedBySha": "907ccf1"
+    "updatedAt": "2026-05-26",
+    "updatedBySha": "b7176d7"
   },
   "ideas-api": {
     "summary": "Stores and serves AI-generated feature ideas in Azure Table Storage. Accepts browser JWT tokens via EasyAuth for read access and an X-Ideas-Key machine write-key for automated writes. Exposes endpoints to list and create ideas, manage projects, and trigger the ideas-bot Container App Job.",

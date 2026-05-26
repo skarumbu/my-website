@@ -1,5 +1,11 @@
 [
   {
+    "package": "dashboard-api",
+    "capturedAt": "2026-05-26",
+    "commitSha": "b7176d7",
+    "commitMessage": "feat: pass error_type and status through ErrorRow"
+  },
+  {
     "package": "ideas-bot",
     "capturedAt": "2026-05-26",
     "commitSha": "2f2bb1b",
