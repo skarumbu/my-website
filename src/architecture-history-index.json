@@ -1,5 +1,11 @@
 [
   {
+    "package": "ideas-bot",
+    "capturedAt": "2026-05-26",
+    "commitSha": "2f2bb1b",
+    "commitMessage": "feat: add structured logging via shared-logging"
+  },
+  {
     "package": "dashboard-api",
     "capturedAt": "2026-05-14",
     "commitSha": "907ccf1",
