@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: in_progress
-last_updated: "2026-05-30T18:55:00.000Z"
+last_updated: "2026-05-30T18:55:12.049Z"
 progress:
   total_phases: 5
   completed_phases: 0
   total_plans: 3
-  completed_plans: 1
-  percent: 33
+  completed_plans: 2
+  percent: 0
 ---
 
 # Project State: Personal Site — Posts & Writing
@@ -30,7 +30,7 @@ progress:
 ## Current Position
 
 Phase: 01 (storage-schema) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 | Field | Value |
 |-------|-------|
 | Current phase | 1 — Storage & Schema |
@@ -40,13 +40,14 @@ Plan: 2 of 3
 
 **Progress:**
 
-```
+[███████░░░] 67%
 [███░░░░░░░] 33%
 Phase 1 [███░░░░░░░] 1/3 plans complete
 Phase 2 [          ] Not started
 Phase 3 [          ] Not started
 Phase 4 [          ] Not started
 Phase 5 [          ] Not started
+
 ```
 
 ---
@@ -62,6 +63,7 @@ Phase 5 [          ] Not started
 | Phase 01-storage-schema P01 | 15 min | 2 tasks | 12 files |
 
 ---
+| Phase 01 P02 | 25 | 3 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -111,3 +113,8 @@ Phase 5 [          ] Not started
 ---
 
 *State initialized: 2026-05-30*
+
+## Decisions
+
+- [Phase ?]: SDK pinned
+- [Phase ?]: Azurite conftest
