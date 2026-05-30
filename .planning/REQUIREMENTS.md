@@ -78,41 +78,41 @@
 
 ## Traceability
 
-*Updated during roadmap creation.*
+*Updated: 2026-05-30 after roadmap creation.*
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| STOR-01 | — | Pending |
-| STOR-02 | — | Pending |
-| STOR-03 | — | Pending |
-| API-01 | — | Pending |
-| API-02 | — | Pending |
-| API-03 | — | Pending |
-| API-04 | — | Pending |
-| API-05 | — | Pending |
-| READ-01 | — | Pending |
-| READ-02 | — | Pending |
-| READ-03 | — | Pending |
-| READ-04 | — | Pending |
-| READ-05 | — | Pending |
-| EDIT-01 | — | Pending |
-| EDIT-02 | — | Pending |
-| EDIT-03 | — | Pending |
-| EDIT-04 | — | Pending |
-| EDIT-05 | — | Pending |
-| EDIT-06 | — | Pending |
-| EDIT-07 | — | Pending |
-| EDIT-08 | — | Pending |
-| EDIT-09 | — | Pending |
-| SEC-01 | — | Pending |
-| SEC-02 | — | Pending |
-| SEC-03 | — | Pending |
+| STOR-01 | Phase 1 | Pending |
+| STOR-02 | Phase 1 | Pending |
+| STOR-03 | Phase 1 | Pending |
+| API-01 | Phase 2 | Pending |
+| API-02 | Phase 2 | Pending |
+| SEC-03 | Phase 2 | Pending |
+| READ-01 | Phase 3 | Pending |
+| READ-02 | Phase 3 | Pending |
+| READ-03 | Phase 3 | Pending |
+| READ-04 | Phase 3 | Pending |
+| READ-05 | Phase 3 | Pending |
+| SEC-01 | Phase 3 | Pending |
+| API-03 | Phase 4 | Pending |
+| API-04 | Phase 4 | Pending |
+| API-05 | Phase 4 | Pending |
+| SEC-02 | Phase 4 | Pending |
+| EDIT-01 | Phase 5 | Pending |
+| EDIT-02 | Phase 5 | Pending |
+| EDIT-03 | Phase 5 | Pending |
+| EDIT-04 | Phase 5 | Pending |
+| EDIT-05 | Phase 5 | Pending |
+| EDIT-06 | Phase 5 | Pending |
+| EDIT-07 | Phase 5 | Pending |
+| EDIT-08 | Phase 5 | Pending |
+| EDIT-09 | Phase 5 | Pending |
 
 **Coverage:**
 - v1 requirements: 25 total
-- Mapped to phases: 0 (updated by roadmapper)
-- Unmapped: 25 ⚠️
+- Mapped to phases: 25 ✓
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-05-30*
-*Last updated: 2026-05-30 after initial definition*
+*Last updated: 2026-05-30 after roadmap creation*

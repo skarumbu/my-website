@@ -60,6 +60,7 @@ A private writing space that publishes instantly to a public reading feed — so
 - **Hosting**: Azure Static Web Apps (SPA) + Azure Functions — backend stays in Functions
 - **Storage**: Azure Blob Storage — no new database services
 - **Build**: Create React App (react-scripts) — no ejecting or build system changes
+- **Repo structure**: Backend API lives in `C:\Users\Sriram\posts-api\` (sibling repo, Python Azure Functions — matches `ideas-api`, `dashboard_api` pattern). Infrastructure provisioned in `C:\Users\Sriram\azure-infrastructure\` (existing Bicep repo).
 
 ## Key Decisions
 
