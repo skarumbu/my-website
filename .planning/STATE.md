@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: in_progress
-last_updated: "2026-05-30T18:59:42.752Z"
+last_updated: "2026-06-01T05:41:27.536Z"
 progress:
   total_phases: 5
-  completed_phases: 0
-  total_plans: 3
-  completed_plans: 2
-  percent: 0
+  completed_phases: 1
+  total_plans: 5
+  completed_plans: 4
+  percent: 20
 ---
 
 # Project State: Personal Site — Posts & Writing
@@ -29,21 +29,21 @@ progress:
 
 ## Current Position
 
-Phase: 01 (storage-schema) — EXECUTING
-Plan: 3 of 3
+Phase: 02 (public-reading-api) — EXECUTING
+Plan: 2 of 2
 | Field | Value |
 |-------|-------|
-| Current phase | 1 — Storage & Schema |
-| Current plan | 2 of 3 (01-02) |
+| Current phase | 2 — Public Reading API |
+| Current plan | 1 of 2 (02-01) |
 | Phase status | In Progress |
 | Overall status | Executing |
 
 **Progress:**
 
-[███████░░░] 67%
-[███░░░░░░░] 33%
-Phase 1 [███░░░░░░░] 1/3 plans complete
-Phase 2 [          ] Not started
+[████████░░] 80%
+[██░░░░░░░░] 20%
+Phase 1 [██████████] 3/3 plans complete ✓
+Phase 2 [          ] 0/2 plans complete
 Phase 3 [          ] Not started
 Phase 4 [          ] Not started
 Phase 5 [          ] Not started
@@ -64,6 +64,7 @@ Phase 5 [          ] Not started
 
 ---
 | Phase 01 P02 | 25 | 3 tasks | 7 files |
+| Phase 02-public-reading-api P01 | 15 | 2 tasks | 2 files |
 
 ## Accumulated Context
 

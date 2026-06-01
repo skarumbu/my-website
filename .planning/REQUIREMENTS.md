@@ -10,8 +10,8 @@
 - [x] **STOR-01**: Azure Blob Storage container provisioned for posts (one `.md` file per post)
 - [x] **STOR-02**: Post frontmatter schema defined and documented (`title`, `slug`, `date`, `published`, `description`)
 - [x] **STOR-03**: Slug generation algorithm implemented with deduplication (no two posts share a slug)
-- [ ] **API-01**: `GET /api/posts` returns all published posts sorted by date descending (public)
-- [ ] **API-02**: `GET /api/posts/:slug` returns a single published post by slug (public)
+- [x] **API-01**: `GET /api/posts` returns all published posts sorted by date descending (public)
+- [x] **API-02**: `GET /api/posts/:slug` returns a single published post by slug (public)
 - [ ] **API-03**: `POST /api/posts` creates a new post blob from request body (MSAL-gated)
 - [ ] **API-04**: `PUT /api/posts/:slug` updates an existing post blob (MSAL-gated)
 - [ ] **API-05**: `DELETE /api/posts/:slug` deletes a post blob (MSAL-gated)
@@ -85,8 +85,8 @@
 | STOR-01 | Phase 1 | Complete |
 | STOR-02 | Phase 1 | Complete |
 | STOR-03 | Phase 1 | Complete |
-| API-01 | Phase 2 | Pending |
-| API-02 | Phase 2 | Pending |
+| API-01 | Phase 2 | Complete |
+| API-02 | Phase 2 | Complete |
 | SEC-03 | Phase 2 | Pending |
 | READ-01 | Phase 3 | Pending |
 | READ-02 | Phase 3 | Pending |

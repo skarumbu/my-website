@@ -54,11 +54,11 @@
   2. `GET /api/posts/:slug` returns the full post body and frontmatter for a valid published slug
   3. Requests hitting the Blob container directly (bypassing Functions) are rejected — the container is private
 
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 
 **Wave 1**
 
-- [ ] 02-01-PLAN.md — Implement list_posts + get_post handlers in function_app.py with full test suite (7 tests, Azurite + unit)
+- [x] 02-01-PLAN.md — Implement list_posts + get_post handlers in function_app.py with full test suite (7 tests, Azurite + unit)
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -121,7 +121,7 @@
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Storage & Schema | 3/3 | Complete   | 2026-05-31 |
-| 2. Public Reading API | 0/2 | Not started | - |
+| 2. Public Reading API | 1/2 | In Progress|  |
 | 3. Public Reading UI | 0/? | Not started | - |
 | 4. Write API | 0/? | Not started | - |
 | 5. Editor UI | 0/? | Not started | - |
