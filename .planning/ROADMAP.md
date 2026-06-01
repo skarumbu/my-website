@@ -11,7 +11,7 @@
 ## Phases
 
 - [x] **Phase 1: Storage & Schema** — Blob container provisioned, frontmatter spec locked, slug algorithm implemented (completed 2026-05-31)
-- [ ] **Phase 2: Public Reading API** — Read-only Azure Functions endpoints serving published posts
+- [x] **Phase 2: Public Reading API** — Read-only Azure Functions endpoints serving published posts (completed 2026-05-31)
 - [ ] **Phase 3: Public Reading UI** — Public `/posts` list and `/posts/:slug` reader live on site
 - [ ] **Phase 4: Write API** — Authenticated create/update/delete endpoints with Bearer token validation
 - [ ] **Phase 5: Editor UI** — Auth-gated `/write` editor with full create/edit/publish/delete flows and autosave
@@ -121,7 +121,7 @@
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Storage & Schema | 3/3 | Complete   | 2026-05-31 |
-| 2. Public Reading API | 1/2 | In Progress|  |
+| 2. Public Reading API | 2/2 | Complete | 2026-05-31 |
 | 3. Public Reading UI | 0/? | Not started | - |
 | 4. Write API | 0/? | Not started | - |
 | 5. Editor UI | 0/? | Not started | - |
@@ -129,4 +129,4 @@
 ---
 
 *Roadmap created: 2026-05-30*
-*Last updated: 2026-05-31 after Phase 2 planning*
+*Last updated: 2026-05-31 after Phase 2 completion*

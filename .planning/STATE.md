@@ -6,10 +6,10 @@ status: in_progress
 last_updated: "2026-06-01T05:41:27.536Z"
 progress:
   total_phases: 5
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 5
-  completed_plans: 4
-  percent: 20
+  completed_plans: 5
+  percent: 40
 ---
 
 # Project State: Personal Site — Posts & Writing
@@ -23,27 +23,25 @@ progress:
 
 **Core value:** A private writing space that publishes instantly to a public reading feed — write anything, share without friction.
 
-**Current focus:** Phase 01 — storage-schema
+**Current focus:** Phase 03 — public-reading-ui
 
 ---
 
 ## Current Position
 
-Phase: 02 (public-reading-api) — EXECUTING
-Plan: 2 of 2
+Phase: 03 (public-reading-ui) — NEXT
 | Field | Value |
 |-------|-------|
-| Current phase | 2 — Public Reading API |
-| Current plan | 1 of 2 (02-01) |
-| Phase status | In Progress |
-| Overall status | Executing |
+| Current phase | 3 — Public Reading UI |
+| Phase status | Not started |
+| Overall status | In Progress |
 
 **Progress:**
 
 [████████░░] 80%
-[██░░░░░░░░] 20%
+[████░░░░░░] 40%
 Phase 1 [██████████] 3/3 plans complete ✓
-Phase 2 [          ] 0/2 plans complete
+Phase 2 [██████████] 2/2 plans complete ✓
 Phase 3 [          ] Not started
 Phase 4 [          ] Not started
 Phase 5 [          ] Not started
