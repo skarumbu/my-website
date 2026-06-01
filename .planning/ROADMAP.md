@@ -10,7 +10,7 @@
 
 ## Phases
 
-- [ ] **Phase 1: Storage & Schema** — Blob container provisioned, frontmatter spec locked, slug algorithm implemented
+- [x] **Phase 1: Storage & Schema** — Blob container provisioned, frontmatter spec locked, slug algorithm implemented (completed 2026-05-31)
 - [ ] **Phase 2: Public Reading API** — Read-only Azure Functions endpoints serving published posts
 - [ ] **Phase 3: Public Reading UI** — Public `/posts` list and `/posts/:slug` reader live on site
 - [ ] **Phase 4: Write API** — Authenticated create/update/delete endpoints with Bearer token validation
@@ -32,7 +32,7 @@
   2. A documented frontmatter schema (`title`, `slug`, `date`, `published`, `description`) is in place and validated against a sample post
   3. A slug generation function produces URL-safe slugs and rejects or deduplicates any slug collision
 
-**Plans:** 2/3 plans executed
+**Plans:** 3/3 plans complete
 **Wave 1**
 
 - [x] 01-01-PLAN.md — Scaffold posts-api repo: git init, config files, venv, package install, pytest config, Azurite fixture, stub tests
@@ -40,7 +40,7 @@
 **Wave 2** *(blocked on Wave 1 completion)*
 
 - [x] 01-02-PLAN.md — Implement schema.py + slugs.py with 13 passing pytest tests (Azurite-backed blob round-trip)
-- [ ] 01-03-PLAN.md — Write postsapi.bicep + wire into main.bicep + create GitHub repo + deploy to Azure
+- [x] 01-03-PLAN.md — Write postsapi.bicep + wire into main.bicep + create GitHub repo + deploy to Azure
 
 ### Phase 2: Public Reading API
 
@@ -54,7 +54,15 @@
   2. `GET /api/posts/:slug` returns the full post body and frontmatter for a valid published slug
   3. Requests hitting the Blob container directly (bypassing Functions) are rejected — the container is private
 
-**Plans**: TBD
+**Plans:** 2 plans
+
+**Wave 1**
+
+- [ ] 02-01-PLAN.md — Implement list_posts + get_post handlers in function_app.py with full test suite (7 tests, Azurite + unit)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 02-02-PLAN.md — SEC-03 smoke-test checkpoint: verify direct blob URL returns 403
 
 ### Phase 3: Public Reading UI
 
@@ -112,8 +120,8 @@
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Storage & Schema | 2/3 | In Progress|  |
-| 2. Public Reading API | 0/? | Not started | - |
+| 1. Storage & Schema | 3/3 | Complete   | 2026-05-31 |
+| 2. Public Reading API | 0/2 | Not started | - |
 | 3. Public Reading UI | 0/? | Not started | - |
 | 4. Write API | 0/? | Not started | - |
 | 5. Editor UI | 0/? | Not started | - |
@@ -121,4 +129,4 @@
 ---
 
 *Roadmap created: 2026-05-30*
-*Last updated: 2026-05-30 after Phase 1 planning*
+*Last updated: 2026-05-31 after Phase 2 planning*
