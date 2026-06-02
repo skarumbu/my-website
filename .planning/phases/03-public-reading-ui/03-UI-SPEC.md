@@ -59,23 +59,26 @@ Source: Derived from existing patterns in `ideas.css` (`.ideas-content { padding
 
 All sizes and weights match the existing DM Sans + Fraunces system already in use site-wide.
 
+Declared sizes: exactly 4 (13px, 16px, 22px, 48px).
+Declared weights: exactly 2 (400 regular, 600 semibold).
+
 | Role | Size | Weight | Line Height | Font | Usage |
 |------|------|--------|-------------|------|-------|
-| Body | 16px | 400 | 1.6 | DM Sans | Post prose paragraphs, description text on list rows |
-| Label | 13px | 500 | 1.4 | DM Sans | Date display on list rows and reader header, "Back to Writing" link |
-| Heading | 22px | 600 (Fraunces variation) | 1.25 | Fraunces | Post title on list row, post title on reader header |
-| Page heading | 48px | 400 | 0.95 | Fraunces | "Writing" H1 on /posts page |
+| Small / label | 13px | 400 | 1.4 | DM Sans | Date display on list rows and reader header, "Back to Writing" link, inline code |
+| Body | 16px | 400 | 1.6 | DM Sans | Post prose paragraphs, description text on list rows, H3 headings in markdown body |
+| Heading | 22px | 600 (Fraunces variation) | 1.25 | Fraunces | Post title on list row, post title on reader header, H2 headings in markdown body |
+| Display | 48px | 400 | 0.95 | Fraunces | "Writing" H1 on /posts page |
 
 Additional markdown body typography (rendered by react-markdown inside reader):
 
 | Element | Size | Weight | Line Height | Font |
 |---------|------|--------|-------------|------|
-| `h1` in body | 28px | 600 | 1.2 | Fraunces |
+| `h1` in body | 22px | 600 | 1.25 | Fraunces |
 | `h2` in body | 22px | 600 | 1.25 | Fraunces |
-| `h3` in body | 18px | 600 | 1.3 | DM Sans |
+| `h3` in body | 16px | 600 | 1.3 | DM Sans |
 | `p` | 16px | 400 | 1.6 | DM Sans |
-| `code` inline | 14px | 400 | inherit | monospace (system: `ui-monospace, 'Cascadia Code', 'Source Code Pro', monospace`) |
-| `pre` / code block | 14px | 400 | 1.5 | monospace |
+| `code` inline | 13px | 400 | inherit | monospace (system: `ui-monospace, 'Cascadia Code', 'Source Code Pro', monospace`) |
+| `pre` / code block | 13px | 400 | 1.5 | monospace |
 
 Source: Heading size from `ideas.css` `.ideas-card-title { font-size: 20px }` and `.ideas-heading { clamp(48px, 6vw, 72px) }` — page heading uses Fraunces at 48px to match Ideas page heading pattern. Body 16px / 1.6 is standard editorial line-height, consistent with `.ideas-card-body { font: 400 14px/1.55 }` trend, stepped up to 16px for long-form reading comfort.
 
@@ -89,14 +92,14 @@ All values taken from existing `:root` CSS variables defined in `src/styling/hom
 |------|-------|-------|
 | Dominant (60%) | `#FFEFD9` (`--bg-1`) | Page background on /posts and /posts/:slug — same warm cream as all other pages |
 | Secondary (30%) | `#FFFFFF` / `rgba(255,255,255,0.85)` | List row hover background, reader column surface, code block background (slightly darker: `rgba(58,36,24,0.04)`) |
-| Accent (10%) | `#E5533C` (`--accent`) | "Writing" nav link active state only |
+| Accent (10%) | `#E5533C` (`--accent`) | Nav link active state, inline hyperlinks within post body, and error text |
 | Ink / text | `#3A2418` (`--ink`) | All body text, post titles, page heading |
 | Ink secondary | `#6B4A3A` (`--ink-2`) | Post description on list row, reader prose (slightly muted) |
 | Ink tertiary | `#A38876` (`--ink-3`) | Date display, back-link muted text |
 | Border / divider | `#F0D7B6` (`--line`) | List row dividers, reader column rule below header |
 | Error | `#E5533C` (`--accent`) | `.posts-error` inline error text (matches existing `ideas-error` pattern) |
 
-Accent reserved for: nav link active indicator only. No other elements on /posts or /posts/:slug use the accent color.
+Accent reserved for: nav link active state, inline hyperlinks within post body, and error text.
 
 Source: All hex values copied directly from `src/styling/home.css` `:root` block.
 
@@ -129,7 +132,7 @@ Source: All hex values copied directly from `src/styling/home.css` `:root` block
 
 **Inside each row:**
 - `.posts-row-title` — Fraunces, 22px, weight 600 (variation settings matching `ideas-card-title`), `color: var(--ink)`, left-aligned
-- `.posts-row-date` — DM Sans, 13px, weight 500, `color: var(--ink-3)`, right-aligned, `white-space: nowrap`
+- `.posts-row-date` — DM Sans, 13px, weight 400, `color: var(--ink-3)`, right-aligned, `white-space: nowrap`
 - `.posts-row-desc` — DM Sans, 16px, weight 400, `color: var(--ink-2)`, `line-height: 1.5`, `margin-top: 4px`, grid-column span 2
 
 **Loading state:**
@@ -163,14 +166,14 @@ Source: All hex values copied directly from `src/styling/home.css` `:root` block
 **Back link:**
 - `<a className="post-reader-back" href="/posts">← Writing</a>`
 - Placed at top of content column, above post header
-- DM Sans, 13px, weight 500, color `var(--ink-3)`, no underline, hover: `color: var(--ink)`
+- DM Sans, 13px, weight 400, color `var(--ink-3)`, no underline, hover: `color: var(--ink)`
 - Margin-bottom: 32px
 - Source: CONTEXT.md D-08, READ-05
 
 **Post header (above body):**
 - `.post-reader-header` — margin-bottom 32px, padding-bottom 24px, border-bottom `1px solid var(--line)`
-- `.post-reader-title` — Fraunces, 28px (h1 size), weight 600, line-height 1.2, color `var(--ink)`, margin 0 0 8px
-- `.post-reader-date` — DM Sans, 13px, weight 500, color `var(--ink-3)`, margin 0 0 12px
+- `.post-reader-title` — Fraunces, 22px, weight 600, line-height 1.25, color `var(--ink)`, margin 0 0 8px
+- `.post-reader-date` — DM Sans, 13px, weight 400, color `var(--ink-3)`, margin 0 0 12px
 - `.post-reader-desc` — DM Sans, 16px, weight 400, color `var(--ink-2)`, line-height 1.5, margin 0
 - Source: CONTEXT.md D-05
 
@@ -179,17 +182,17 @@ Source: All hex values copied directly from `src/styling/home.css` `:root` block
 - Rendered via `react-markdown` — no `dangerouslySetInnerHTML` (SEC-01, D-11)
 - Prose styles applied to `.post-reader-body` children:
   - `p`: 16px, weight 400, line-height 1.6, color `var(--ink)`, margin 0 0 16px
-  - `h1`: Fraunces 28px, weight 600, line-height 1.2, margin 32px 0 12px
-  - `h2`: Fraunces 22px, weight 600, line-height 1.25, margin 28px 0 10px
-  - `h3`: DM Sans 18px, weight 600, line-height 1.3, margin 24px 0 8px
+  - `h1`: Fraunces 22px, weight 600, line-height 1.25, margin 32px 0 12px
+  - `h2`: Fraunces 22px, weight 600, line-height 1.25, margin 28px 0 12px
+  - `h3`: DM Sans 16px, weight 600, line-height 1.3, margin 24px 0 8px
   - `a`: color `var(--accent)`, no underline default, underline on hover
   - `strong`: weight 600, color `var(--ink)`
   - `em`: font-style italic
   - `ul`, `ol`: margin 0 0 16px, padding-left 24px
   - `li`: margin 0 0 4px, line-height 1.6
-  - `code` inline: `background: rgba(58,36,24,0.06); border-radius: 4px; padding: 2px 5px; font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', monospace; font-size: 14px; color: var(--ink);`
+  - `code` inline: `background: rgba(58,36,24,0.06); border-radius: 4px; padding: 4px 8px; font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', monospace; font-size: 13px; color: var(--ink);`
   - `pre`: `background: rgba(58,36,24,0.05); border: 1px solid var(--line); border-radius: 8px; padding: 16px; overflow-x: auto; margin: 0 0 16px;`
-  - `pre code`: `background: none; padding: 0; border-radius: 0; font-size: 14px; line-height: 1.5; color: var(--ink);`
+  - `pre code`: `background: none; padding: 0; border-radius: 0; font-size: 13px; line-height: 1.5; color: var(--ink);`
   - `blockquote`: `border-left: 3px solid var(--line); padding-left: 16px; color: var(--ink-2); margin: 0 0 16px;`
 - Source: CONTEXT.md D-06 (code blocks: monospace, darker background, padding — no syntax highlighting)
 
