@@ -531,17 +531,19 @@ function PostReader() {
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **CORS for local development**
    - What we know: `function_app.py` sets `ALLOWED_ORIGIN = "https://www.quixotry.me"` — a single hardcoded origin.
    - What's unclear: Is there a dev environment override or a `local.settings.json` with `*` origins?
    - Recommendation: Check `C:\Users\Sriram\posts-api\local.settings.json` during Wave 0. If `localhost` isn't allowed, document the local dev workaround (e.g., CORS browser extension or proxy).
+   - **RESOLVED:** Plan 03 Task 3 (human-verify checkpoint) explicitly handles this: devs either add `http://localhost:3000` to the dev function CORS config or verify against the deployed API after branch merge. No blocking action needed before execution.
 
 2. **Home page card grid span balance**
    - What we know: Current grid has Digits (span 3, span 2), NBA (span 3), Trail (span 3), Ideas (span 2), Learn (span 4) = fits a 6-column grid across 2 rows.
    - What's unclear: Adding a `span 3` Writing card may leave an orphaned partial row depending on order.
    - Recommendation: The planner should verify card order produces a complete grid row. UI-SPEC says `span 3` for Writing — pair it with an adjacent `span 3` card or adjust to `span 2` + `span 4` if layout demands it.
+   - **RESOLVED:** Plan 03 Task 2 ships `span 3` per UI-SPEC without pre-optimizing. Plan 03 Task 3 (human-verify checkpoint) confirms final visual layout — if the grid shows a broken row, the checkpoint resume signal requests a span adjustment. No blocking action needed before execution.
 
 ---
 
