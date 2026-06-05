@@ -9,6 +9,7 @@ import TrailFinder from './TrailFinder.tsx';
 import Dashboard from './Dashboard.tsx';
 import Ideas from './Ideas.tsx';
 import LearningPlan from './LearningPlan.tsx';
+import Posts from './Posts.tsx';
 import reportWebVitals from './reportWebVitals';
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { PublicClientApplication } from "@azure/msal-browser";
@@ -49,6 +50,10 @@ const router = createBrowserRouter([
   {
     path: "/learning-plan",
     element: <LearningPlan />
+  },
+  {
+    path: "/posts",
+    element: <Posts />
   }
 ]);
 
