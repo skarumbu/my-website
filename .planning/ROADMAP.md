@@ -78,8 +78,20 @@
   4. Post content is rendered via `react-markdown` — no `dangerouslySetInnerHTML` is used for post content
   5. A "back to posts" link on each post page returns the reader to `/posts`
 
-**Plans**: TBD
+**Plans:** 3 plans
 **UI hint**: yes
+
+**Wave 1**
+
+- [ ] 03-01-PLAN.md — Install react-markdown + Wave 0 test scaffolds; build `/posts` list page (Posts.tsx + posts.css) and register route (READ-01, READ-02)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 03-02-PLAN.md — Build `/posts/:slug` reader (PostReader.tsx + post-reader.css) with react-markdown rendering; register route (READ-03, READ-04, READ-05, SEC-01)
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [ ] 03-03-PLAN.md — Site integration: Writing nav links + home card + CI env var; human-verify live read path (D-09, D-10)
 
 ### Phase 4: Write API
 
@@ -122,11 +134,11 @@
 |-------|----------------|--------|-----------|
 | 1. Storage & Schema | 3/3 | Complete   | 2026-05-31 |
 | 2. Public Reading API | 2/2 | Complete | 2026-05-31 |
-| 3. Public Reading UI | 0/? | Not started | - |
+| 3. Public Reading UI | 0/3 | Planned | - |
 | 4. Write API | 0/? | Not started | - |
 | 5. Editor UI | 0/? | Not started | - |
 
 ---
 
 *Roadmap created: 2026-05-30*
-*Last updated: 2026-05-31 after Phase 2 completion*
+*Last updated: 2026-06-04 after Phase 3 planning*
