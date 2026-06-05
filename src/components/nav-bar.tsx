@@ -20,6 +20,9 @@ const NavBar: React.FC = () => {
       <a href="/learning-plan" className="button">
         Learning Plan
       </a>
+      <a href="/posts" className="button">
+        Writing
+      </a>
     </nav>
   );
 };

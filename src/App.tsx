@@ -21,6 +21,7 @@ const App: React.FC = () => {
           <a href="/trail-finder">Trail Finder</a>
           <a href="/ideas">Ideas</a>
           <a href="/learning-plan">Learning Plan</a>
+          <a href="/posts">Writing</a>
         </div>
       </nav>
 
@@ -95,6 +96,17 @@ const App: React.FC = () => {
             <div className="card-label">Brain food</div>
             <div className="card-title">Learning Plan</div>
             <div className="card-desc">What I'm chewing on this quarter — shaders, Spanish, and how to actually finish a book.</div>
+          </div>
+          <div className="arrow"><ArrowIcon /></div>
+        </a>
+
+        {/* Writing */}
+        <a href="/posts" className="card card-writing">
+          <span className="card-decor" style={{ right: 12, bottom: -8, fontSize: 110 }}>✍</span>
+          <div>
+            <div className="card-label">Journal</div>
+            <div className="card-title">Writing</div>
+            <div className="card-desc">Thoughts, notes, and project write-ups.</div>
           </div>
           <div className="arrow"><ArrowIcon /></div>
         </a>

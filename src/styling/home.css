@@ -231,6 +231,13 @@
 }
 .card-learn .card-decor { right: 12px; bottom: -12px; font-size: 130px; }
 
+.card-writing {
+  grid-column: span 3;
+  background: var(--c-peach);
+  color: var(--c-peach-ink);
+}
+.card-writing .card-decor { right: 12px; bottom: -8px; font-size: 110px; }
+
 /* Digits pebble preview */
 .digits-preview {
   position: absolute;
@@ -390,7 +397,8 @@
   .card-nba,
   .card-trail,
   .card-ideas,
-  .card-learn {
+  .card-learn,
+  .card-writing {
     grid-column: span 2;
     grid-row: auto;
   }

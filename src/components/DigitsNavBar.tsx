@@ -7,6 +7,7 @@ const NAV_LINKS = [
   { href: '/trail-finder',  label: 'Trail Finder' },
   { href: '/ideas',         label: 'Ideas' },
   { href: '/learning-plan', label: 'Learning Plan' },
+  { href: '/posts',         label: 'Writing' },
 ];
 
 const DigitsNavBar: React.FC = () => {
