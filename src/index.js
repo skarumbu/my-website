@@ -10,6 +10,7 @@ import Dashboard from './Dashboard.tsx';
 import Ideas from './Ideas.tsx';
 import LearningPlan from './LearningPlan.tsx';
 import Posts from './Posts.tsx';
+import PostReader from './PostReader.tsx';
 import reportWebVitals from './reportWebVitals';
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { PublicClientApplication } from "@azure/msal-browser";
@@ -54,6 +55,10 @@ const router = createBrowserRouter([
   {
     path: "/posts",
     element: <Posts />
+  },
+  {
+    path: "/posts/:slug",
+    element: <PostReader />
   }
 ]);
 
