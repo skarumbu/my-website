@@ -1,5 +1,5 @@
 {
-  "model_profile": "balanced",
+  "model_profile": "inherit",
   "commit_docs": true,
   "parallelization": true,
   "search_gitignored": false,
@@ -24,7 +24,7 @@
     "ai_integration_phase": true,
     "tdd_mode": false,
     "human_verify_mode": "end-of-phase",
-    "auto_advance": false,
+    "auto_advance": true,
     "_auto_chain_active": true,
     "node_repair": true,
     "node_repair_budget": 2,
@@ -48,10 +48,11 @@
     "post_planning_gaps": true,
     "security_enforcement": true,
     "security_asvs_level": 1,
-    "security_block_on": "high"
+    "security_block_on": "high",
+    "ui_review": true
   },
   "hooks": {
-    "context_warnings": true,
+    "context_warnings": false,
     "workflow_guard": false
   },
   "ship": {
