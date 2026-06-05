@@ -1,0 +1,95 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT@9..144,400..800,100&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap');
+
+.posts-page {
+  min-height: 100vh;
+  background: var(--bg-1);
+  font-family: 'DM Sans', system-ui, sans-serif;
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+.posts-content {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 24px 40px 120px;
+}
+
+.posts-heading {
+  font-family: 'Fraunces', serif;
+  font-size: 48px;
+  font-weight: 400;
+  line-height: 0.95;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+  margin: 48px 0 32px;
+}
+
+.posts-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.posts-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: auto auto;
+  padding: 20px 0;
+  border-bottom: 1px solid var(--line);
+  text-decoration: none;
+  color: inherit;
+  border-radius: 8px;
+  transition: background 180ms, padding-left 180ms;
+  cursor: pointer;
+}
+
+.posts-row:hover {
+  background: rgba(255, 255, 255, 0.6);
+  padding-left: 12px;
+}
+
+.posts-row-title {
+  font-family: 'Fraunces', serif;
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--ink);
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.posts-row-date {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--ink-3);
+  white-space: nowrap;
+  grid-column: 2;
+  grid-row: 1;
+  align-self: center;
+  padding-left: 16px;
+}
+
+.posts-row-desc {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  color: var(--ink-2);
+  line-height: 1.5;
+  margin-top: 4px;
+  grid-column: 1 / -1;
+  grid-row: 2;
+}
+
+.posts-error {
+  font-size: 13px;
+  color: var(--accent);
+  margin: 0 0 12px;
+}
+
+.posts-empty {
+  font-size: 16px;
+  color: var(--ink-2);
+  text-align: center;
+  padding: 48px 0;
+}
