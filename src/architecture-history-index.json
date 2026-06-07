@@ -2,6 +2,12 @@
   {
     "package": "ideas-api",
     "capturedAt": "2026-06-07",
+    "commitSha": "91c5450",
+    "commitMessage": "fix: allow machine key auth on PATCH /projects/{id}"
+  },
+  {
+    "package": "ideas-api",
+    "capturedAt": "2026-06-07",
     "commitSha": "0dc7a44",
     "commitMessage": "feat: add repos field to projects, PATCH /projects/{id}, machine auth on GET /projects"
   },

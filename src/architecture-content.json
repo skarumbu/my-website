@@ -238,16 +238,7 @@
     "summary": "Stores and serves AI-generated feature ideas in Azure Table Storage. Accepts browser JWT tokens via EasyAuth for read access and an X-Ideas-Key machine write-key for automated writes. Exposes endpoints to list and create ideas, manage projects, and trigger the ideas-bot Container App Job.",
     "description": "Azure Functions app that stores and serves feature ideas in Table Storage. Supports two auth modes: browser JWT tokens via EasyAuth for read access, and an X-Ideas-Key machine write-key for automated writes. Exposes a trigger endpoint for the ideas-bot.",
     "features": [
-      "List and create ideas in Azure Table Storage",
-      "List and create projects \u2014 ideas are grouped under projects",
-      "List, create, and delete per-idea status updates (comments section)",
-      "EasyAuth JWT authentication for browser access (read)",
-      "X-Ideas-Key machine write-key for automated idea creation (write)",
-      "POST /api/ideas/{id}/run-bot \u2014 triggers the ideas-bot Container App Job for a specific idea, with optional model override",
-      "PATCH /api/projects/{id} \u2014 updates project metadata, including associated repositories",
-      "Projects now support an optional 'repos' field (list of repository URLs)",
-      "Ideas, projects, and updates stored in separate Table Storage tables",
-      "Supports additional bot status: needs_info"
+      "PATCH /api/projects/{id} \u2014 updates project metadata, including associated repositories, now supports both EasyAuth JWT authentication and X-Ideas-Key machine write-key for access"
     ],
     "architecture": {
       "overview": "HTTP-triggered Azure Functions backed by Table Storage. EasyAuth handles browser auth transparently at the Azure layer \u2014 no auth code in the application. A separate machine key enables automation (ideas-bot, external scripts) to write ideas without user credentials.",
@@ -255,7 +246,7 @@
         "EasyAuth injects the validated Google ID token as a request header \u2014 the function reads sub and email from it",
         "X-Ideas-Key is a long-lived secret stored as a Function App setting (not in the codebase)",
         "run-bot endpoint starts a Container App Job execution via the Azure SDK and returns immediately, with optional model override passed as AZURE_OPENAI_DEPLOYMENT",
-        "PATCH /projects/{id} endpoint updates project metadata, including the 'repos' field stored as a JSON array in Table Storage",
+        "PATCH /projects/{id} endpoint updates project metadata, including the 'repos' field stored as a JSON array in Table Storage, now supports machine key authentication alongside user authentication",
         "No compute runs between requests \u2014 fully serverless, scales to zero",
         "Table Storage partition key = project ID; row key = idea ID (UUID)",
         "Updates table uses idea ID as the partition key and UUID as the row key",
@@ -273,7 +264,7 @@
       }
     ],
     "updatedAt": "2026-06-07",
-    "updatedBySha": "0dc7a44",
+    "updatedBySha": "91c5450",
     "designDocs": [
       {
         "title": "ADR: Per-Idea Status Updates",
