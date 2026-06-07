@@ -39,6 +39,7 @@ interface Idea {
 interface Project {
   id: string;
   name: string;
+  repos?: string[];
 }
 
 interface Update {
@@ -84,7 +85,8 @@ interface ComposerProps {
   onClose: () => void;
   onSubmit: (
     data: { project: string; project_id: string | null; title: string; body: string; status: Idea['status'] },
-    newProjectName?: string
+    newProjectName?: string,
+    newProjectRepos?: string[]
   ) => void;
   initial: Idea | null;
   projects: Project[];
@@ -97,6 +99,7 @@ function Composer({ open, onClose, onSubmit, initial, projects }: ComposerProps)
   const [body, setBody] = useState(initial?.body || '');
   const [status, setStatus] = useState<Idea['status']>(initial?.status || 'open');
   const [newProjectName, setNewProjectName] = useState('');
+  const [newProjectRepos, setNewProjectRepos] = useState('');
   const [showNewInput, setShowNewInput] = useState(false);
 
   useEffect(() => {
@@ -106,6 +109,7 @@ function Composer({ open, onClose, onSubmit, initial, projects }: ComposerProps)
       setBody(initial?.body || '');
       setStatus(initial?.status || 'open');
       setNewProjectName('');
+      setNewProjectRepos('');
       setShowNewInput(false);
     }
   }, [open, initial, projects]);
@@ -123,9 +127,13 @@ function Composer({ open, onClose, onSubmit, initial, projects }: ComposerProps)
     const effectiveProjectName = showNewInput ? newProjectName.trim() : project;
     if (!effectiveProjectName) return;
     const matched = projects.find(p => p.name === effectiveProjectName);
+    const repos = showNewInput
+      ? newProjectRepos.split(',').map(r => r.trim()).filter(Boolean)
+      : undefined;
     onSubmit(
       { project: effectiveProjectName, project_id: matched?.id ?? null, title: title.trim(), body: body.trim(), status },
-      showNewInput ? newProjectName.trim() : undefined
+      showNewInput ? newProjectName.trim() : undefined,
+      repos
     );
     onClose();
   };
@@ -161,14 +169,22 @@ function Composer({ open, onClose, onSubmit, initial, projects }: ComposerProps)
               <option value={NEW_PROJECT_SENTINEL}>+ New project…</option>
             </select>
             {showNewInput && (
-              <input
-                autoFocus
-                className="ideas-field-input ideas-new-project-input"
-                value={newProjectName}
-                onChange={e => setNewProjectName(e.target.value)}
-                placeholder="Project name"
-                maxLength={60}
-              />
+              <>
+                <input
+                  autoFocus
+                  className="ideas-field-input ideas-new-project-input"
+                  value={newProjectName}
+                  onChange={e => setNewProjectName(e.target.value)}
+                  placeholder="Project name"
+                  maxLength={60}
+                />
+                <input
+                  className="ideas-field-input"
+                  value={newProjectRepos}
+                  onChange={e => setNewProjectRepos(e.target.value)}
+                  placeholder="GitHub repos (e.g. skarumbu/my-website)"
+                />
+              </>
             )}
           </label>
 
@@ -630,6 +646,9 @@ function Ideas() {
   const [editing, setEditing] = useState<Idea | null>(null);
   const [detailIdea, setDetailIdea] = useState<Idea | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
+  const [projectsModalOpen, setProjectsModalOpen] = useState(false);
+  const [projectReposEdits, setProjectReposEdits] = useState<Record<string, string>>({});
+  const [projectsSaving, setProjectsSaving] = useState<string | null>(null);
 
   const getToken = useCallback(
     () => acquireToken(instance, accounts[0], ideasApiRequest, `${window.location.origin}/ideas`),
@@ -807,27 +826,39 @@ function Ideas() {
   const openDetail = (idea: Idea) => { setDetailIdea(idea); setDetailOpen(true); };
   const editFromDetail = () => { setDetailOpen(false); setEditing(detailIdea); setComposerOpen(true); };
 
-  const createProject = useCallback(async (name: string): Promise<Project> => {
+  const createProject = useCallback(async (name: string, repos?: string[]): Promise<Project> => {
     if (!BASE_URL) throw new Error('BASE_URL not configured');
     const token = await getToken();
     const resp = await fetch(`${BASE_URL}/api/projects`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name }),
+      body: JSON.stringify({ name, repos: repos || [] }),
     });
     if (!resp.ok) throw new Error(`${resp.status}`);
-    const json = await resp.json();
-    return json as Project;
+    return resp.json() as Promise<Project>;
+  }, [getToken]);
+
+  const updateProjectRepos = useCallback(async (projectId: string, repos: string[]): Promise<Project> => {
+    if (!BASE_URL) throw new Error('BASE_URL not configured');
+    const token = await getToken();
+    const resp = await fetch(`${BASE_URL}/api/projects/${projectId}`, {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ repos }),
+    });
+    if (!resp.ok) throw new Error(`${resp.status}`);
+    return resp.json() as Promise<Project>;
   }, [getToken]);
 
   const handleComposerSubmit = async (
     data: { project: string; project_id: string | null; title: string; body: string; status: Idea['status'] },
-    newProjectName?: string
+    newProjectName?: string,
+    newProjectRepos?: string[]
   ) => {
     let finalData = data;
     if (newProjectName) {
       try {
-        const newProject = await createProject(newProjectName);
+        const newProject = await createProject(newProjectName, newProjectRepos);
         setProjects(prev => [...prev, newProject]);
         finalData = { ...data, project_id: newProject.id };
       } catch (e: any) {
@@ -943,6 +974,13 @@ function Ideas() {
             <option value="project">Project</option>
           </select>
 
+          <button className="ideas-manage-projects-btn" onClick={() => {
+            setProjectReposEdits(Object.fromEntries(projects.map(p => [p.id, (p.repos || []).join(', ')])));
+            setProjectsModalOpen(true);
+          }}>
+            Projects
+          </button>
+
           <button className="ideas-add-btn" onClick={openNew}>
             <span className="ideas-add-btn-plus">+</span>
             New idea
@@ -998,6 +1036,50 @@ function Ideas() {
         initial={editing}
         projects={projects}
       />
+
+      {projectsModalOpen && (
+        <>
+          <div className="ideas-overlay ideas-overlay--open" onClick={() => setProjectsModalOpen(false)} />
+          <div className="ideas-projects-modal">
+            <div className="ideas-composer-header">
+              <span className="ideas-composer-title">Manage projects</span>
+              <button className="ideas-composer-close" onClick={() => setProjectsModalOpen(false)}>×</button>
+            </div>
+            <div className="ideas-projects-modal-body">
+              <p className="ideas-projects-modal-hint">Set the GitHub repo slug(s) each project maps to. Comma-separate multiple repos.</p>
+              {projects.filter(p => p.id).map(p => (
+                <div key={p.id} className="ideas-project-row">
+                  <span className="ideas-project-row-name">{p.name}</span>
+                  <input
+                    className="ideas-field-input ideas-project-repos-input"
+                    value={projectReposEdits[p.id] ?? (p.repos || []).join(', ')}
+                    onChange={e => setProjectReposEdits(prev => ({ ...prev, [p.id]: e.target.value }))}
+                    placeholder="e.g. skarumbu/my-website"
+                  />
+                  <button
+                    className="ideas-project-save-btn"
+                    disabled={projectsSaving === p.id}
+                    onClick={async () => {
+                      setProjectsSaving(p.id);
+                      try {
+                        const repos = (projectReposEdits[p.id] || '').split(',').map(r => r.trim()).filter(Boolean);
+                        const updated = await updateProjectRepos(p.id, repos);
+                        setProjects(prev => prev.map(x => x.id === p.id ? updated : x));
+                      } catch (e: any) {
+                        setError('Failed to save: ' + e.message);
+                      } finally {
+                        setProjectsSaving(null);
+                      }
+                    }}
+                  >
+                    {projectsSaving === p.id ? 'Saving…' : 'Save'}
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
