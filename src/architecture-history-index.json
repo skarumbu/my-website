@@ -1,5 +1,11 @@
 [
   {
+    "package": "ideas-bot",
+    "capturedAt": "2026-06-07",
+    "commitSha": "95d0e6e",
+    "commitMessage": "feat(bot): watch GitHub Actions CI and auto-repair on failure\n\nReplaces local npm build verification with GitHub Actions monitoring.\nAfter creating the PR, bot polls gh pr checks every 30s until all checks\ncomplete. On failure, fetches failed step logs via gh run view --log-failed,\nspawns a targeted repair agent, pushes the fix, and waits for CI again.\nWorks for any language/build system configured in the repo's CI.\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>"
+  },
+  {
     "package": "ideas-api",
     "capturedAt": "2026-06-07",
     "commitSha": "91c5450",

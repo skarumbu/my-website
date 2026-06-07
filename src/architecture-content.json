@@ -283,7 +283,8 @@
       "Pre-flight clarity check to assess idea implementability and request clarification if needed",
       "Prior updates thread injected into agent context for continuity on re-trigger",
       "Branch name and PR title include model slug for A/B comparison",
-      "Supports multi-repo projects by resolving repositories dynamically from the Ideas API"
+      "Supports multi-repo projects by resolving repositories dynamically from the Ideas API",
+      "GitHub Actions CI monitoring and auto-repair on failure, including fetching logs, diagnosing issues, and pushing fixes"
     ],
     "architecture": {
       "overview": "A containerised Python agent that autonomously implements feature ideas. Triggered on demand by ideas-api, it clones the target repo, performs a pre-flight clarity check, runs an AI-driven tool-use loop to read/write files and execute shell commands, commits the result, and opens a draft pull request.",
@@ -297,7 +298,8 @@
         "Branch name and PR title include model slug for A/B comparison",
         "Job is triggered via az containerapp job start by ideas-api using Managed Identity",
         "Structured logging implemented via shared-logging library for consistent and enriched log metadata",
-        "Dynamic repository resolution via Ideas API enables multi-repo project support"
+        "Dynamic repository resolution via Ideas API enables multi-repo project support",
+        "GitHub Actions CI monitoring added \u2014 bot polls PR checks, fetches failure logs, runs repair agent, and re-pushes fixes"
       ]
     },
     "dataFlow": [
@@ -327,10 +329,19 @@
       {
         "label": "Commit changes \u00b7 open draft PR(s) on GitHub",
         "color": "green"
+      },
+      {
+        "label": "Monitor GitHub Actions CI \u00b7 auto-repair on failure",
+        "color": "green",
+        "sublines": [
+          "Poll PR checks every 30s until completion",
+          "Fetch failure logs \u00b7 diagnose issues \u00b7 push fixes",
+          "Re-trigger CI and verify success"
+        ]
       }
     ],
     "updatedAt": "2026-06-07",
-    "updatedBySha": "d48fa3f"
+    "updatedBySha": "95d0e6e"
   },
   "azure-infrastructure": {
     "summary": "Defines and provisions all Azure resources at subscription scope using Bicep. Modules cover the Static Web App, Container Registry, Container App Environment (shared Log Analytics workspace), momentum-finder and trail-finder Container Apps, Digits and Dashboard Azure Functions apps, and all RBAC role assignments.",
