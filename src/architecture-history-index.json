@@ -1,5 +1,11 @@
 [
   {
+    "package": "ideas-api",
+    "capturedAt": "2026-06-07",
+    "commitSha": "f21218a",
+    "commitMessage": "feat: add needs_info bot status and per-run model override\n\n- VALID_BOT_STATUSES now includes needs_info\n- run-bot endpoint reads optional model from request body and passes\n  AZURE_OPENAI_DEPLOYMENT override to the Container App Job execution\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>"
+  },
+  {
     "package": "ideas-bot",
     "capturedAt": "2026-06-07",
     "commitSha": "9c304e9",

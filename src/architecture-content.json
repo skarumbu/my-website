@@ -243,15 +243,16 @@
       "List, create, and delete per-idea status updates (comments section)",
       "EasyAuth JWT authentication for browser access (read)",
       "X-Ideas-Key machine write-key for automated idea creation (write)",
-      "POST /api/ideas/{id}/run-bot \u2014 triggers the ideas-bot Container App Job for a specific idea",
-      "Ideas, projects, and updates stored in separate Table Storage tables"
+      "POST /api/ideas/{id}/run-bot \u2014 triggers the ideas-bot Container App Job for a specific idea, with optional model override",
+      "Ideas, projects, and updates stored in separate Table Storage tables",
+      "Supports additional bot status: needs_info"
     ],
     "architecture": {
       "overview": "HTTP-triggered Azure Functions backed by Table Storage. EasyAuth handles browser auth transparently at the Azure layer \u2014 no auth code in the application. A separate machine key enables automation (ideas-bot, external scripts) to write ideas without user credentials.",
       "keyPoints": [
         "EasyAuth injects the validated Google ID token as a request header \u2014 the function reads sub and email from it",
         "X-Ideas-Key is a long-lived secret stored as a Function App setting (not in the codebase)",
-        "run-bot endpoint starts a Container App Job execution via the Azure SDK and returns immediately",
+        "run-bot endpoint starts a Container App Job execution via the Azure SDK and returns immediately, with optional model override passed as AZURE_OPENAI_DEPLOYMENT",
         "No compute runs between requests \u2014 fully serverless, scales to zero",
         "Table Storage partition key = project ID; row key = idea ID (UUID)",
         "Updates table uses idea ID as the partition key and UUID as the row key"
@@ -303,8 +304,8 @@
         ]
       }
     ],
-    "updatedAt": "2026-05-13",
-    "updatedBySha": "b62fc85",
+    "updatedAt": "2026-06-07",
+    "updatedBySha": "f21218a",
     "designDocs": [
       {
         "title": "ADR: Per-Idea Status Updates",
