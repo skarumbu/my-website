@@ -1,0 +1,58 @@
+{
+  "package": "ideas-bot",
+  "capturedAt": "2026-06-07",
+  "commitSha": "d48fa3f",
+  "commitMessage": "feat: resolve repos from project API instead of hardcoded REPO_MAP (BOT-02)",
+  "content": {
+    "summary": "Container App Job triggered by ideas-api. Clones the target repository, performs a pre-flight clarity check, then runs an AI-driven tool-use loop to implement the requested feature. Commits the result and opens a draft pull request on GitHub. The job scales to zero between invocations.",
+    "description": "A containerised Python agent that autonomously implements feature ideas. Triggered on demand by ideas-api, it clones the target repo, runs a GPT-4o tool-use loop to read/write files and execute shell commands, commits the result, and opens a draft pull request.",
+    "features": [
+      "Structured logging via shared-logging library for consistent log formatting and metadata",
+      "Enhanced error logging with detailed context, including endpoint, method, error type, and stack trace",
+      "Pre-flight clarity check to assess idea implementability and request clarification if needed",
+      "Prior updates thread injected into agent context for continuity on re-trigger",
+      "Branch name and PR title include model slug for A/B comparison"
+    ],
+    "architecture": {
+      "overview": "A containerised Python agent that autonomously implements feature ideas. Triggered on demand by ideas-api, it clones the target repo, performs a pre-flight clarity check, runs an AI-driven tool-use loop to read/write files and execute shell commands, commits the result, and opens a draft pull request.",
+      "keyPoints": [
+        "Fresh container per invocation \u2014 no shared state between runs",
+        "GitHub PAT stored as a Container App secret (not an environment variable in the image)",
+        "Pre-flight clarity check posts bot comments and pauses execution if the idea is too vague",
+        "GPT-4o tool-use loop has a hard iteration cap to prevent runaway API cost",
+        "Shell execution tool runs in a sandboxed subprocess within the container",
+        "Prior updates thread injected into agent context for continuity on re-trigger",
+        "Branch name and PR title include model slug for A/B comparison",
+        "Job is triggered via az containerapp job start by ideas-api using Managed Identity",
+        "Structured logging implemented via shared-logging library for consistent and enriched log metadata"
+      ]
+    },
+    "dataFlow": [
+      {
+        "label": "ideas-api receives POST /run-bot",
+        "color": "purple"
+      },
+      {
+        "label": "Container App Job starts \u2014 fresh container",
+        "color": "orange"
+      },
+      {
+        "label": "Pre-flight clarity check \u00b7 request clarification if needed",
+        "color": "blue"
+      },
+      {
+        "label": "Clone target repo \u00b7 read idea description",
+        "sublines": [
+          "GPT-4o tool-use loop",
+          "read files \u00b7 write files \u00b7 run shell commands"
+        ]
+      },
+      {
+        "label": "Commit changes \u00b7 open draft PR on GitHub",
+        "color": "green"
+      }
+    ],
+    "updatedAt": "2026-06-07",
+    "updatedBySha": "9c304e9"
+  }
+}

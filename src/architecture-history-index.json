@@ -1,5 +1,11 @@
 [
   {
+    "package": "ideas-bot",
+    "capturedAt": "2026-06-07",
+    "commitSha": "d48fa3f",
+    "commitMessage": "feat: resolve repos from project API instead of hardcoded REPO_MAP (BOT-02)"
+  },
+  {
     "package": "ideas-api",
     "capturedAt": "2026-06-07",
     "commitSha": "f21218a",

@@ -323,7 +323,8 @@
       "Enhanced error logging with detailed context, including endpoint, method, error type, and stack trace",
       "Pre-flight clarity check to assess idea implementability and request clarification if needed",
       "Prior updates thread injected into agent context for continuity on re-trigger",
-      "Branch name and PR title include model slug for A/B comparison"
+      "Branch name and PR title include model slug for A/B comparison",
+      "Supports multi-repo projects by resolving repositories dynamically from the Ideas API"
     ],
     "architecture": {
       "overview": "A containerised Python agent that autonomously implements feature ideas. Triggered on demand by ideas-api, it clones the target repo, performs a pre-flight clarity check, runs an AI-driven tool-use loop to read/write files and execute shell commands, commits the result, and opens a draft pull request.",
@@ -336,7 +337,8 @@
         "Prior updates thread injected into agent context for continuity on re-trigger",
         "Branch name and PR title include model slug for A/B comparison",
         "Job is triggered via az containerapp job start by ideas-api using Managed Identity",
-        "Structured logging implemented via shared-logging library for consistent and enriched log metadata"
+        "Structured logging implemented via shared-logging library for consistent and enriched log metadata",
+        "Dynamic repository resolution via Ideas API enables multi-repo project support"
       ]
     },
     "dataFlow": [
@@ -353,19 +355,23 @@
         "color": "blue"
       },
       {
-        "label": "Clone target repo \u00b7 read idea description",
+        "label": "Resolve repositories dynamically from Ideas API",
+        "color": "blue"
+      },
+      {
+        "label": "Clone target repo(s) \u00b7 read idea description",
         "sublines": [
           "GPT-4o tool-use loop",
           "read files \u00b7 write files \u00b7 run shell commands"
         ]
       },
       {
-        "label": "Commit changes \u00b7 open draft PR on GitHub",
+        "label": "Commit changes \u00b7 open draft PR(s) on GitHub",
         "color": "green"
       }
     ],
     "updatedAt": "2026-06-07",
-    "updatedBySha": "9c304e9"
+    "updatedBySha": "d48fa3f"
   },
   "azure-infrastructure": {
     "summary": "Defines and provisions all Azure resources at subscription scope using Bicep. Modules cover the Static Web App, Container Registry, Container App Environment (shared Log Analytics workspace), momentum-finder and trail-finder Container Apps, Digits and Dashboard Azure Functions apps, and all RBAC role assignments.",
