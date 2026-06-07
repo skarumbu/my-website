@@ -31,7 +31,11 @@ function Write() {
       return response.accessToken;
     } catch (e: any) {
       if (e?.errorCode === 'interaction_in_progress') throw e;
-      instance.acquireTokenRedirect({ ...postsApiRequest, redirectUri: window.location.origin + '/write' });
+      try {
+        await instance.acquireTokenRedirect({ ...postsApiRequest, redirectUri: window.location.origin + '/write' });
+      } catch (redirectErr: any) {
+        if (redirectErr?.errorCode !== 'interaction_in_progress') throw redirectErr;
+      }
       throw new Error('Redirecting for auth...');
     }
   }, [instance, accounts]);

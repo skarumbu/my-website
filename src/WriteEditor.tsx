@@ -46,10 +46,14 @@ export default function WriteEditor() {
       return response.accessToken;
     } catch (e: any) {
       if (e?.errorCode === 'interaction_in_progress') throw e;
-      instance.acquireTokenRedirect({
-        ...postsApiRequest,
-        redirectUri: window.location.origin + (slug ? `/write/${slug}` : '/write/new'),
-      });
+      try {
+        await instance.acquireTokenRedirect({
+          ...postsApiRequest,
+          redirectUri: window.location.origin + (slug ? `/write/${slug}` : '/write/new'),
+        });
+      } catch (redirectErr: any) {
+        if (redirectErr?.errorCode !== 'interaction_in_progress') throw redirectErr;
+      }
       throw new Error('Redirecting for auth...');
     }
   }, [instance, accounts, slug]);

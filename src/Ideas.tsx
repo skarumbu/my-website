@@ -617,7 +617,11 @@ function Ideas() {
       return response.accessToken;
     } catch (e: any) {
       if (e?.errorCode === 'interaction_in_progress') throw e;
-      instance.acquireTokenRedirect({ ...ideasApiRequest, redirectUri: window.location.origin + '/ideas' });
+      try {
+        await instance.acquireTokenRedirect({ ...ideasApiRequest, redirectUri: window.location.origin + '/ideas' });
+      } catch (redirectErr: any) {
+        if (redirectErr?.errorCode !== 'interaction_in_progress') throw redirectErr;
+      }
       throw new Error('Redirecting for auth...');
     }
   }, [instance, accounts]);
