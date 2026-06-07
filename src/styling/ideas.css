@@ -471,6 +471,20 @@
 .ideas-action-btn--bot     { color: #6d28d9; border-color: rgba(109,40,217,0.3); }
 .ideas-action-btn--bot:hover:not(:disabled) { background: rgba(109,40,217,0.08); }
 
+.ideas-model-select {
+  height: 26px;
+  padding: 0 20px 0 7px;
+  font-size: 11px;
+  font-family: inherit;
+  border: 1px solid rgba(109,40,217,0.3);
+  border-radius: 6px;
+  background: white url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' stroke='%236d28d9' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>") no-repeat right 5px center;
+  background-size: 8px 5px;
+  color: #6d28d9;
+  appearance: none;
+  cursor: pointer;
+}
+
 /* ── Empty state ────────────────────────────────────────────── */
 .ideas-empty {
   column-span: all;

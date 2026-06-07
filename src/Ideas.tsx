@@ -20,7 +20,7 @@ const PROJECT_TINTS: Record<string, { fg: string; bg: string }> = {
 
 const PROJECTS = ['Digits', 'NBA Games', 'Trail Finder', 'Ideas', 'Other'];
 
-type BotStatus = 'queued' | 'running' | 'completed' | 'failed';
+type BotStatus = 'queued' | 'running' | 'completed' | 'failed' | 'needs_info';
 
 interface Idea {
   id: string;
@@ -232,10 +232,11 @@ function BotStatusChip({ idea }: { idea: Idea }) {
   if (!status) return null;
 
   const map: Record<BotStatus, { fg: string; bg: string; label: string }> = {
-    queued:    { fg: '#92400e', bg: 'rgba(251,191,36,0.18)',  label: 'Queued' },
-    running:   { fg: '#1e40af', bg: 'rgba(59,130,246,0.15)',  label: 'Running…' },
-    completed: { fg: '#065f46', bg: 'rgba(16,185,129,0.15)',  label: 'Done' },
-    failed:    { fg: '#991b1b', bg: 'rgba(239,68,68,0.15)',   label: 'Failed' },
+    queued:     { fg: '#92400e', bg: 'rgba(251,191,36,0.18)',   label: 'Queued' },
+    running:    { fg: '#1e40af', bg: 'rgba(59,130,246,0.15)',   label: 'Running…' },
+    completed:  { fg: '#065f46', bg: 'rgba(16,185,129,0.15)',   label: 'Done' },
+    failed:     { fg: '#991b1b', bg: 'rgba(239,68,68,0.15)',    label: 'Failed' },
+    needs_info: { fg: '#6d28d9', bg: 'rgba(139,92,246,0.15)',   label: 'Needs info' },
   };
   const s = map[status];
   if (!s) return null;
@@ -411,6 +412,11 @@ function IdeaDetailPanel({ open, idea, onClose, onEdit, getToken }: DetailPanelP
           {idea.bot_status && (
             <div style={{ marginBottom: 16 }}>
               <BotStatusChip idea={idea} />
+              {idea.bot_status === 'needs_info' && (
+                <p style={{ fontSize: 13, color: '#6b7280', margin: '4px 0 0' }}>
+                  Answer the bot's question below, then re-trigger.
+                </p>
+              )}
             </div>
           )}
 
@@ -482,13 +488,14 @@ interface CardProps {
   onView: () => void;
   onDelete: () => void;
   onSetState: (s: Idea['status']) => void;
-  onRunBot: () => void;
+  onRunBot: (model: string) => void;
   updating: boolean;
   botRunning: boolean;
 }
 
 function IdeaCard({ idea, onView, onDelete, onSetState, onRunBot, updating, botRunning }: CardProps) {
   const [hover, setHover] = useState(false);
+  const [selectedModel, setSelectedModel] = useState('o3-mini');
   const isDone = idea.status === 'done';
   const isDismissed = idea.status === 'dismissed';
   const rot = cardRot(idea.id);
@@ -539,8 +546,20 @@ function IdeaCard({ idea, onView, onDelete, onSetState, onRunBot, updating, botR
         ) : (
           <button className="ideas-action-btn ideas-action-btn--reopen" onClick={() => onSetState('open')} disabled={updating}>Reopen</button>
         )}
-        {idea.status === 'open' && !idea.bot_status && (
-          <button className="ideas-action-btn ideas-action-btn--bot" onClick={onRunBot} disabled={botRunning || updating} title="Assign AI bot">⚡ Bot</button>
+        {idea.status === 'open' && (!idea.bot_status || idea.bot_status === 'needs_info') && (
+          <>
+            <select
+              className="ideas-model-select"
+              value={selectedModel}
+              onChange={e => setSelectedModel(e.target.value)}
+              onClick={e => e.stopPropagation()}
+            >
+              <option value="o3-mini">o3-mini</option>
+              <option value="gpt-4.5">gpt-4.5</option>
+              <option value="gpt-4o">gpt-4o</option>
+            </select>
+            <button className="ideas-action-btn ideas-action-btn--bot" onClick={() => onRunBot(selectedModel)} disabled={botRunning || updating} title="Assign AI bot">⚡ Bot</button>
+          </>
         )}
         <div style={{ flex: 1 }} />
         <button className="ideas-action-btn ideas-action-btn--delete" onClick={onDelete} title="Delete">
@@ -667,7 +686,7 @@ function Ideas() {
     fetchProjects().then(ps => setProjects(ps));
   }, [isAuthenticated, fetchIdeas, fetchProjects]);
 
-  const runBot = useCallback(async (idea: Idea) => {
+  const runBot = useCallback(async (idea: Idea, model: string) => {
     if (!BASE_URL || botRunning) return;
     setBotRunning(idea.id);
     setIdeas(prev => prev.map(i => i.id === idea.id ? { ...i, bot_status: 'queued' as BotStatus } : i));
@@ -675,7 +694,8 @@ function Ideas() {
       const token = await getToken();
       const resp = await fetch(`${BASE_URL}/api/ideas/${idea.id}/run-bot`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model }),
       });
       if (!resp.ok) throw new Error(`${resp.status}`);
       const json = await resp.json();
@@ -939,18 +959,18 @@ function Ideas() {
           ) : tab === 'all' ? (
             <>
               {visible.filter(i => i.status === 'open').map(idea => (
-                <IdeaCard key={idea.id} idea={idea} onView={() => openDetail(idea)} onDelete={() => handleDelete(idea)} onSetState={s => handleSetState(idea, s)} onRunBot={() => runBot(idea)} updating={updating === idea.id} botRunning={botRunning === idea.id} />
+                <IdeaCard key={idea.id} idea={idea} onView={() => openDetail(idea)} onDelete={() => handleDelete(idea)} onSetState={s => handleSetState(idea, s)} onRunBot={(model) => runBot(idea, model)} updating={updating === idea.id} botRunning={botRunning === idea.id} />
               ))}
               {visible.some(i => i.status !== 'open') && (
                 <div className="ideas-group-label">Recently shipped</div>
               )}
               {visible.filter(i => i.status !== 'open').map(idea => (
-                <IdeaCard key={idea.id} idea={idea} onView={() => openDetail(idea)} onDelete={() => handleDelete(idea)} onSetState={s => handleSetState(idea, s)} onRunBot={() => runBot(idea)} updating={updating === idea.id} botRunning={botRunning === idea.id} />
+                <IdeaCard key={idea.id} idea={idea} onView={() => openDetail(idea)} onDelete={() => handleDelete(idea)} onSetState={s => handleSetState(idea, s)} onRunBot={(model) => runBot(idea, model)} updating={updating === idea.id} botRunning={botRunning === idea.id} />
               ))}
             </>
           ) : (
             visible.map(idea => (
-              <IdeaCard key={idea.id} idea={idea} onView={() => openDetail(idea)} onDelete={() => handleDelete(idea)} onSetState={s => handleSetState(idea, s)} onRunBot={() => runBot(idea)} updating={updating === idea.id} botRunning={botRunning === idea.id} />
+              <IdeaCard key={idea.id} idea={idea} onView={() => openDetail(idea)} onDelete={() => handleDelete(idea)} onSetState={s => handleSetState(idea, s)} onRunBot={(model) => runBot(idea, model)} updating={updating === idea.id} botRunning={botRunning === idea.id} />
             ))
           )}
         </div>
