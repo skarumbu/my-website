@@ -1,3 +1,11 @@
+---
+title: "ADR: Dashboard — GitHub Actions Integration & Expandable Cards"
+slug: dashboard-github-actions-expandable-cards
+date: "2026-05-12T00:00:00+00:00"
+published: true
+description: "Architecture decision record for Dashboard GitHub Actions integration and expandable card UI."
+updatedAt: "2026-05-12T00:00:00+00:00"
+---
 # ADR: Dashboard — GitHub Actions Integration & Expandable Cards
 
 **Date:** 2026-05-12

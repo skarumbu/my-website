@@ -50,7 +50,7 @@
     "designDocs": [
       {
         "title": "ADR: Dashboard GitHub Actions & Expandable Cards",
-        "href": "https://github.com/skarumbu/my-website/blob/main/docs/design/2026-05-12-dashboard-github-actions-expandable-cards.md",
+        "href": "https://github.com/skarumbu/my-website/blob/main/posts/dashboard-github-actions-expandable-cards.md",
         "date": "2026-05-12",
         "description": "Adds GitHub Actions last-run status to each service card, replaces the flat metrics table with inline accordion expansion."
       }

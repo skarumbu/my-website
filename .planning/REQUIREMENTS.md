@@ -26,8 +26,8 @@
 
 ### Editor
 
-- [ ] **EDIT-01**: Authenticated user can access the editor at `/write`
-- [ ] **EDIT-02**: Editor is gated behind Azure AD login (reusing existing MSAL setup)
+- [x] **EDIT-01**: Authenticated user can access the editor at `/write`
+- [x] **EDIT-02**: Editor is gated behind Azure AD login (reusing existing MSAL setup)
 - [ ] **EDIT-03**: User can create a new post with title, description, and markdown body
 - [ ] **EDIT-04**: User can edit an existing post from the editor
 - [ ] **EDIT-05**: User can delete a post from the editor
@@ -41,6 +41,16 @@
 - [ ] **SEC-01**: Post content rendered using `react-markdown` (not `dangerouslySetInnerHTML`) — prevents XSS
 - [ ] **SEC-02**: Write API endpoints validate Bearer token before any mutation
 - [ ] **SEC-03**: Azure Blob Storage container is private — all access goes through Functions, never direct browser
+
+### GitHub-Backed Content (Phase 6)
+
+- [ ] **GH-01**: New posts created in the editor are committed to the my-website GitHub repo as `.md` files (not written to Azure Blob)
+- [ ] **GH-02**: Existing design docs at `docs/design/` appear in the `/posts` public reading feed
+- [ ] **GH-03**: The `/write` editor creates, edits, and deletes posts via the GitHub Contents API
+- [ ] **GH-04**: The Azure Blob Storage container and blob-client code in posts-api are decommissioned
+- [ ] **GH-05**: A GitHub PAT token stored as an Azure Function app setting authenticates all GitHub API writes
+
+---
 
 ## v2 Requirements
 
@@ -98,8 +108,8 @@
 | API-04 | Phase 4 | Pending |
 | API-05 | Phase 4 | Pending |
 | SEC-02 | Phase 4 | Pending |
-| EDIT-01 | Phase 5 | Pending |
-| EDIT-02 | Phase 5 | Pending |
+| EDIT-01 | Phase 5 | Complete (05-01) |
+| EDIT-02 | Phase 5 | Complete (05-01) |
 | EDIT-03 | Phase 5 | Pending |
 | EDIT-04 | Phase 5 | Pending |
 | EDIT-05 | Phase 5 | Pending |

@@ -13,7 +13,7 @@
 - [x] **Phase 1: Storage & Schema** — Blob container provisioned, frontmatter spec locked, slug algorithm implemented (completed 2026-05-31)
 - [x] **Phase 2: Public Reading API** — Read-only Azure Functions endpoints serving published posts (completed 2026-05-31)
 - [ ] **Phase 3: Public Reading UI** — Public `/posts` list and `/posts/:slug` reader live on site
-- [ ] **Phase 4: Write API** — Authenticated create/update/delete endpoints with Bearer token validation
+- [x] **Phase 4: Write API** — Authenticated create/update/delete endpoints with Bearer token validation (completed 2026-06-05)
 - [ ] **Phase 5: Editor UI** — Auth-gated `/write` editor with full create/edit/publish/delete flows and autosave
 
 ---
@@ -106,7 +106,19 @@
   3. `DELETE /api/posts/:slug` with a valid Bearer token removes the blob from storage
   4. Any write request without a valid Bearer token is rejected with a 401 response — no mutation occurs
 
-**Plans**: TBD
+**Plans:** 3/3 plans complete
+
+**Wave 1**
+
+- [x] 04-01-PLAN.md — auth.py (verbatim copy from ideas-api) + Wave 0 test stubs + create_post handler with tests (API-03, SEC-02)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [x] 04-02-PLAN.md — update_post + delete_post handlers with Wave 0 stubs and tests (API-04, API-05, SEC-02)
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [x] 04-03-PLAN.md — Bicep Easy Auth: authsettingsV2 in postsapi.bicep + main.bicep param wiring + human-verify deploy (SEC-02)
 
 ### Phase 5: Editor UI
 
@@ -123,8 +135,47 @@
   5. A logged-in user can toggle a post between published and draft; unpublished posts do not appear on `/posts`
   6. The editor autosaves to localStorage every 2-3 seconds; navigating away with unsaved changes shows a warning
 
-**Plans**: TBD
-**UI hint**: yes
+**Plans:** 3 plans
+
+**Wave 1**
+
+- [ ] 05-01-PLAN.md — MSAL mock + test stubs + authConfig fix + routes + nav + Write.tsx post list (EDIT-01, EDIT-02)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 05-02-PLAN.md — WriteEditor.tsx core: auth gate, field state, load post, save (POST/PUT), URL update on first save, Published toggle (EDIT-03, EDIT-04, EDIT-06)
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [ ] 05-03-PLAN.md — Delete toolbar button, two-tier autosave (latestDraft ref), useBlocker + useBeforeUnload, DigitsNavBar, Azure AD redirectUri verify (EDIT-05, EDIT-07, EDIT-08, EDIT-09)
+
+### Phase 6: GitHub-Backed Content
+
+**Goal:** All post content (new posts and existing design docs) is stored as markdown files committed to the my-website git repository. The posts-api is rewritten to proxy the GitHub Contents API. Azure Blob Storage is decommissioned. Design docs at `docs/design/` are surfaced in the public reading feed alongside new posts.
+**Mode:** mvp
+**Depends on:** Phase 5
+**Requirements:** GH-01, GH-02, GH-03, GH-04, GH-05
+**Success Criteria**:
+
+  1. New posts created in the editor are committed to the my-website repo as `.md` files and immediately appear on `/posts`
+  2. The `docs/design/` markdown files appear in the `/posts` feed alongside new posts
+  3. The editor at `/write` still creates, edits, and deletes posts — now via GitHub Contents API
+  4. No active Azure Blob Storage dependency for post content
+  5. Existing posts (if any) are migrated or recreated in the repo
+
+**Plans:** 3 plans
+
+**Wave 1**
+
+- [ ] 06-01-PLAN.md — Rewrite slugs.py with GitHub API helpers; update requirements.txt; rewrite conftest.py + test_slugs.py; delete test_storage.py (GH-01, GH-04, GH-05)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 06-02-PLAN.md — Rewrite function_app.py to use GitHub helpers; rewrite test_function_app.py with requests mocks (GH-01, GH-02, GH-03, GH-04)
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [ ] 06-03-PLAN.md — Migrate 5 design docs to posts/ with frontmatter; update postsapi.bicep + main.bicep with GITHUB_TOKEN/GITHUB_REPO; human-verify deployed feed (GH-02, GH-05)
 
 ---
 
@@ -134,11 +185,12 @@
 |-------|----------------|--------|-----------|
 | 1. Storage & Schema | 3/3 | Complete   | 2026-05-31 |
 | 2. Public Reading API | 2/2 | Complete | 2026-05-31 |
-| 3. Public Reading UI | 0/3 | Planned | - |
-| 4. Write API | 0/? | Not started | - |
-| 5. Editor UI | 0/? | Not started | - |
+| 3. Public Reading UI | 3/3 | Complete | 2026-06-05 |
+| 4. Write API | 3/3 | Complete    | 2026-06-05 |
+| 5. Editor UI | 3/3 | Complete | 2026-06-06 |
+| 6. GitHub-Backed Content | 0/3 | Not started | - |
 
 ---
 
 *Roadmap created: 2026-05-30*
-*Last updated: 2026-06-04 after Phase 3 planning*
+*Last updated: 2026-06-06 after Phase 6 planning*

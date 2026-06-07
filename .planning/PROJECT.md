@@ -28,7 +28,7 @@ A private writing space that publishes instantly to a public reading feed — so
 - [ ] Individual post page at `/posts/:slug` — full article rendered from markdown
 - [ ] Private notebook-style editor at `/write` — authenticated, markdown with live preview
 - [ ] Posts saved to Azure Blob Storage as markdown files with frontmatter metadata
-- [ ] Azure Functions API for post CRUD (create, read, update, delete, list)
+- [x] Azure Functions API for post CRUD (create, read, update, delete, list) — Validated in Phase 04: write-api
 - [ ] Editor protected by Azure AD login (existing MSAL setup reused)
 - [ ] Support for varied content types: design docs, essays, project write-ups, short notes
 - [ ] New post, edit existing post, and publish/unpublish from the editor
@@ -66,10 +66,11 @@ A private writing space that publishes instantly to a public reading feed — so
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Azure Blob Storage for posts | Simplest fit with existing Azure setup; no DB to provision | — Pending |
-| Reuse MSAL auth for editor | Already installed and configured; avoids a second auth system | — Pending |
-| Markdown with frontmatter | Flexible for all content types; portable if storage changes later | — Pending |
+| Azure Blob Storage for posts | Simplest fit with existing Azure setup; no DB to provision | ✓ Validated (phases 01–04) |
+| Reuse MSAL auth for editor | Already installed and configured; avoids a second auth system | — Pending (Phase 05) |
+| Markdown with frontmatter | Flexible for all content types; portable if storage changes later | ✓ Validated (phases 01–04) |
 | Date-ordered feed (no tags) | Keeps v1 simple; can add filtering later | — Pending |
+| Easy Auth (X-MS-CLIENT-PRINCIPAL) for write API | Platform injects auth header; handler validates it; keeps public reads open | ✓ Validated (Phase 04) |
 
 ## Evolution
 
@@ -89,4 +90,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-05-30 after initialization*
+*Last updated: 2026-06-05 — Phase 04 (write-api) complete*

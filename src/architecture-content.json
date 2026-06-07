@@ -24,13 +24,13 @@
     "designDocs": [
       {
         "title": "ADR: Per-Idea Status Updates",
-        "href": "https://github.com/skarumbu/my-website/blob/main/docs/design/2026-05-12-per-idea-status-updates.md",
+        "href": "https://github.com/skarumbu/my-website/blob/main/posts/per-idea-status-updates.md",
         "date": "2026-05-12",
         "description": "Adds a threaded updates log to each idea, backed by a new Azure Table Storage table and a detail slide-over panel in the frontend."
       },
       {
         "title": "ADR: Dashboard GitHub Actions & Expandable Cards",
-        "href": "https://github.com/skarumbu/my-website/blob/main/docs/design/2026-05-12-dashboard-github-actions-expandable-cards.md",
+        "href": "https://github.com/skarumbu/my-website/blob/main/posts/dashboard-github-actions-expandable-cards.md",
         "date": "2026-05-12",
         "description": "Adds GitHub Actions last-run status to each service card, replaces the flat metrics table with inline accordion expansion."
       }
@@ -226,7 +226,7 @@
     "designDocs": [
       {
         "title": "ADR: Dashboard GitHub Actions & Expandable Cards",
-        "href": "https://github.com/skarumbu/my-website/blob/main/docs/design/2026-05-12-dashboard-github-actions-expandable-cards.md",
+        "href": "https://github.com/skarumbu/my-website/blob/main/posts/dashboard-github-actions-expandable-cards.md",
         "date": "2026-05-12",
         "description": "Adds GitHub Actions last-run status to each service card, replaces the flat metrics table with inline accordion expansion."
       }
@@ -308,7 +308,7 @@
     "designDocs": [
       {
         "title": "ADR: Per-Idea Status Updates",
-        "href": "https://github.com/skarumbu/my-website/blob/main/docs/design/2026-05-12-per-idea-status-updates.md",
+        "href": "https://github.com/skarumbu/my-website/blob/main/posts/per-idea-status-updates.md",
         "date": "2026-05-12",
         "description": "Adds a threaded updates log to each idea, backed by a new Azure Table Storage table and a detail slide-over panel in the frontend."
       }

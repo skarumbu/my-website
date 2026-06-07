@@ -1,3 +1,11 @@
+---
+title: "ADR: Running App — Deployment & Auth Decisions"
+slug: running-app-deployment-decisions
+date: "2026-05-25T00:00:00+00:00"
+published: true
+description: "Architecture decision record for Running App deployment architecture and authentication approach."
+updatedAt: "2026-05-25T00:00:00+00:00"
+---
 # ADR: Running App — Deployment & Auth Decisions
 
 **Date:** 2026-05-25

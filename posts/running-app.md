@@ -1,3 +1,11 @@
+---
+title: "ADR: Running App"
+slug: running-app
+date: "2026-05-23T00:00:00+00:00"
+published: true
+description: "Architecture decision record for the Running App feature."
+updatedAt: "2026-05-23T00:00:00+00:00"
+---
 # ADR: Running App
 
 **Date:** 2026-05-23

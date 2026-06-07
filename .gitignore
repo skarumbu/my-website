@@ -27,3 +27,6 @@ yarn-error.log*
 # Learning Plan API local config
 api/local.settings.json
 
+
+# Claude Code internal directory
+.claude/

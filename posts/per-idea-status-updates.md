@@ -1,3 +1,11 @@
+---
+title: "ADR: Per-Idea Status Updates"
+slug: per-idea-status-updates
+date: "2026-05-12T00:00:00+00:00"
+published: true
+description: "Architecture decision record for adding per-idea status update tracking."
+updatedAt: "2026-05-12T00:00:00+00:00"
+---
 # ADR: Per-Idea Status Updates
 
 **Date:** 2026-05-12
