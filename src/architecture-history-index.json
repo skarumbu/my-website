@@ -1,5 +1,11 @@
 [
   {
+    "package": "ideas-api",
+    "capturedAt": "2026-06-07",
+    "commitSha": "0dc7a44",
+    "commitMessage": "feat: add repos field to projects, PATCH /projects/{id}, machine auth on GET /projects"
+  },
+  {
     "package": "ideas-bot",
     "capturedAt": "2026-06-07",
     "commitSha": "d48fa3f",

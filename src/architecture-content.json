@@ -244,6 +244,8 @@
       "EasyAuth JWT authentication for browser access (read)",
       "X-Ideas-Key machine write-key for automated idea creation (write)",
       "POST /api/ideas/{id}/run-bot \u2014 triggers the ideas-bot Container App Job for a specific idea, with optional model override",
+      "PATCH /api/projects/{id} \u2014 updates project metadata, including associated repositories",
+      "Projects now support an optional 'repos' field (list of repository URLs)",
       "Ideas, projects, and updates stored in separate Table Storage tables",
       "Supports additional bot status: needs_info"
     ],
@@ -253,59 +255,25 @@
         "EasyAuth injects the validated Google ID token as a request header \u2014 the function reads sub and email from it",
         "X-Ideas-Key is a long-lived secret stored as a Function App setting (not in the codebase)",
         "run-bot endpoint starts a Container App Job execution via the Azure SDK and returns immediately, with optional model override passed as AZURE_OPENAI_DEPLOYMENT",
+        "PATCH /projects/{id} endpoint updates project metadata, including the 'repos' field stored as a JSON array in Table Storage",
         "No compute runs between requests \u2014 fully serverless, scales to zero",
         "Table Storage partition key = project ID; row key = idea ID (UUID)",
-        "Updates table uses idea ID as the partition key and UUID as the row key"
+        "Updates table uses idea ID as the partition key and UUID as the row key",
+        "Projects table uses a fixed partition key ('projects') and UUID as the row key"
       ]
     },
     "dataFlow": [
       {
-        "label": "User opens /ideas \u2014 EasyAuth validates Google JWT",
-        "color": "purple"
-      },
-      {
-        "label": "GET /api/ideas + GET /api/projects",
+        "label": "User updates project metadata",
         "color": "purple",
         "sublines": [
-          "reads Azure Table Storage",
-          "returns idea and project lists"
-        ]
-      },
-      {
-        "label": "User clicks \"Assign Bot\"",
-        "color": "purple"
-      },
-      {
-        "label": "POST /api/ideas/{id}/run-bot",
-        "color": "orange",
-        "sublines": [
-          "triggers Container App Job execution via Azure SDK",
-          "returns job execution ID immediately"
-        ]
-      },
-      {
-        "label": "ideas-bot runs asynchronously \u2192 opens draft PR",
-        "color": "green"
-      },
-      {
-        "label": "User posts a status update for an idea",
-        "color": "purple",
-        "sublines": [
-          "POST /api/ideas/{id}/updates",
-          "writes to the updates table"
-        ]
-      },
-      {
-        "label": "User deletes a status update",
-        "color": "purple",
-        "sublines": [
-          "DELETE /api/ideas/{id}/updates/{update_id}",
-          "removes entry from the updates table"
+          "PATCH /api/projects/{id}",
+          "updates 'repos' field in the projects table"
         ]
       }
     ],
     "updatedAt": "2026-06-07",
-    "updatedBySha": "f21218a",
+    "updatedBySha": "0dc7a44",
     "designDocs": [
       {
         "title": "ADR: Per-Idea Status Updates",
