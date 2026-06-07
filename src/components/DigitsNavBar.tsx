@@ -1,4 +1,5 @@
 import React from 'react';
+import { useIsAuthenticated } from '@azure/msal-react';
 import '../styling/digits-nav-bar.css';
 
 const NAV_LINKS = [
@@ -12,6 +13,7 @@ const NAV_LINKS = [
 
 const DigitsNavBar: React.FC = () => {
   const current = window.location.pathname;
+  const isAuthenticated = useIsAuthenticated();
 
   return (
     <nav className="digits-nav">
@@ -28,6 +30,14 @@ const DigitsNavBar: React.FC = () => {
             {label}
           </a>
         ))}
+        {isAuthenticated && (
+          <a
+            href="/write"
+            className={`digits-nav-pill${current === '/write' ? ' active' : ''}`}
+          >
+            Write
+          </a>
+        )}
       </div>
     </nav>
   );

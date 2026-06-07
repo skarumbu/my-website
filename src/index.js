@@ -11,6 +11,8 @@ import Ideas from './Ideas.tsx';
 import LearningPlan from './LearningPlan.tsx';
 import Posts from './Posts.tsx';
 import PostReader from './PostReader.tsx';
+import Write from './Write.tsx';
+import WriteEditor from './WriteEditor.tsx';
 import reportWebVitals from './reportWebVitals';
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { PublicClientApplication } from "@azure/msal-browser";
@@ -59,6 +61,18 @@ const router = createBrowserRouter([
   {
     path: "/posts/:slug",
     element: <PostReader />
+  },
+  {
+    path: "/write",
+    element: <Write />,
+  },
+  {
+    path: "/write/new",
+    element: <WriteEditor />,
+  },
+  {
+    path: "/write/:slug",
+    element: <WriteEditor />,
   }
 ]);
 

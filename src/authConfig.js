@@ -2,7 +2,7 @@ export const msalConfig = {
   auth: {
     clientId: process.env.REACT_APP_AZURE_CLIENT_ID,
     authority: `https://login.microsoftonline.com/${process.env.REACT_APP_AZURE_TENANT_ID}`,
-    redirectUri: window.location.origin + "/dashboard",
+    redirectUri: window.location.origin,
   },
   cache: {
     cacheLocation: "sessionStorage",
@@ -16,4 +16,8 @@ export const dashboardApiRequest = {
 
 export const ideasApiRequest = {
   scopes: ['api://e70038a1-6f98-4008-b10a-a5926ec6a861/access_as_user'],
+};
+
+export const postsApiRequest = {
+  scopes: ['api://825b77cb-1492-406f-9072-923aa536b328/.default'],
 };

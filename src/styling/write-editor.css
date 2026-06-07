@@ -1,0 +1,218 @@
+.editor-page {
+  min-height: 100vh;
+  background: var(--bg-1);
+  font-family: 'DM Sans', system-ui, sans-serif;
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  /* NO texture overlay — flat background for calm, focused editing */
+}
+
+.editor-content {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 48px 40px 80px;
+  position: relative;
+}
+
+.editor-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.editor-back {
+  font-size: 13px;
+  color: var(--ink-3);
+  text-decoration: none;
+}
+
+.editor-back:hover {
+  color: var(--ink);
+  text-decoration: underline;
+}
+
+.editor-autosave {
+  font-size: 13px;
+  color: var(--ink-3);
+  margin-left: auto;
+  margin-right: 16px;
+}
+
+.editor-autosave.saved {
+  color: var(--good, #4FA86E);
+}
+
+.editor-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.editor-save-btn {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.editor-save-btn:hover {
+  background: var(--accent-dk);
+}
+
+.editor-save-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.editor-publish-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.editor-delete-btn {
+  background: transparent;
+  border: 1px solid var(--accent-dk);
+  color: var(--accent-dk);
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 400;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.editor-delete-btn:hover {
+  background: rgba(184, 61, 42, 0.08);
+}
+
+.editor-divider {
+  border: none;
+  border-top: 1px solid var(--line);
+  margin: 16px 0;
+}
+
+.editor-field-title {
+  width: 100%;
+  border: none;
+  border-bottom: 2px solid transparent;
+  outline: none;
+  font-size: 16px;
+  font-weight: 600;
+  font-family: 'DM Sans', sans-serif;
+  color: var(--ink);
+  background: transparent;
+  padding: 12px 0;
+  box-sizing: border-box;
+}
+
+.editor-field-title:focus {
+  border-bottom-color: var(--line);
+}
+
+.editor-field-desc {
+  width: 100%;
+  border: none;
+  border-bottom: 2px solid transparent;
+  outline: none;
+  font-size: 16px;
+  font-weight: 400;
+  font-family: 'DM Sans', sans-serif;
+  color: var(--ink-2);
+  background: transparent;
+  padding: 12px 0;
+  box-sizing: border-box;
+  margin-bottom: 16px;
+}
+
+.editor-field-desc:focus {
+  border-bottom-color: var(--line);
+}
+
+.editor-field-body {
+  width: 100%;
+  border: none;
+  outline: none;
+  font-size: 16px;
+  font-weight: 400;
+  font-family: 'DM Sans', sans-serif;
+  color: var(--ink);
+  background: transparent;
+  line-height: 1.7;
+  padding: 12px 0;
+  box-sizing: border-box;
+  resize: vertical;
+  min-height: 320px;
+}
+
+.editor-error {
+  font-size: 13px;
+  color: var(--accent);
+  margin: 0 0 12px;
+}
+
+.editor-login-view {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  text-align: center;
+  gap: 16px;
+}
+
+.editor-login-view h1 {
+  font-family: 'Fraunces', serif;
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--ink);
+  margin: 0;
+}
+
+.editor-login-view p {
+  font-size: 16px;
+  color: var(--ink-2);
+  margin: 0;
+  max-width: 400px;
+}
+
+.editor-login-btn {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.editor-login-btn:hover {
+  background: var(--accent-dk);
+}
+
+.editor-unsaved-banner {
+  background: rgba(229, 83, 60, 0.08);
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  font-size: 13px;
+}

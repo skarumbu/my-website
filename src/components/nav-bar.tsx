@@ -1,8 +1,10 @@
 import React from "react";
+import { useIsAuthenticated } from "@azure/msal-react";
 import "../styling/nav-bar.css";
 import "../styling/button.css";
 
 const NavBar: React.FC = () => {
+  const isAuthenticated = useIsAuthenticated();
   return (
     <nav className="nav-bar">
       <a href="/digits" className="button">
@@ -23,6 +25,11 @@ const NavBar: React.FC = () => {
       <a href="/posts" className="button">
         Writing
       </a>
+      {isAuthenticated && (
+        <a href="/write" className="button">
+          Write
+        </a>
+      )}
     </nav>
   );
 };
