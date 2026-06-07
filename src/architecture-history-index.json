@@ -1,5 +1,11 @@
 [
   {
+    "package": "ideas-bot",
+    "capturedAt": "2026-06-07",
+    "commitSha": "9c304e9",
+    "commitMessage": "feat: upgrade model default, add needs-info pre-flight and model slug in PR\n\n- Default deployment changed from gpt-4o to o3-mini\n- max_tokens raised from 4096 to 8096\n- assess_idea_clarity() pre-flight check: posts a bot comment and sets\n  needs_info status if the idea is too vague to implement autonomously\n- fetch_updates() / post_bot_update() helpers for ideas-api updates endpoint\n- Prior updates thread injected into agent context on re-trigger\n- Branch name and PR title now include model slug for A/B comparison\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>"
+  },
+  {
     "package": "dashboard-api",
     "capturedAt": "2026-05-26",
     "commitSha": "b7176d7",

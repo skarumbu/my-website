@@ -315,19 +315,25 @@
     ]
   },
   "ideas-bot": {
-    "summary": "Container App Job triggered by ideas-api. Clones the target repository, then runs a GPT-4o tool-use loop that reads and writes files and runs shell commands to implement the requested feature. Commits the result and opens a draft pull request on GitHub. The job scales to zero between invocations.",
+    "summary": "Container App Job triggered by ideas-api. Clones the target repository, performs a pre-flight clarity check, then runs an AI-driven tool-use loop to implement the requested feature. Commits the result and opens a draft pull request on GitHub. The job scales to zero between invocations.",
     "description": "A containerised Python agent that autonomously implements feature ideas. Triggered on demand by ideas-api, it clones the target repo, runs a GPT-4o tool-use loop to read/write files and execute shell commands, commits the result, and opens a draft pull request.",
     "features": [
       "Structured logging via shared-logging library for consistent log formatting and metadata",
-      "Enhanced error logging with detailed context, including endpoint, method, error type, and stack trace"
+      "Enhanced error logging with detailed context, including endpoint, method, error type, and stack trace",
+      "Pre-flight clarity check to assess idea implementability and request clarification if needed",
+      "Prior updates thread injected into agent context for continuity on re-trigger",
+      "Branch name and PR title include model slug for A/B comparison"
     ],
     "architecture": {
-      "overview": "A Python script packaged as a Docker container and registered as a Container App Job. Each trigger spins up a fresh job execution from scratch. The GPT-4o agent loop iterates until the feature is implemented or a maximum iteration limit is reached, then commits and creates the PR.",
+      "overview": "A containerised Python agent that autonomously implements feature ideas. Triggered on demand by ideas-api, it clones the target repo, performs a pre-flight clarity check, runs an AI-driven tool-use loop to read/write files and execute shell commands, commits the result, and opens a draft pull request.",
       "keyPoints": [
         "Fresh container per invocation \u2014 no shared state between runs",
         "GitHub PAT stored as a Container App secret (not an environment variable in the image)",
+        "Pre-flight clarity check posts bot comments and pauses execution if the idea is too vague",
         "GPT-4o tool-use loop has a hard iteration cap to prevent runaway API cost",
         "Shell execution tool runs in a sandboxed subprocess within the container",
+        "Prior updates thread injected into agent context for continuity on re-trigger",
+        "Branch name and PR title include model slug for A/B comparison",
         "Job is triggered via az containerapp job start by ideas-api using Managed Identity",
         "Structured logging implemented via shared-logging library for consistent and enriched log metadata"
       ]
@@ -342,6 +348,10 @@
         "color": "orange"
       },
       {
+        "label": "Pre-flight clarity check \u00b7 request clarification if needed",
+        "color": "blue"
+      },
+      {
         "label": "Clone target repo \u00b7 read idea description",
         "sublines": [
           "GPT-4o tool-use loop",
@@ -353,8 +363,8 @@
         "color": "green"
       }
     ],
-    "updatedAt": "2026-05-26",
-    "updatedBySha": "2f2bb1b"
+    "updatedAt": "2026-06-07",
+    "updatedBySha": "9c304e9"
   },
   "azure-infrastructure": {
     "summary": "Defines and provisions all Azure resources at subscription scope using Bicep. Modules cover the Static Web App, Container Registry, Container App Environment (shared Log Analytics workspace), momentum-finder and trail-finder Container Apps, Digits and Dashboard Azure Functions apps, and all RBAC role assignments.",
