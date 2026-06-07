@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMsal, useIsAuthenticated } from '@azure/msal-react';
 import { postsApiRequest } from './authConfig.js';
+import { acquireToken } from './auth.ts';
 import NavBar from './components/nav-bar.tsx';
 import Spinner from './components/Spinner.tsx';
 import './styling/write.css';
@@ -25,20 +26,10 @@ function Write() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const getToken = useCallback(async (): Promise<string> => {
-    try {
-      const response = await instance.acquireTokenSilent({ ...postsApiRequest, account: accounts[0] });
-      return response.accessToken;
-    } catch (e: any) {
-      if (e?.errorCode === 'interaction_in_progress') throw e;
-      try {
-        await instance.acquireTokenRedirect({ ...postsApiRequest, redirectUri: window.location.origin + '/write' });
-      } catch (redirectErr: any) {
-        if (redirectErr?.errorCode !== 'interaction_in_progress') throw redirectErr;
-      }
-      throw new Error('Redirecting for auth...');
-    }
-  }, [instance, accounts]);
+  const getToken = useCallback(
+    () => acquireToken(instance, accounts[0], postsApiRequest, `${window.location.origin}/write`),
+    [instance, accounts]
+  );
 
   useEffect(() => {
     if (!isAuthenticated) return;

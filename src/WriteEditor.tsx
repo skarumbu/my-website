@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate, useBeforeUnload, useBlocker } from 'react-router-dom';
 import { useMsal, useIsAuthenticated } from '@azure/msal-react';
 import { postsApiRequest } from './authConfig.js';
+import { acquireToken } from './auth.ts';
 import NavBar from './components/nav-bar.tsx';
 import Spinner from './components/Spinner.tsx';
 import './styling/write-editor.css';
@@ -40,23 +41,11 @@ export default function WriteEditor() {
   }, [unsavedSinceApi]);
 
   // getToken: user-triggered, interactive redirect fallback
-  const getToken = useCallback(async (): Promise<string> => {
-    try {
-      const response = await instance.acquireTokenSilent({ ...postsApiRequest, account: accounts[0] });
-      return response.accessToken;
-    } catch (e: any) {
-      if (e?.errorCode === 'interaction_in_progress') throw e;
-      try {
-        await instance.acquireTokenRedirect({
-          ...postsApiRequest,
-          redirectUri: window.location.origin + (slug ? `/write/${slug}` : '/write/new'),
-        });
-      } catch (redirectErr: any) {
-        if (redirectErr?.errorCode !== 'interaction_in_progress') throw redirectErr;
-      }
-      throw new Error('Redirecting for auth...');
-    }
-  }, [instance, accounts, slug]);
+  const getToken = useCallback(
+    () => acquireToken(instance, accounts[0], postsApiRequest,
+      `${window.location.origin}${slug ? `/write/${slug}` : '/write/new'}`),
+    [instance, accounts, slug]
+  );
 
   // getTokenSilent: background autosave — NEVER redirects
   const getTokenSilent = useCallback(async (): Promise<string | null> => {

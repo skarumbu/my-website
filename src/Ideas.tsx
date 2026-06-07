@@ -3,6 +3,7 @@ import NavBar from './components/nav-bar.tsx';
 import './styling/ideas.css';
 import { useMsal, useIsAuthenticated } from '@azure/msal-react';
 import { ideasApiRequest } from './authConfig.js';
+import { acquireToken } from './auth.ts';
 
 const BASE_URL = process.env.REACT_APP_IDEAS_API_BASE_URL;
 
@@ -611,20 +612,10 @@ function Ideas() {
   const [detailIdea, setDetailIdea] = useState<Idea | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
 
-  const getToken = useCallback(async (): Promise<string> => {
-    try {
-      const response = await instance.acquireTokenSilent({ ...ideasApiRequest, account: accounts[0] });
-      return response.accessToken;
-    } catch (e: any) {
-      if (e?.errorCode === 'interaction_in_progress') throw e;
-      try {
-        await instance.acquireTokenRedirect({ ...ideasApiRequest, redirectUri: window.location.origin + '/ideas' });
-      } catch (redirectErr: any) {
-        if (redirectErr?.errorCode !== 'interaction_in_progress') throw redirectErr;
-      }
-      throw new Error('Redirecting for auth...');
-    }
-  }, [instance, accounts]);
+  const getToken = useCallback(
+    () => acquireToken(instance, accounts[0], ideasApiRequest, `${window.location.origin}/ideas`),
+    [instance, accounts]
+  );
 
   // Silent-only token fetch for background operations — never redirects
   const getTokenSilent = useCallback(async (): Promise<string | null> => {
