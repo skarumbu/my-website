@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import NavBar from './components/nav-bar.tsx';
 import './styling/ideas.css';
 import { useMsal, useIsAuthenticated } from '@azure/msal-react';
+import { InteractionStatus } from '@azure/msal-browser';
 import { ideasApiRequest } from './authConfig.js';
 import { acquireToken } from './auth.ts';
 
@@ -630,7 +631,7 @@ function EmptyState({ tab, onAdd }: { tab: StatusFilter; onAdd: () => void }) {
 // ── Main component ────────────────────────────────────────────────────
 
 function Ideas() {
-  const { instance, accounts } = useMsal();
+  const { instance, accounts, inProgress } = useMsal();
   const isAuthenticated = useIsAuthenticated();
 
   const [ideas, setIdeas] = useState<Idea[]>([]);
@@ -700,10 +701,10 @@ function Ideas() {
   }, [getToken]);
 
   useEffect(() => {
-    if (!isAuthenticated) return;
+    if (!isAuthenticated || inProgress !== InteractionStatus.None) return;
     fetchIdeas();
     fetchProjects().then(ps => setProjects(ps));
-  }, [isAuthenticated, fetchIdeas, fetchProjects]);
+  }, [isAuthenticated, inProgress, fetchIdeas, fetchProjects]);
 
   const runBot = useCallback(async (idea: Idea, model: string) => {
     if (!BASE_URL || botRunning) return;
