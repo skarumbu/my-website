@@ -419,5 +419,26 @@
         "color": "green"
       }
     ]
+  },
+  "posts-api": {
+    "summary": "A Python FastAPI service that stores and serves blog posts backed by Azure Table Storage. Posts are written as Markdown files in a GitHub repository and exposed via a REST API consumed by the my-website frontend.",
+    "description": "REST API for reading and writing blog posts. Backed by Azure Table Storage for post metadata and GitHub for Markdown content storage.",
+    "features": [
+      "Read and list published posts via HTTP GET endpoints",
+      "Create and update posts stored as Markdown in GitHub",
+      "Azure Table Storage for post metadata (slug, title, date, status)",
+      "Python FastAPI with async request handling",
+      "Deployed to Azure Functions"
+    ],
+    "architecture": {
+      "overview": "FastAPI application deployed as an Azure Functions app. Post metadata (slug, title, publish date, status) lives in Azure Table Storage. Post content is stored as Markdown files in a GitHub repository and fetched at read time.",
+      "keyPoints": [
+        "Dual storage: Azure Table Storage for metadata, GitHub for Markdown content",
+        "Posts are identified by slug \u2014 the Table Storage row key",
+        "GitHub content fetch uses a PAT scoped to the content repository",
+        "Deployed via Azure Functions Python v2 programming model"
+      ]
+    },
+    "dataFlow": null
   }
 }

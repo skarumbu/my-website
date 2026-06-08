@@ -1,13 +1,9 @@
 import React from 'react';
-import metadata from '../architecture-metadata.json';
 import archContent from '../architecture-content.json';
 import historyIndex from '../architecture-history-index.json';
 
 type HistoryEntry = { package: string; capturedAt: string; commitSha: string; commitMessage: string };
 const allHistory = historyIndex as HistoryEntry[];
-
-type ServiceMeta = { lastDeploy: string | null; commitSha: string | null };
-const meta = metadata as Record<string, ServiceMeta>;
 
 type GeneratedContent = {
   summary?: string;
@@ -37,7 +33,6 @@ interface PkgData {
   name: string;
   role: string;
   runsOn: string;
-  metaKey?: string;
   description: string;
   features: string[];
   architecture: {
@@ -89,7 +84,7 @@ const PACKAGES: Record<string, PkgData> = {
     name: 'digits',
     role: 'Generates and serves daily Digits puzzles',
     runsOn: 'Azure Functions',
-    metaKey: 'digits',
+
     description:
       'Azure Functions app that generates, stores, and serves daily number puzzles. Each request is instrumented with metrics rows written to Table Storage so the dashboard can track volume and latency.',
     features: [
@@ -128,7 +123,7 @@ const PACKAGES: Record<string, PkgData> = {
     name: 'momentum-finder',
     role: 'Identifies momentum shifts in live NBA games',
     runsOn: 'Azure Container Apps',
-    metaKey: 'momentum-finder',
+
     description:
       'FastAPI Container App that analyses live NBA game data to detect and surface momentum shifts. Scales automatically between 0 and 10 replicas and emits structured JSON logs for dashboard monitoring.',
     features: [
@@ -168,7 +163,7 @@ const PACKAGES: Record<string, PkgData> = {
     name: 'trail-finder',
     role: 'Trail recommendations + conditions via Google Places & AI',
     runsOn: 'Azure Container Apps',
-    metaKey: 'trail-finder',
+
     description:
       'FastAPI Container App that generates personalised trail recommendations for a given city. Fans out across Google Places, weather, and search APIs, then synthesizes a condition summary and gear list with Azure OpenAI. Results are cached 24h per location.',
     features: [
@@ -212,7 +207,7 @@ const PACKAGES: Record<string, PkgData> = {
     name: 'dashboard-api',
     role: 'Aggregates health, metrics, and cost across all services',
     runsOn: 'Azure Functions',
-    metaKey: 'dashboard-api',
+
     description:
       'Azure Functions app that fans out in parallel to health-check all services, query Log Analytics for request metrics, pull Digits Table Storage metrics, and fetch Azure Cost Management spend — returning everything in a single aggregated response.',
     features: [
@@ -257,7 +252,7 @@ const PACKAGES: Record<string, PkgData> = {
     name: 'ideas-api',
     role: 'Stores/serves AI-generated feature ideas; triggers ideas-bot',
     runsOn: 'Azure Functions',
-    metaKey: 'ideas-api',
+
     description:
       'Azure Functions app that stores and serves feature ideas in Table Storage. Supports two auth modes: browser JWT tokens via EasyAuth for read access, and an X-Ideas-Key machine write-key for automated writes. Exposes a trigger endpoint for the ideas-bot.',
     features: [
@@ -375,7 +370,7 @@ const PACKAGES: Record<string, PkgData> = {
     name: 'learning-plan-api',
     role: 'Generates and stores AI-powered personalised learning plans',
     runsOn: 'Azure Functions',
-    metaKey: 'learning-plan-api',
+
     description:
       'Azure Functions app that generates structured learning plans via the Claude API and stores them per user in Azure Table Storage. Google ID tokens are verified server-side for every request.',
     features: [
@@ -448,7 +443,6 @@ const PackageDetail: React.FC<Props> = ({ packageKey, onBack }) => {
   const designDocs: { title: string; href: string; date: string; description: string }[] =
     (gen as any).designDocs ?? [];
 
-  const m = staticPkg.metaKey ? meta[staticPkg.metaKey] : null;
   const pkgHistory = allHistory.filter(e => e.package === packageKey);
 
   return (
@@ -467,11 +461,6 @@ const PackageDetail: React.FC<Props> = ({ packageKey, onBack }) => {
           )}
         </div>
         <p className="arch-pkg-role">{pkg.role}</p>
-        {m?.lastDeploy && (
-          <p className="arch-pkg-deploy">
-            Last deploy: {m.lastDeploy} · <code style={{ fontSize: '0.78rem' }}>{m.commitSha}</code>
-          </p>
-        )}
         <p className="arch-pkg-desc">{pkg.description}</p>
         <div className="arch-tech-stack" style={{ marginTop: '1rem' }}>
           {pkg.techStack.map(t => (

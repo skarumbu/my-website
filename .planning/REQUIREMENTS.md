@@ -124,5 +124,12 @@
 - Unmapped: 0
 
 ---
+
+## Ideas Bot — Project/Repo Mapping
+
+- [ ] **BOT-01**: Project records include a `repos` field — a list of GitHub repo slugs (e.g. `["skarumbu/my-website"]`). Exposed in the project creation/edit UI.
+- [ ] **BOT-02**: The ideas bot resolves target repo(s) from the idea's project record at runtime, replacing the hardcoded `REPO_MAP`. If the project has no `repos` configured, the bot exits with a clear error rather than falling back silently.
+
+---
 *Requirements defined: 2026-05-30*
-*Last updated: 2026-05-30 after roadmap creation*
+*Last updated: 2026-06-07 — added BOT-01, BOT-02 (project→repo mapping)*

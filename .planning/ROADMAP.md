@@ -190,6 +190,16 @@
 | 5. Editor UI | 3/3 | Complete | 2026-06-06 |
 | 6. GitHub-Backed Content | 0/3 | Not started | - |
 
+### Phase 7: Arch Update Pipeline Generalization
+
+**Goal:** [To be planned]
+**Requirements**: TBD
+**Depends on:** Phase 6
+**Plans:** 3/3 plans complete
+
+Plans:
+- [x] TBD (run /gsd-plan-phase 7 to break down) (completed 2026-06-07)
+
 ---
 
 *Roadmap created: 2026-05-30*

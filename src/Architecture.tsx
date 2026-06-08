@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import NavBar from './components/nav-bar.tsx';
 import './styling/architecture.css';
-import metadata from './architecture-metadata.json';
 import archContent from './architecture-content.json';
 import ArchDiagram from './architecture/ArchDiagram.tsx';
 import PackageDetail from './architecture/PackageDetail.tsx';
@@ -9,14 +8,6 @@ import PackageDetail from './architecture/PackageDetail.tsx';
 type GeneratedSummary = { summary?: string };
 const pkgSummary = archContent as Record<string, GeneratedSummary>;
 
-type ServiceMeta = { lastDeploy: string | null; commitSha: string | null };
-const meta = metadata as Record<string, ServiceMeta>;
-
-function deployLabel(key: string) {
-  const m = meta[key];
-  if (!m?.lastDeploy) return null;
-  return `${m.lastDeploy} · ${m.commitSha}`;
-}
 
 const Architecture: React.FC = () => {
   const today = new Date().toISOString().split('T')[0];
@@ -66,20 +57,20 @@ const Architecture: React.FC = () => {
           </p>
           <table className="arch-table">
             <thead>
-              <tr><th>Package</th><th>Role</th><th>Runs on</th><th>Last Deploy</th></tr>
+              <tr><th>Package</th><th>Role</th><th>Runs on</th></tr>
             </thead>
             <tbody>
               {[
-                ['my-website',           'React SPA — the user-facing frontend',                          'Azure Static Web Apps', null],
-                ['digits',               'Generates and serves Digits puzzles',                           'Azure Functions',       'digits'],
-                ['momentum-finder',      'Identifies momentum shifts in live NBA games',                  'Azure Container Apps',  'momentum-finder'],
-                ['trail-finder',         'Trail recommendations + conditions via Google Places & AI',     'Azure Container Apps',  'trail-finder'],
-                ['dashboard-api',        'Aggregates health, metrics, and cost across all services',      'Azure Functions',       'dashboard-api'],
-                ['ideas-api',            'Stores/serves AI-generated feature ideas; triggers ideas-bot',  'Azure Functions',       'ideas-api'],
-                ['ideas-bot',            'Autonomous agent: implements features and opens draft PRs',      'Container App Job',     null],
-                ['azure-infrastructure', 'Defines all Azure cloud resources (infra-as-code)',             'Provisioning only',     null],
-                ['learning-plan-api',    'Generates and stores AI-powered personalised learning plans',   'Azure Functions',       'learning-plan-api'],
-              ].map(([pkg, role, runs, metaKey]) => (
+                ['my-website',           'React SPA — the user-facing frontend',                          'Azure Static Web Apps'],
+                ['digits',               'Generates and serves Digits puzzles',                           'Azure Functions'],
+                ['momentum-finder',      'Identifies momentum shifts in live NBA games',                  'Azure Container Apps'],
+                ['trail-finder',         'Trail recommendations + conditions via Google Places & AI',     'Azure Container Apps'],
+                ['dashboard-api',        'Aggregates health, metrics, and cost across all services',      'Azure Functions'],
+                ['ideas-api',            'Stores/serves AI-generated feature ideas; triggers ideas-bot',  'Azure Functions'],
+                ['ideas-bot',            'Autonomous agent: implements features and opens draft PRs',      'Container App Job'],
+                ['azure-infrastructure', 'Defines all Azure cloud resources (infra-as-code)',             'Provisioning only'],
+                ['learning-plan-api',    'Generates and stores AI-powered personalised learning plans',   'Azure Functions'],
+              ].map(([pkg, role, runs]) => (
                 <tr key={pkg as string} className="arch-table-row-clickable" onClick={() => setSelectedPkg(pkg as string)}>
                   <td>
                     <button className="arch-pkg-link">
@@ -88,9 +79,6 @@ const Architecture: React.FC = () => {
                   </td>
                   <td>{role}</td>
                   <td>{runs}</td>
-                  <td style={{ fontSize: '0.78rem', color: '#8b949e', whiteSpace: 'nowrap' }}>
-                    {metaKey ? (deployLabel(metaKey as string) ?? '—') : '—'}
-                  </td>
                 </tr>
               ))}
             </tbody>
