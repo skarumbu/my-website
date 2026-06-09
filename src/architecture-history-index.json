@@ -2,6 +2,12 @@
   {
     "package": "ideas-bot",
     "capturedAt": "2026-06-09",
+    "commitSha": "590069b",
+    "commitMessage": "refactor(bot): project = one repo; remove multi-repo loop\n\nfetch_project_repo() returns a single string. Bot clones that one repo\nand opens one PR. No LLM inference, no loop.\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>"
+  },
+  {
+    "package": "ideas-bot",
+    "capturedAt": "2026-06-09",
     "commitSha": "a824310",
     "commitMessage": "fix(bot): handle 429 rate limits - increase retries, cap context window\n\n- max_retries=8 lets the openai library back off and retry on 429/5xx\n- timeout=120s per request (was default 60s)\n- Sliding context window keeps system+user prompt + last 30 messages,\n  preventing unbounded growth that drives up per-round token usage\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>"
   },
