@@ -2,6 +2,12 @@
   {
     "package": "ideas-bot",
     "capturedAt": "2026-06-09",
+    "commitSha": "25e78d6",
+    "commitMessage": "fix: cut token pressure to reduce 429s\n\n- bash output cap: 8000 \u2192 2500 chars\n- read_file cap: 8000 \u2192 4000 chars\n- max_tokens: 8096 \u2192 4096 in agent + repair loops\n- context window: last 30 \u2192 last 14 messages\n- final retry wait: 180s \u2192 300s\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>"
+  },
+  {
+    "package": "ideas-bot",
+    "capturedAt": "2026-06-09",
     "commitSha": "6d997fc",
     "commitMessage": "feat: decompose complex ideas into sub-tasks to avoid 429 rate limits\n\nBefore the agent loop, check whether the idea is complex enough to split.\nIf so, create 2-4 focused child ideas (same project/repo), block the parent,\nand exit. Each child runs with a small focused context \u2014 far fewer rounds.\n\nWhen re-triggered after all children complete: if they were subtasks,\nmark parent completed without running an agent loop.\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>"
   },
