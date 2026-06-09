@@ -1,0 +1,89 @@
+{
+  "package": "ideas-bot",
+  "capturedAt": "2026-06-09",
+  "commitSha": "99c01d4",
+  "commitMessage": "fix: app-level 429 retry with 60s backoff on top of SDK retries\n\nSDK max_retries=8 exhausts in ~2 min on sustained TPM limits.\n_chat_complete wraps all 3 call sites with up to 4 attempts,\nsleeping 60/120/180s between them before giving up.\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>",
+  "content": {
+    "summary": "Container App Job triggered by ideas-api. Clones the target repository, runs an AI-driven tool-use loop to implement the requested feature, commits the result, and opens a draft pull request on GitHub. The job scales to zero between invocations.",
+    "description": "A containerised Python agent that autonomously implements feature ideas. Triggered on demand by ideas-api, it clones the target repo, runs a GPT-4o tool-use loop to read/write files and execute shell commands, commits the result, and opens a draft pull request.",
+    "features": [
+      "Structured logging via shared-logging library for consistent log formatting and metadata",
+      "Enhanced error logging with detailed context, including endpoint, method, error type, and stack trace",
+      "Pre-flight clarity check to assess idea implementability and request clarification if needed",
+      "Prior updates thread injected into agent context for continuity on re-trigger",
+      "Branch name and PR title include model slug for A/B comparison",
+      "Single-repo project support with dynamic repository resolution via Ideas API",
+      "Cross-repo dependency management \u2014 agent blocks until all dependencies are completed",
+      "GitHub Actions CI monitoring and auto-repair on failure, including fetching logs, diagnosing issues, and pushing fixes",
+      "Sliding context window for GPT-4o tool-use loop to prevent unbounded token growth and reduce 429 rate limit risks",
+      "Retry mechanism with exponential backoff (max_retries=8) and increased timeout (120s) for handling 429/5xx errors"
+    ],
+    "architecture": {
+      "overview": "A containerised Python agent that autonomously implements feature ideas. Triggered on demand by ideas-api, it clones the target repo, performs a pre-flight clarity check, runs an AI-driven tool-use loop to read/write files and execute shell commands, commits the result, and opens a draft pull request.",
+      "keyPoints": [
+        "Fresh container per invocation \u2014 no shared state between runs",
+        "GitHub PAT stored as a Container App secret (not an environment variable in the image)",
+        "Pre-flight clarity check posts bot comments and pauses execution if the idea is too vague",
+        "GPT-4o tool-use loop has a hard iteration cap to prevent runaway API cost",
+        "Sliding context window keeps system prompt, user prompt, and last 30 exchanges to bound token usage and reduce 429 risks",
+        "Shell execution tool runs in a sandboxed subprocess within the container",
+        "Prior updates thread injected into agent context for continuity on re-trigger",
+        "Branch name and PR title include model slug for A/B comparison",
+        "Job is triggered via az containerapp job start by ideas-api using Managed Identity",
+        "Structured logging implemented via shared-logging library for consistent and enriched log metadata",
+        "Single-repo project support with dynamic repository resolution via Ideas API",
+        "Cross-repo dependency management \u2014 agent blocks until all dependencies are completed, re-checks statuses on re-trigger, and unblocks automatically",
+        "Retry mechanism with exponential backoff (max_retries=8) and increased timeout (120s) for handling 429/5xx errors",
+        "GitHub Actions CI monitoring added \u2014 bot polls PR checks, fetches failure logs, runs repair agent, and re-pushes fixes"
+      ]
+    },
+    "dataFlow": [
+      {
+        "label": "ideas-api receives POST /run-bot",
+        "color": "purple"
+      },
+      {
+        "label": "Container App Job starts \u2014 fresh container",
+        "color": "orange"
+      },
+      {
+        "label": "Pre-flight clarity check \u00b7 request clarification if needed",
+        "color": "blue"
+      },
+      {
+        "label": "Resolve repository dynamically from Ideas API",
+        "color": "blue"
+      },
+      {
+        "label": "Clone target repo \u00b7 read idea description",
+        "sublines": [
+          "GPT-4o tool-use loop",
+          "read files \u00b7 write files \u00b7 run shell commands"
+        ]
+      },
+      {
+        "label": "Create cross-repo dependency ideas if needed \u00b7 block until dependencies complete",
+        "color": "blue",
+        "sublines": [
+          "Fetch all projects \u00b7 file dependency ideas",
+          "Re-trigger checks dependency statuses \u00b7 unblock automatically"
+        ]
+      },
+      {
+        "label": "Commit changes \u00b7 open draft PR on GitHub",
+        "color": "green"
+      },
+      {
+        "label": "Monitor GitHub Actions CI \u00b7 auto-repair on failure",
+        "color": "green",
+        "sublines": [
+          "Poll PR checks every 30s until completion",
+          "Fetch failure logs \u00b7 diagnose issues \u00b7 push fixes",
+          "Re-trigger CI and verify success"
+        ]
+      }
+    ],
+    "updatedAt": "2026-06-09",
+    "updatedBySha": "e9f8850"
+  }
+}
