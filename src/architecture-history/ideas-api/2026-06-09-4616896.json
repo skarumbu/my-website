@@ -1,0 +1,40 @@
+{
+  "package": "ideas-api",
+  "capturedAt": "2026-06-09",
+  "commitSha": "4616896",
+  "commitMessage": "feat: add blocked bot_status and bot_blocked_by field for cross-repo dependencies\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>",
+  "content": {
+    "summary": "Stores and serves AI-generated feature ideas in Azure Table Storage. Accepts browser JWT tokens via EasyAuth for read access and an X-Ideas-Key machine write-key for automated writes. Exposes endpoints to list and create ideas, manage projects, and trigger the ideas-bot Container App Job. Projects now support a single repository string instead of a list.",
+    "description": "Azure Functions app that stores and serves feature ideas in Table Storage. Supports two auth modes: browser JWT tokens via EasyAuth for read access, and an X-Ideas-Key machine write-key for automated writes. Exposes a trigger endpoint for the ideas-bot.",
+    "features": [
+      "PATCH /api/projects/{id} \u2014 updates project metadata, including associated repository, supports both EasyAuth JWT authentication and X-Ideas-Key machine write-key for access"
+    ],
+    "architecture": {
+      "overview": "HTTP-triggered Azure Functions backed by Table Storage. EasyAuth handles browser auth transparently at the Azure layer \u2014 no auth code in the application. A separate machine key enables automation (ideas-bot, external scripts) to write ideas without user credentials.",
+      "keyPoints": [
+        "PATCH /projects/{id} endpoint updates project metadata, including the 'repo' field stored as a single string in Table Storage, now supports machine key authentication alongside user authentication",
+        "Backward compatibility: existing entities with old 'repos' JSON list have their first entry promoted to the 'repo' field on read"
+      ]
+    },
+    "dataFlow": [
+      {
+        "label": "User updates project metadata",
+        "color": "purple",
+        "sublines": [
+          "PATCH /api/projects/{id}",
+          "updates 'repo' field in the projects table"
+        ]
+      }
+    ],
+    "updatedAt": "2026-06-09",
+    "updatedBySha": "d72520d",
+    "designDocs": [
+      {
+        "title": "ADR: Per-Idea Status Updates",
+        "href": "https://github.com/skarumbu/my-website/blob/main/posts/per-idea-status-updates.md",
+        "date": "2026-05-12",
+        "description": "Adds a threaded updates log to each idea, backed by a new Azure Table Storage table and a detail slide-over panel in the frontend."
+      }
+    ]
+  }
+}

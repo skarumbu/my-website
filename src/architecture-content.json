@@ -238,27 +238,29 @@
     "summary": "Stores and serves AI-generated feature ideas in Azure Table Storage. Accepts browser JWT tokens via EasyAuth for read access and an X-Ideas-Key machine write-key for automated writes. Exposes endpoints to list and create ideas, manage projects, and trigger the ideas-bot Container App Job. Projects now support a single repository string instead of a list.",
     "description": "Azure Functions app that stores and serves feature ideas in Table Storage. Supports two auth modes: browser JWT tokens via EasyAuth for read access, and an X-Ideas-Key machine write-key for automated writes. Exposes a trigger endpoint for the ideas-bot.",
     "features": [
-      "PATCH /api/projects/{id} \u2014 updates project metadata, including associated repository, supports both EasyAuth JWT authentication and X-Ideas-Key machine write-key for access"
+      "PATCH /api/projects/{id} \u2014 updates project metadata, including associated repository, supports both EasyAuth JWT authentication and X-Ideas-Key machine write-key for access",
+      "Supports bot-managed fields, including 'bot_status', 'bot_pr_url', 'bot_error', and the newly added 'bot_blocked_by' for cross-repo dependency tracking"
     ],
     "architecture": {
       "overview": "HTTP-triggered Azure Functions backed by Table Storage. EasyAuth handles browser auth transparently at the Azure layer \u2014 no auth code in the application. A separate machine key enables automation (ideas-bot, external scripts) to write ideas without user credentials.",
       "keyPoints": [
         "PATCH /projects/{id} endpoint updates project metadata, including the 'repo' field stored as a single string in Table Storage, now supports machine key authentication alongside user authentication",
-        "Backward compatibility: existing entities with old 'repos' JSON list have their first entry promoted to the 'repo' field on read"
+        "Backward compatibility: existing entities with old 'repos' JSON list have their first entry promoted to the 'repo' field on read",
+        "New 'bot_blocked_by' field added to support tracking cross-repo dependencies, integrated into the bot-managed fields alongside 'bot_status', 'bot_pr_url', and 'bot_error'"
       ]
     },
     "dataFlow": [
       {
-        "label": "User updates project metadata",
-        "color": "purple",
+        "label": "Bot updates idea status",
+        "color": "orange",
         "sublines": [
-          "PATCH /api/projects/{id}",
-          "updates 'repo' field in the projects table"
+          "Updates 'bot_status' field in the ideas table",
+          "Adds 'bot_blocked_by' field for cross-repo dependency tracking"
         ]
       }
     ],
     "updatedAt": "2026-06-09",
-    "updatedBySha": "d72520d",
+    "updatedBySha": "4616896",
     "designDocs": [
       {
         "title": "ADR: Per-Idea Status Updates",

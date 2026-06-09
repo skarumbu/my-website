@@ -2,6 +2,12 @@
   {
     "package": "ideas-api",
     "capturedAt": "2026-06-09",
+    "commitSha": "4616896",
+    "commitMessage": "feat: add blocked bot_status and bot_blocked_by field for cross-repo dependencies\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>"
+  },
+  {
+    "package": "ideas-api",
+    "capturedAt": "2026-06-09",
     "commitSha": "d72520d",
     "commitMessage": "refactor(projects): project = one repo; repos[] -> repo string\n\nAPI now accepts and returns a single `repo` string per project.\nBackward compat: existing entities with old `repos` JSON list have\ntheir first entry promoted on read.\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>"
   },
