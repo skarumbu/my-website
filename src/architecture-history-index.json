@@ -2,6 +2,12 @@
   {
     "package": "ideas-bot",
     "capturedAt": "2026-06-09",
+    "commitSha": "2c2e1a3",
+    "commitMessage": "fix: decompose subtasks now assign correct project per subtask\n\nPreviously all subtasks were filed under the parent idea's project,\ncausing frontend subtasks to land in the wrong repo. Now:\n- decompose_idea receives the full project list and includes it in the prompt\n- LLM must assign an exact project_name per subtask based on which repo the work belongs to\n- project_name is validated against known projects before use; falls back to parent if unrecognised\n- main() uses each subtask's project_name when creating the idea in the API\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>"
+  },
+  {
+    "package": "ideas-bot",
+    "capturedAt": "2026-06-09",
     "commitSha": "25e78d6",
     "commitMessage": "fix: cut token pressure to reduce 429s\n\n- bash output cap: 8000 \u2192 2500 chars\n- read_file cap: 8000 \u2192 4000 chars\n- max_tokens: 8096 \u2192 4096 in agent + repair loops\n- context window: last 30 \u2192 last 14 messages\n- final retry wait: 180s \u2192 300s\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>"
   },

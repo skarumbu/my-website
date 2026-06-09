@@ -276,7 +276,7 @@
     "features": [
       "App-level retry mechanism for GPT-4o API calls with up to 4 attempts and exponential backoff (60/120/300s) to handle sustained 429 rate limits",
       "Sliding context window for GPT-4o tool-use loop now trims older exchanges beyond the last 14 to reduce token growth and further mitigate 429 risks",
-      "Decomposes complex ideas into 2\u20134 focused sub-tasks to avoid 429 rate limits, reducing token usage and API load",
+      "Decomposes complex ideas into 2\u20134 focused sub-tasks, each assigned to the correct project based on repo-specific work, reducing token usage and API load",
       "Reduced token caps for tool outputs and agent loops: bash output capped at 2500 chars, read_file capped at 4000 chars, and max_tokens reduced to 4096"
     ],
     "architecture": {
@@ -284,66 +284,23 @@
       "keyPoints": [
         "GPT-4o tool-use loop now includes app-level retry mechanism with up to 4 attempts and exponential backoff (60/120/300s) for handling sustained 429 rate limits",
         "Sliding context window trims older exchanges beyond the last 14 to bound token usage and reduce 429 risks",
-        "Idea decomposition mechanism splits complex ideas into 2\u20134 focused sub-tasks when necessary, blocking the parent idea until all sub-tasks complete",
+        "Idea decomposition mechanism splits complex ideas into 2\u20134 focused sub-tasks, each assigned to the correct project based on repo-specific work, blocking the parent idea until all sub-tasks complete",
         "Token caps adjusted to reduce API load: bash output capped at 2500 chars, read_file capped at 4000 chars, and max_tokens reduced to 4096 in agent and repair loops"
       ]
     },
     "dataFlow": [
       {
-        "label": "ideas-api receives POST /run-bot",
-        "color": "purple"
-      },
-      {
-        "label": "Container App Job starts \u2014 fresh container",
-        "color": "orange"
-      },
-      {
-        "label": "Pre-flight clarity check \u00b7 request clarification if needed",
-        "color": "blue"
-      },
-      {
-        "label": "Resolve repository dynamically from Ideas API",
-        "color": "blue"
-      },
-      {
         "label": "Decompose complex ideas into sub-tasks if needed \u00b7 block parent idea",
         "color": "blue",
         "sublines": [
           "Evaluate idea complexity \u00b7 create 2\u20134 focused sub-tasks",
+          "Assign exact project_name per subtask based on repo-specific work",
           "File sub-tasks via Ideas API \u00b7 update parent idea status"
-        ]
-      },
-      {
-        "label": "Clone target repo \u00b7 read idea description",
-        "sublines": [
-          "GPT-4o tool-use loop",
-          "read files \u00b7 write files \u00b7 run shell commands"
-        ]
-      },
-      {
-        "label": "Create cross-repo dependency ideas if needed \u00b7 block until dependencies complete",
-        "color": "blue",
-        "sublines": [
-          "Fetch all projects \u00b7 file dependency ideas",
-          "Re-trigger checks dependency statuses \u00b7 unblock automatically"
-        ]
-      },
-      {
-        "label": "Commit changes \u00b7 open draft PR on GitHub",
-        "color": "green"
-      },
-      {
-        "label": "Monitor GitHub Actions CI \u00b7 auto-repair on failure",
-        "color": "green",
-        "sublines": [
-          "Poll PR checks every 30s until completion",
-          "Fetch failure logs \u00b7 diagnose issues \u00b7 push fixes",
-          "Re-trigger CI and verify success"
         ]
       }
     ],
     "updatedAt": "2026-06-09",
-    "updatedBySha": "25e78d6"
+    "updatedBySha": "2c2e1a3"
   },
   "azure-infrastructure": {
     "summary": "Defines and provisions all Azure resources at subscription scope using Bicep. Modules cover the Static Web App, Container Registry, Container App Environment (shared Log Analytics workspace), momentum-finder and trail-finder Container Apps, Digits and Dashboard Azure Functions apps, and all RBAC role assignments.",
