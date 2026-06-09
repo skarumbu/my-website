@@ -1,0 +1,69 @@
+{
+  "package": "ideas-bot",
+  "capturedAt": "2026-06-09",
+  "commitSha": "6d997fc",
+  "commitMessage": "feat: decompose complex ideas into sub-tasks to avoid 429 rate limits\n\nBefore the agent loop, check whether the idea is complex enough to split.\nIf so, create 2-4 focused child ideas (same project/repo), block the parent,\nand exit. Each child runs with a small focused context \u2014 far fewer rounds.\n\nWhen re-triggered after all children complete: if they were subtasks,\nmark parent completed without running an agent loop.\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>",
+  "content": {
+    "summary": "Container App Job triggered by ideas-api. Clones the target repository, runs an AI-driven tool-use loop to implement the requested feature, commits the result, and opens a draft pull request on GitHub. The job scales to zero between invocations.",
+    "description": "A containerised Python agent that autonomously implements feature ideas. Triggered on demand by ideas-api, it clones the target repo, runs a GPT-4o tool-use loop to read/write files and execute shell commands, commits the result, and opens a draft pull request.",
+    "features": [
+      "App-level retry mechanism for GPT-4o API calls with up to 4 attempts and exponential backoff (60/120/180s) to handle sustained 429 rate limits",
+      "Sliding context window for GPT-4o tool-use loop now trims older exchanges to reduce token growth and further mitigate 429 risks"
+    ],
+    "architecture": {
+      "overview": "A containerised Python agent that autonomously implements feature ideas. Triggered on demand by ideas-api, it clones the target repo, performs a pre-flight clarity check, runs an AI-driven tool-use loop to read/write files and execute shell commands, commits the result, and opens a draft pull request.",
+      "keyPoints": [
+        "GPT-4o tool-use loop now includes app-level retry mechanism with up to 4 attempts and exponential backoff (60/120/180s) for handling sustained 429 rate limits",
+        "Sliding context window trims older exchanges beyond the last 30 to bound token usage and reduce 429 risks"
+      ]
+    },
+    "dataFlow": [
+      {
+        "label": "ideas-api receives POST /run-bot",
+        "color": "purple"
+      },
+      {
+        "label": "Container App Job starts \u2014 fresh container",
+        "color": "orange"
+      },
+      {
+        "label": "Pre-flight clarity check \u00b7 request clarification if needed",
+        "color": "blue"
+      },
+      {
+        "label": "Resolve repository dynamically from Ideas API",
+        "color": "blue"
+      },
+      {
+        "label": "Clone target repo \u00b7 read idea description",
+        "sublines": [
+          "GPT-4o tool-use loop",
+          "read files \u00b7 write files \u00b7 run shell commands"
+        ]
+      },
+      {
+        "label": "Create cross-repo dependency ideas if needed \u00b7 block until dependencies complete",
+        "color": "blue",
+        "sublines": [
+          "Fetch all projects \u00b7 file dependency ideas",
+          "Re-trigger checks dependency statuses \u00b7 unblock automatically"
+        ]
+      },
+      {
+        "label": "Commit changes \u00b7 open draft PR on GitHub",
+        "color": "green"
+      },
+      {
+        "label": "Monitor GitHub Actions CI \u00b7 auto-repair on failure",
+        "color": "green",
+        "sublines": [
+          "Poll PR checks every 30s until completion",
+          "Fetch failure logs \u00b7 diagnose issues \u00b7 push fixes",
+          "Re-trigger CI and verify success"
+        ]
+      }
+    ],
+    "updatedAt": "2026-06-09",
+    "updatedBySha": "99c01d4"
+  }
+}

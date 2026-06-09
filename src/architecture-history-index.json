@@ -2,6 +2,12 @@
   {
     "package": "ideas-bot",
     "capturedAt": "2026-06-09",
+    "commitSha": "6d997fc",
+    "commitMessage": "feat: decompose complex ideas into sub-tasks to avoid 429 rate limits\n\nBefore the agent loop, check whether the idea is complex enough to split.\nIf so, create 2-4 focused child ideas (same project/repo), block the parent,\nand exit. Each child runs with a small focused context \u2014 far fewer rounds.\n\nWhen re-triggered after all children complete: if they were subtasks,\nmark parent completed without running an agent loop.\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>"
+  },
+  {
+    "package": "ideas-bot",
+    "capturedAt": "2026-06-09",
     "commitSha": "99c01d4",
     "commitMessage": "fix: app-level 429 retry with 60s backoff on top of SDK retries\n\nSDK max_retries=8 exhausts in ~2 min on sustained TPM limits.\n_chat_complete wraps all 3 call sites with up to 4 attempts,\nsleeping 60/120/180s between them before giving up.\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>"
   },
