@@ -565,7 +565,7 @@ function IdeaCard({ idea, onView, onDelete, onSetState, onRunBot, updating, botR
         ) : (
           <button className="ideas-action-btn ideas-action-btn--reopen" onClick={() => onSetState('open')} disabled={updating}>Reopen</button>
         )}
-        {idea.status === 'open' && (!idea.bot_status || idea.bot_status === 'needs_info') && (
+        {idea.status === 'open' && (!idea.bot_status || idea.bot_status === 'needs_info' || idea.bot_status === 'failed') && (
           <>
             <select
               className="ideas-model-select"
