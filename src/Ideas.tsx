@@ -434,6 +434,11 @@ function IdeaDetailPanel({ open, idea, onClose, onEdit, getToken }: DetailPanelP
                   Answer the bot's question below, then re-trigger.
                 </p>
               )}
+              {idea.bot_status === 'failed' && idea.bot_error && (
+                <p style={{ fontSize: 13, color: '#991b1b', margin: '6px 0 0', lineHeight: 1.5 }}>
+                  {idea.bot_error}
+                </p>
+              )}
             </div>
           )}
 
