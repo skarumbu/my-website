@@ -580,16 +580,18 @@ function IdeaCard({ idea, onView, onDelete, onSetState, onRunBot, updating, botR
         )}
         {idea.status === 'open' && (!idea.bot_status || idea.bot_status === 'needs_info' || idea.bot_status === 'failed' || idea.bot_status === 'blocked') && (
           <>
-            <select
-              className="ideas-model-select"
-              value={selectedModel}
-              onChange={e => setSelectedModel(e.target.value)}
-              onClick={e => e.stopPropagation()}
-            >
-              <option value="gpt-4.1-mini">gpt-4.1-mini</option>
-              <option value="gpt-4.1">gpt-4.1</option>
-              <option value="gpt-4o">gpt-4o</option>
-            </select>
+            <span className="ideas-model-select-wrap" onClick={e => e.stopPropagation()}>
+              <select
+                className="ideas-model-select"
+                value={selectedModel}
+                onChange={e => setSelectedModel(e.target.value)}
+              >
+                <option value="gpt-4.1-mini">gpt-4.1-mini</option>
+                <option value="gpt-4.1">gpt-4.1</option>
+                <option value="gpt-4o">gpt-4o</option>
+              </select>
+              <span aria-hidden="true">{selectedModel}</span>
+            </span>
             <button className="ideas-action-btn ideas-action-btn--bot" onClick={() => onRunBot(selectedModel)} disabled={botRunning || updating} title="Assign AI bot">⚡ Bot</button>
           </>
         )}
