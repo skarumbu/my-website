@@ -21,7 +21,7 @@ const PROJECT_TINTS: Record<string, { fg: string; bg: string }> = {
 
 const PROJECTS = ['Digits', 'NBA Games', 'Trail Finder', 'Ideas', 'Other'];
 
-type BotStatus = 'queued' | 'running' | 'completed' | 'failed' | 'needs_info';
+type BotStatus = 'queued' | 'running' | 'completed' | 'failed' | 'needs_info' | 'blocked';
 
 interface Idea {
   id: string;
@@ -35,6 +35,7 @@ interface Idea {
   bot_status?: BotStatus | null;
   bot_pr_url?: string | null;
   bot_error?: string | null;
+  bot_blocked_by?: string | null;
 }
 
 interface Project {
@@ -251,6 +252,7 @@ function BotStatusChip({ idea }: { idea: Idea }) {
     completed:  { fg: '#065f46', bg: 'rgba(16,185,129,0.15)',   label: 'Done' },
     failed:     { fg: '#991b1b', bg: 'rgba(239,68,68,0.15)',    label: 'Failed' },
     needs_info: { fg: '#6d28d9', bg: 'rgba(139,92,246,0.15)',   label: 'Needs info' },
+    blocked:    { fg: '#1e40af', bg: 'rgba(59,130,246,0.12)',   label: 'Blocked' },
   };
   const s = map[status];
   if (!s) return null;
@@ -436,6 +438,17 @@ function IdeaDetailPanel({ open, idea, onClose, onEdit, getToken }: DetailPanelP
                   {idea.bot_error}
                 </p>
               )}
+              {idea.bot_status === 'blocked' && idea.bot_blocked_by && (() => {
+                try {
+                  const deps: Array<{id: string; project: string; title: string}> = JSON.parse(idea.bot_blocked_by!);
+                  if (!deps.length) return null;
+                  return (
+                    <p style={{ fontSize: 13, color: '#1e40af', margin: '6px 0 0', lineHeight: 1.6 }}>
+                      Waiting on: {deps.map(d => `[${d.project}] ${d.title}`).join(', ')}
+                    </p>
+                  );
+                } catch { return null; }
+              })()}
             </div>
           )}
 
@@ -565,7 +578,7 @@ function IdeaCard({ idea, onView, onDelete, onSetState, onRunBot, updating, botR
         ) : (
           <button className="ideas-action-btn ideas-action-btn--reopen" onClick={() => onSetState('open')} disabled={updating}>Reopen</button>
         )}
-        {idea.status === 'open' && (!idea.bot_status || idea.bot_status === 'needs_info' || idea.bot_status === 'failed') && (
+        {idea.status === 'open' && (!idea.bot_status || idea.bot_status === 'needs_info' || idea.bot_status === 'failed' || idea.bot_status === 'blocked') && (
           <>
             <select
               className="ideas-model-select"
