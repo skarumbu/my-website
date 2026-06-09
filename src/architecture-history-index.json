@@ -1,5 +1,11 @@
 [
   {
+    "package": "ideas-bot",
+    "capturedAt": "2026-06-09",
+    "commitSha": "e9f8850",
+    "commitMessage": "feat: cross-repo dependency ideas \u2014 bot blocks until deps complete\n\nWhen the agent discovers work that belongs in a different repo, it can\ncall create_idea to file a dependency. The original idea becomes blocked\nand will not push until all dependencies reach completed status.\nRe-triggering checks dependency statuses and unblocks automatically.\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>"
+  },
+  {
     "package": "ideas-api",
     "capturedAt": "2026-06-09",
     "commitSha": "4616896",
