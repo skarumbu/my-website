@@ -8,6 +8,7 @@ import Architecture from './Architecture.tsx';
 import TrailFinder from './TrailFinder.tsx';
 import Dashboard from './Dashboard.tsx';
 import Ideas from './Ideas.tsx';
+import ProjectPage from './ProjectPage.tsx';
 import LearningPlan from './LearningPlan.tsx';
 import Posts from './Posts.tsx';
 import PostReader from './PostReader.tsx';
@@ -49,6 +50,10 @@ const router = createBrowserRouter([
   {
     path: "/ideas",
     element: <Ideas />
+  },
+  {
+    path: "/ideas/projects/:projectId",
+    element: <ProjectPage />
   },
   {
     path: "/learning-plan",

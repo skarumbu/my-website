@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import NavBar from './components/nav-bar.tsx';
 import './styling/ideas.css';
 import { useMsal, useIsAuthenticated } from '@azure/msal-react';
@@ -544,10 +545,21 @@ function IdeaCard({ idea, onView, onDelete, onSetState, onRunBot, updating, botR
       <div className="ideas-card-tint" />
 
       <div className="ideas-card-head">
-        <span className="ideas-tag">
-          <span className="ideas-tag-swatch" />
-          {idea.project}
-        </span>
+        {idea.project_id ? (
+          <Link
+            className="ideas-tag ideas-tag--link"
+            to={`/ideas/projects/${idea.project_id}`}
+            onClick={e => e.stopPropagation()}
+          >
+            <span className="ideas-tag-swatch" />
+            {idea.project}
+          </Link>
+        ) : (
+          <span className="ideas-tag">
+            <span className="ideas-tag-swatch" />
+            {idea.project}
+          </span>
+        )}
         <span className="ideas-card-date">{fmtDate(idea.created_at)}</span>
       </div>
 
