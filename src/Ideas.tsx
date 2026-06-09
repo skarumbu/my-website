@@ -40,7 +40,7 @@ interface Idea {
 interface Project {
   id: string;
   name: string;
-  repos?: string[];
+  repo?: string;
 }
 
 interface Update {
@@ -87,7 +87,7 @@ interface ComposerProps {
   onSubmit: (
     data: { project: string; project_id: string | null; title: string; body: string; status: Idea['status'] },
     newProjectName?: string,
-    newProjectRepos?: string[]
+    newProjectRepo?: string
   ) => void;
   initial: Idea | null;
   projects: Project[];
@@ -100,7 +100,7 @@ function Composer({ open, onClose, onSubmit, initial, projects }: ComposerProps)
   const [body, setBody] = useState(initial?.body || '');
   const [status, setStatus] = useState<Idea['status']>(initial?.status || 'open');
   const [newProjectName, setNewProjectName] = useState('');
-  const [newProjectRepos, setNewProjectRepos] = useState('');
+  const [newProjectRepo, setNewProjectRepo] = useState('');
   const [showNewInput, setShowNewInput] = useState(false);
 
   useEffect(() => {
@@ -110,7 +110,7 @@ function Composer({ open, onClose, onSubmit, initial, projects }: ComposerProps)
       setBody(initial?.body || '');
       setStatus(initial?.status || 'open');
       setNewProjectName('');
-      setNewProjectRepos('');
+      setNewProjectRepo('');
       setShowNewInput(false);
     }
   }, [open, initial, projects]);
@@ -128,13 +128,10 @@ function Composer({ open, onClose, onSubmit, initial, projects }: ComposerProps)
     const effectiveProjectName = showNewInput ? newProjectName.trim() : project;
     if (!effectiveProjectName) return;
     const matched = projects.find(p => p.name === effectiveProjectName);
-    const repos = showNewInput
-      ? newProjectRepos.split(',').map(r => r.trim()).filter(Boolean)
-      : undefined;
     onSubmit(
       { project: effectiveProjectName, project_id: matched?.id ?? null, title: title.trim(), body: body.trim(), status },
       showNewInput ? newProjectName.trim() : undefined,
-      repos
+      showNewInput ? newProjectRepo.trim() : undefined
     );
     onClose();
   };
@@ -181,9 +178,9 @@ function Composer({ open, onClose, onSubmit, initial, projects }: ComposerProps)
                 />
                 <input
                   className="ideas-field-input"
-                  value={newProjectRepos}
-                  onChange={e => setNewProjectRepos(e.target.value)}
-                  placeholder="GitHub repos (e.g. skarumbu/my-website)"
+                  value={newProjectRepo}
+                  onChange={e => setNewProjectRepo(e.target.value)}
+                  placeholder="GitHub repo (e.g. skarumbu/my-website)"
                 />
               </>
             )}
@@ -653,7 +650,7 @@ function Ideas() {
   const [detailIdea, setDetailIdea] = useState<Idea | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [projectsModalOpen, setProjectsModalOpen] = useState(false);
-  const [projectReposEdits, setProjectReposEdits] = useState<Record<string, string>>({});
+  const [projectRepoEdits, setProjectRepoEdits] = useState<Record<string, string>>({});
   const [projectsSaving, setProjectsSaving] = useState<string | null>(null);
 
   const getToken = useCallback(
@@ -832,25 +829,25 @@ function Ideas() {
   const openDetail = (idea: Idea) => { setDetailIdea(idea); setDetailOpen(true); };
   const editFromDetail = () => { setDetailOpen(false); setEditing(detailIdea); setComposerOpen(true); };
 
-  const createProject = useCallback(async (name: string, repos?: string[]): Promise<Project> => {
+  const createProject = useCallback(async (name: string, repo?: string): Promise<Project> => {
     if (!BASE_URL) throw new Error('BASE_URL not configured');
     const token = await getToken();
     const resp = await fetch(`${BASE_URL}/api/projects`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, repos: repos || [] }),
+      body: JSON.stringify({ name, repo: repo || '' }),
     });
     if (!resp.ok) throw new Error(`${resp.status}`);
     return resp.json() as Promise<Project>;
   }, [getToken]);
 
-  const updateProjectRepos = useCallback(async (projectId: string, repos: string[]): Promise<Project> => {
+  const updateProjectRepo = useCallback(async (projectId: string, repo: string): Promise<Project> => {
     if (!BASE_URL) throw new Error('BASE_URL not configured');
     const token = await getToken();
     const resp = await fetch(`${BASE_URL}/api/projects/${projectId}`, {
       method: 'PATCH',
       headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ repos }),
+      body: JSON.stringify({ repo }),
     });
     if (!resp.ok) throw new Error(`${resp.status}`);
     return resp.json() as Promise<Project>;
@@ -859,12 +856,12 @@ function Ideas() {
   const handleComposerSubmit = async (
     data: { project: string; project_id: string | null; title: string; body: string; status: Idea['status'] },
     newProjectName?: string,
-    newProjectRepos?: string[]
+    newProjectRepo?: string
   ) => {
     let finalData = data;
     if (newProjectName) {
       try {
-        const newProject = await createProject(newProjectName, newProjectRepos);
+        const newProject = await createProject(newProjectName, newProjectRepo);
         setProjects(prev => [...prev, newProject]);
         finalData = { ...data, project_id: newProject.id };
       } catch (e: any) {
@@ -981,7 +978,7 @@ function Ideas() {
           </select>
 
           <button className="ideas-manage-projects-btn" onClick={() => {
-            setProjectReposEdits(Object.fromEntries(projects.map(p => [p.id, (p.repos || []).join(', ')])));
+            setProjectRepoEdits(Object.fromEntries(projects.map(p => [p.id, p.repo || ''])));
             setProjectsModalOpen(true);
           }}>
             Projects
@@ -1052,14 +1049,14 @@ function Ideas() {
               <button className="ideas-composer-close" onClick={() => setProjectsModalOpen(false)}>×</button>
             </div>
             <div className="ideas-projects-modal-body">
-              <p className="ideas-projects-modal-hint">Set the GitHub repo slug(s) each project maps to. Comma-separate multiple repos.</p>
+              <p className="ideas-projects-modal-hint">Set the GitHub repo each project maps to (e.g. owner/repo).</p>
               {projects.filter(p => p.id).map(p => (
                 <div key={p.id} className="ideas-project-row">
                   <span className="ideas-project-row-name">{p.name}</span>
                   <input
                     className="ideas-field-input ideas-project-repos-input"
-                    value={projectReposEdits[p.id] ?? (p.repos || []).join(', ')}
-                    onChange={e => setProjectReposEdits(prev => ({ ...prev, [p.id]: e.target.value }))}
+                    value={projectRepoEdits[p.id] ?? (p.repo || '')}
+                    onChange={e => setProjectRepoEdits(prev => ({ ...prev, [p.id]: e.target.value }))}
                     placeholder="e.g. skarumbu/my-website"
                   />
                   <button
@@ -1068,8 +1065,7 @@ function Ideas() {
                     onClick={async () => {
                       setProjectsSaving(p.id);
                       try {
-                        const repos = (projectReposEdits[p.id] || '').split(',').map(r => r.trim()).filter(Boolean);
-                        const updated = await updateProjectRepos(p.id, repos);
+                        const updated = await updateProjectRepo(p.id, projectRepoEdits[p.id] || '');
                         setProjects(prev => prev.map(x => x.id === p.id ? updated : x));
                       } catch (e: any) {
                         setError('Failed to save: ' + e.message);
