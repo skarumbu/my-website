@@ -284,7 +284,9 @@
       "Prior updates thread injected into agent context for continuity on re-trigger",
       "Branch name and PR title include model slug for A/B comparison",
       "Supports multi-repo projects by resolving repositories dynamically from the Ideas API",
-      "GitHub Actions CI monitoring and auto-repair on failure, including fetching logs, diagnosing issues, and pushing fixes"
+      "GitHub Actions CI monitoring and auto-repair on failure, including fetching logs, diagnosing issues, and pushing fixes",
+      "Sliding context window for GPT-4o tool-use loop to prevent unbounded token growth and reduce 429 rate limit risks",
+      "Retry mechanism with exponential backoff (max_retries=8) and increased timeout (120s) for handling 429/5xx errors"
     ],
     "architecture": {
       "overview": "A containerised Python agent that autonomously implements feature ideas. Triggered on demand by ideas-api, it clones the target repo, performs a pre-flight clarity check, runs an AI-driven tool-use loop to read/write files and execute shell commands, commits the result, and opens a draft pull request.",
@@ -293,12 +295,14 @@
         "GitHub PAT stored as a Container App secret (not an environment variable in the image)",
         "Pre-flight clarity check posts bot comments and pauses execution if the idea is too vague",
         "GPT-4o tool-use loop has a hard iteration cap to prevent runaway API cost",
+        "Sliding context window keeps system prompt, user prompt, and last 30 exchanges to bound token usage and reduce 429 risks",
         "Shell execution tool runs in a sandboxed subprocess within the container",
         "Prior updates thread injected into agent context for continuity on re-trigger",
         "Branch name and PR title include model slug for A/B comparison",
         "Job is triggered via az containerapp job start by ideas-api using Managed Identity",
         "Structured logging implemented via shared-logging library for consistent and enriched log metadata",
         "Dynamic repository resolution via Ideas API enables multi-repo project support",
+        "Retry mechanism with exponential backoff (max_retries=8) and increased timeout (120s) for handling 429/5xx errors",
         "GitHub Actions CI monitoring added \u2014 bot polls PR checks, fetches failure logs, runs repair agent, and re-pushes fixes"
       ]
     },
@@ -340,8 +344,8 @@
         ]
       }
     ],
-    "updatedAt": "2026-06-07",
-    "updatedBySha": "95d0e6e"
+    "updatedAt": "2026-06-09",
+    "updatedBySha": "a824310"
   },
   "azure-infrastructure": {
     "summary": "Defines and provisions all Azure resources at subscription scope using Bicep. Modules cover the Static Web App, Container Registry, Container App Environment (shared Log Analytics workspace), momentum-finder and trail-finder Container Apps, Digits and Dashboard Azure Functions apps, and all RBAC role assignments.",
