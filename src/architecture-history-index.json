@@ -1,5 +1,11 @@
 [
   {
+    "package": "azure-infrastructure",
+    "capturedAt": "2026-06-12",
+    "commitSha": "062ef0b",
+    "commitMessage": "feat: add arch-content-foundry to Bicep (GlobalStandard gpt-4o 50K TPM)\n\nResource was created manually and had Standard SKU at 10K TPM, causing 429s\nin the arch-content-update CI workflow. Now managed via Bicep with\nGlobalStandard at 50K TPM. Deployment already updated live via CLI.\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>"
+  },
+  {
     "package": "ideas-bot",
     "capturedAt": "2026-06-09",
     "commitSha": "2c2e1a3",
