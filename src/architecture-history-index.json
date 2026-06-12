@@ -2,6 +2,12 @@
   {
     "package": "ideas-bot",
     "capturedAt": "2026-06-12",
+    "commitSha": "94eb719",
+    "commitMessage": "feat: add query_table tool for Azure Table Storage access\n\nGives the agent read-only access to live ideas, projects, and updates\ntables so it can inspect record shapes and validate assumptions before\nwriting code.\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>"
+  },
+  {
+    "package": "ideas-bot",
+    "capturedAt": "2026-06-12",
     "commitSha": "2b84a44",
     "commitMessage": "fix: pass prior Q&A to clarity check to prevent repeated questions\n\nMoves prior_updates fetch to before assess_idea_clarity so the bot\ncan see what was already asked and answered on previous triggers.\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>"
   },
