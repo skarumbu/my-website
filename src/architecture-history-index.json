@@ -1,5 +1,11 @@
 [
   {
+    "package": "ideas-bot",
+    "capturedAt": "2026-06-12",
+    "commitSha": "e776913",
+    "commitMessage": "feat: inject repo CLAUDE.md into clarity check and agent for better context\n\nBot was asking basic questions (where are ideas stored?) because it had no\ncodebase knowledge at clarity-check time. Now fetches CLAUDE.md from the\ntarget repo via GitHub API before the clarity check runs and injects it into:\n- assess_idea_clarity: so structural questions answerable from docs aren't asked\n- run_agent system prompt: so the agent starts with architecture context\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>"
+  },
+  {
     "package": "azure-infrastructure",
     "capturedAt": "2026-06-12",
     "commitSha": "062ef0b",
