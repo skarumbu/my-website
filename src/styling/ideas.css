@@ -486,6 +486,7 @@
 }
 .ideas-model-select {
   width: 100%;
+  min-width: 0;
   height: 26px;
   padding: 0 20px 0 7px;
   font-size: 11px;
