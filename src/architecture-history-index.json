@@ -2,6 +2,12 @@
   {
     "package": "ideas-bot",
     "capturedAt": "2026-06-16",
+    "commitSha": "6053205",
+    "commitMessage": "fix: chain dependent subtasks so backend runs before frontend"
+  },
+  {
+    "package": "ideas-bot",
+    "capturedAt": "2026-06-16",
     "commitSha": "888f455",
     "commitMessage": "fix: surface agent explanation when no commits are made"
   },
