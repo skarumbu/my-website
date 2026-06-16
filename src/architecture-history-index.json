@@ -1,6 +1,12 @@
 [
   {
     "package": "ideas-bot",
+    "capturedAt": "2026-06-16",
+    "commitSha": "b462924",
+    "commitMessage": "fix: raise agent round limit to 60, add wrap-up nudge at round 50\n\n- Bumped hard cap from 40 to 60 rounds\n- At round 50, injects a user message telling the agent to commit what\n  it has and stop \u2014 so partial work is preserved rather than lost\n- On hitting the hard cap, does a best-effort commit before raising\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>"
+  },
+  {
+    "package": "ideas-bot",
     "capturedAt": "2026-06-12",
     "commitSha": "94eb719",
     "commitMessage": "feat: add query_table tool for Azure Table Storage access\n\nGives the agent read-only access to live ideas, projects, and updates\ntables so it can inspect record shapes and validate assumptions before\nwriting code.\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>"

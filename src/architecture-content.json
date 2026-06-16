@@ -280,7 +280,8 @@
       "Reduced token caps for tool outputs and agent loops: bash output capped at 2500 chars, read_file capped at 4000 chars, and max_tokens reduced to 4096",
       "Fetches CLAUDE.md from the target repository before the clarity check and agent execution, injecting repo-specific context to improve decision-making and reduce unnecessary questions",
       "Prior Q&A from previous triggers is now fetched and injected into the clarity check, preventing repeated questions and improving efficiency",
-      "Added query_table tool for read-only access to Azure Table Storage, enabling the agent to inspect live ideas, projects, and updates tables to validate assumptions and understand record shapes before writing code"
+      "Added query_table tool for read-only access to Azure Table Storage, enabling the agent to inspect live ideas, projects, and updates tables to validate assumptions and understand record shapes before writing code",
+      "Increased agent round limit from 40 to 60, with a wrap-up nudge injected at round 50 to preserve partial work and ensure progress is committed before hitting the limit"
     ],
     "architecture": {
       "overview": "A containerised Python agent that autonomously implements feature ideas. Triggered on demand by ideas-api, it clones the target repo, performs a pre-flight clarity check, runs an AI-driven tool-use loop to read/write files and execute shell commands, commits the result, and opens a draft pull request.",
@@ -291,7 +292,8 @@
         "Token caps adjusted to reduce API load: bash output capped at 2500 chars, read_file capped at 4000 chars, and max_tokens reduced to 4096 in agent and repair loops",
         "CLAUDE.md from the target repository is fetched and injected into the clarity check and agent system prompt, enabling the bot to answer structural questions autonomously and start with architecture context",
         "Prior Q&A from previous triggers is now injected into the clarity check, ensuring previously resolved questions are not re-asked and improving clarity assessment efficiency",
-        "New query_table tool provides read-only access to Azure Table Storage, allowing the agent to inspect live data in ideas, projects, and updates tables to validate assumptions and understand record shapes before writing code"
+        "New query_table tool provides read-only access to Azure Table Storage, allowing the agent to inspect live data in ideas, projects, and updates tables to validate assumptions and understand record shapes before writing code",
+        "Agent round limit increased from 40 to 60, with a wrap-up nudge injected at round 50 to commit partial work and summarize progress, ensuring no work is lost if the hard cap is reached"
       ]
     },
     "dataFlow": [
@@ -305,8 +307,8 @@
         ]
       }
     ],
-    "updatedAt": "2026-06-12",
-    "updatedBySha": "94eb719"
+    "updatedAt": "2026-06-16",
+    "updatedBySha": "b462924"
   },
   "azure-infrastructure": {
     "summary": "Defines and provisions all Azure resources at subscription scope using Bicep. Modules cover the Static Web App, Container Registry, Container App Environment (shared Log Analytics workspace), momentum-finder and trail-finder Container Apps, Digits and Dashboard Azure Functions apps, and all RBAC role assignments.",
