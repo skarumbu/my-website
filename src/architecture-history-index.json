@@ -1,6 +1,12 @@
 [
   {
     "package": "ideas-bot",
+    "capturedAt": "2026-06-17",
+    "commitSha": "bf83d17",
+    "commitMessage": "docs: add CLAUDE.md with posting-to-writing-API instructions\n\nDocuments env vars, one-time login flow, and a subprocess helper\nfunction for ideas-bot to create posts on quixotry.me headlessly.\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>"
+  },
+  {
+    "package": "ideas-bot",
     "capturedAt": "2026-06-16",
     "commitSha": "6053205",
     "commitMessage": "fix: chain dependent subtasks so backend runs before frontend"
