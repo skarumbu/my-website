@@ -121,11 +121,29 @@ affected = decision.get("affected_sections", ["features", "architecture"])
 # ── Fetch current architecture-content.json from my-website ──────────────────
 
 import urllib.request
+import base64
 
-raw_url = f"https://raw.githubusercontent.com/{MY_WEBSITE_REPO}/main/{CONTENT_FILE}"
-req = urllib.request.Request(raw_url, headers={"Authorization": f"token {gh_token}"})
-with urllib.request.urlopen(req) as resp:
-    arch_content = json.loads(resp.read().decode("utf-8"))
+api_url = (
+    f"https://api.github.com/repos/{MY_WEBSITE_REPO}"
+    f"/contents/{CONTENT_FILE}"
+)
+req = urllib.request.Request(
+    api_url,
+    headers={
+        "Authorization": f"token {gh_token}",
+        "Accept": "application/vnd.github.v3+json",
+    },
+)
+try:
+    with urllib.request.urlopen(req) as resp:
+        file_meta = json.loads(resp.read().decode("utf-8"))
+        arch_content = json.loads(base64.b64decode(file_meta["content"]).decode("utf-8"))
+except urllib.error.HTTPError as e:
+    if e.code == 404:
+        print(f"Warning: {CONTENT_FILE} not found — will generate content from scratch.", file=sys.stderr)
+        arch_content = {}
+    else:
+        raise
 
 current_pkg = arch_content.get(repo_name, {})
 
