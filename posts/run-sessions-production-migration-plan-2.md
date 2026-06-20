@@ -3,10 +3,10 @@ author_email: karumbunathan@gmail.com
 date: '2026-06-20T06:31:05.689279+00:00'
 description: How to safely apply the run_sessions schema migration to the running
   app's production PostgreSQL database.
-published: false
+published: true
 slug: run-sessions-production-migration-plan-2
 title: 'Run Sessions: Production Migration Plan'
-updatedAt: '2026-06-20T06:31:05.689304+00:00'
+updatedAt: '2026-06-20T06:38:30.724713+00:00'
 ---
 
 # Run Sessions: Production Migration Plan
