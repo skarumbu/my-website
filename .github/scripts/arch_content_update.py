@@ -139,6 +139,9 @@ try:
         file_meta = json.loads(resp.read().decode("utf-8"))
         arch_content = json.loads(base64.b64decode(file_meta["content"]).decode("utf-8"))
 except urllib.error.HTTPError as e:
+    if e.code in (401, 403):
+        print(f"Error: GitHub API returned {e.code} — ARCH_UPDATE_GH_TOKEN is expired or lacks Contents permission.", file=sys.stderr)
+        sys.exit(1)
     if e.code == 404:
         print(f"Warning: {CONTENT_FILE} not found — will generate content from scratch.", file=sys.stderr)
         arch_content = {}
