@@ -3,19 +3,19 @@
     "summary": "A React (TypeScript) single-page application that handles all user interaction. Deployed to Azure Static Web Apps, which serves the static build and rewrites all navigation to index.html so client-side routing works on deep links. Autocomplete on the Trail Finder search bar is powered by the Google Maps JS SDK running entirely in the browser.",
     "description": "A React (TypeScript) single-page application that hosts all user-facing features. Deployed to Azure Static Web Apps with a rewrite rule that sends all navigation to index.html so client-side routing works on deep links.",
     "features": [
-      "Digits — daily number puzzle game. Uses hardcoded stub data in development (no API call needed)",
-      "Momentum Finder — live NBA game cards with momentum shift indicators",
-      "Trail Finder — city search with Google Maps autocomplete (browser-side), trail recommendations, weather, and AI-generated gear list",
-      "Ideas Board — EasyAuth sign-in, feature idea list and project management, one-click bot trigger",
-      "Learning Plan — Google OAuth sign-in, AI-generated personalised study plans, save and review history",
-      "Architecture reference — internal system documentation (not linked from the main nav)"
+      "Digits \u2014 daily number puzzle game. Uses hardcoded stub data in development (no API call needed)",
+      "Momentum Finder \u2014 live NBA game cards with momentum shift indicators",
+      "Trail Finder \u2014 city search with Google Maps autocomplete (browser-side), trail recommendations, weather, and AI-generated gear list",
+      "Ideas Board \u2014 EasyAuth sign-in, feature idea list and project management, one-click bot trigger",
+      "Learning Plan \u2014 Google OAuth sign-in, AI-generated personalised study plans, save and review history",
+      "Architecture reference \u2014 internal system documentation (not linked from the main nav)"
     ],
     "architecture": {
       "overview": "Create React App with TypeScript and client-side routing via react-router-dom. Each route maps to a top-level TSX + CSS pair. A shared NavBar component appears on every view. REACT_APP_* environment variables are injected at build time by GitHub Actions.",
       "keyPoints": [
-        "public/staticwebapp.config.json rewrites all routes to index.html — required for deep-link navigation on Azure SWA",
+        "public/staticwebapp.config.json rewrites all routes to index.html \u2014 required for deep-link navigation on Azure SWA",
         "Digits uses process.env.NODE_ENV === \"development\" to skip the API and use hardcoded stub data locally",
-        "Trail Finder autocomplete uses the Google Maps JS SDK entirely in the browser — no backend round-trip, 300ms debounce",
+        "Trail Finder autocomplete uses the Google Maps JS SDK entirely in the browser \u2014 no backend round-trip, 300ms debounce",
         "Every PR to main gets an isolated SWA preview environment, torn down automatically when the PR closes",
         "Cross-repo deploy: after each backend service deploys, it commits updated metadata to this repo, triggering a frontend rebuild so the Architecture page stays current"
       ]
@@ -44,15 +44,15 @@
       "Stores puzzles in Azure Table Storage partitioned by date",
       "Serves the current day's puzzles via a single HTTP GET endpoint",
       "Writes per-request metrics rows (duration, status, puzzle count) to a metrics table",
-      "Three difficulty tiers returned in a single response — frontend sorts easy → medium → hard"
+      "Three difficulty tiers returned in a single response \u2014 frontend sorts easy \u2192 medium \u2192 hard"
     ],
     "architecture": {
       "overview": "Two Azure Function triggers: a timer trigger that generates the day's puzzles at midnight UTC and writes them to Table Storage, and an HTTP trigger that reads and returns them. Table Storage acts as both puzzle store and metrics sink.",
       "keyPoints": [
-        "Frontend skips this API in development — NODE_ENV=development activates hardcoded stub data",
+        "Frontend skips this API in development \u2014 NODE_ENV=development activates hardcoded stub data",
         "Metrics rows are picked up by dashboard-api via Azure Table Storage queries",
         "Timer trigger uses a cron expression: \"0 0 * * *\" (midnight UTC daily)",
-        "Puzzles are keyed by ISO date string — no cleanup needed, old rows simply age out"
+        "Puzzles are keyed by ISO date string \u2014 no cleanup needed, old rows simply age out"
       ]
     },
     "dataFlow": [
@@ -63,8 +63,8 @@
       {
         "label": "Frontend checks NODE_ENV",
         "sublines": [
-          "development → hardcoded stub data (no API call)",
-          "production → call Digits API"
+          "development \u2192 hardcoded stub data (no API call)",
+          "production \u2192 call Digits API"
         ]
       },
       {
@@ -76,13 +76,13 @@
         ]
       },
       {
-        "label": "Puzzles rendered — easy → medium → hard",
+        "label": "Puzzles rendered \u2014 easy \u2192 medium \u2192 hard",
         "color": "blue"
       }
     ]
   },
   "momentum-finder": {
-    "summary": "Analyses live NBA game data to surface momentum shifts. Runs as a Container App (FastAPI + Uvicorn on port 80, scales 0–10 replicas). Emits structured JSON logs on every request that flow into Log Analytics for the dashboard to query.",
+    "summary": "Analyses live NBA game data to surface momentum shifts. Runs as a Container App (FastAPI + Uvicorn on port 80, scales 0\u201310 replicas). Emits structured JSON logs on every request that flow into Log Analytics for the dashboard to query.",
     "description": "FastAPI Container App that analyses live NBA game data to detect and surface momentum shifts. Scales automatically between 0 and 10 replicas and emits structured JSON logs for dashboard monitoring.",
     "features": [
       "Fetches live NBA game scores and play-by-play data",
@@ -94,7 +94,7 @@
     "architecture": {
       "overview": "FastAPI on Uvicorn (port 80), containerised and deployed as an Azure Container App. Shares a Log Analytics workspace with trail-finder for unified observability. The app scales to zero replicas when idle.",
       "keyPoints": [
-        "Scales 0–10 replicas — expect a cold start (~5–10s) on first request after idle",
+        "Scales 0\u201310 replicas \u2014 expect a cold start (~5\u201310s) on first request after idle",
         "Shared Log Analytics workspace with trail-finder; KQL queries in dashboard-api span both services",
         "REACT_APP_API_BASE_URL must be set in the frontend build for this feature to work",
         "Structured logging middleware attaches request_id, duration_ms, and status_code to every log line"
@@ -118,7 +118,7 @@
         ]
       },
       {
-        "label": "Live game cards rendered — teams, score, momentum indicators",
+        "label": "Live game cards rendered \u2014 teams, score, momentum indicators",
         "color": "blue"
       }
     ]
@@ -127,35 +127,35 @@
     "summary": "Given a city, geocodes it, searches Google Places for nearby trails, fetches weather from Open-Meteo, pulls AllTrails snippets via Google Custom Search, then synthesizes a condition summary and gear list with Azure OpenAI. Results are cached in memory for 24 hours. Runs as a Container App with the same logging middleware as momentum-finder.",
     "description": "FastAPI Container App that generates personalised trail recommendations for a given city. Fans out across Google Places, weather, and search APIs, then synthesizes a condition summary and gear list with Azure OpenAI. Results are cached 24h per location.",
     "features": [
-      "City search with Google Maps JS SDK autocomplete — runs entirely in the browser, zero backend cost",
+      "City search with Google Maps JS SDK autocomplete \u2014 runs entirely in the browser, zero backend cost",
       "Geocodes the city and searches Google Places for nearby hiking trails",
       "Fetches weekend weather forecast from Open-Meteo (free, no API key)",
       "Pulls AllTrails snippets via Google Custom Search for additional trail context",
       "Azure OpenAI synthesizes a condition summary and gear list from all sources",
-      "In-memory result cache keyed by normalised city name — 24h TTL",
+      "In-memory result cache keyed by normalised city name \u2014 24h TTL",
       "/health endpoint for dashboard monitoring"
     ],
     "architecture": {
-      "overview": "FastAPI app with a sequential pipeline of external API calls fanned out where possible. Azure OpenAI synthesizes the final output from all gathered context. The in-memory cache is a Python dict — cleared on container restart.",
+      "overview": "FastAPI app with a sequential pipeline of external API calls fanned out where possible. Azure OpenAI synthesizes the final output from all gathered context. The in-memory cache is a Python dict \u2014 cleared on container restart.",
       "keyPoints": [
-        "Autocomplete is browser-side (Google Maps JS SDK) — 300ms debounce, no backend request until search is submitted",
+        "Autocomplete is browser-side (Google Maps JS SDK) \u2014 300ms debounce, no backend request until search is submitted",
         "24h cache TTL balances freshness with API cost; weather is the most volatile component",
-        "Identical structured JSON logging middleware to momentum-finder — same KQL queries work for both",
-        "Scales to zero when idle — same cold start caveat as momentum-finder",
+        "Identical structured JSON logging middleware to momentum-finder \u2014 same KQL queries work for both",
+        "Scales to zero when idle \u2014 same cold start caveat as momentum-finder",
         "Google Places and Custom Search quotas are the primary cost driver; OpenAI is secondary"
       ]
     },
     "dataFlow": [
       {
-        "label": "User types city → Google Maps JS SDK autocomplete (browser)",
+        "label": "User types city \u2192 Google Maps JS SDK autocomplete (browser)",
         "color": "blue"
       },
       {
-        "label": "User submits → trail-finder API (Container App)",
+        "label": "User submits \u2192 trail-finder API (Container App)",
         "color": "orange"
       },
       {
-        "label": "Geocode city → lat/lon",
+        "label": "Geocode city \u2192 lat/lon",
         "sublines": [
           "Google Places text search for nearby trails",
           "Open-Meteo weekend weather forecast",
@@ -167,29 +167,29 @@
         "color": "orange"
       },
       {
-        "label": "Result cached 24h · trail cards rendered",
+        "label": "Result cached 24h \u00b7 trail cards rendered",
         "color": "blue"
       }
     ]
   },
   "dashboard-api": {
-    "summary": "Single aggregator endpoint that fans out in parallel to health-check momentum-finder and trail-finder, query Log Analytics (KQL) for request counts, latency, and recent errors, query the Digits metrics Table Storage table, and fetch Azure Cost Management MTD spend. Uses a system-assigned managed identity — no stored credentials.",
-    "description": "Azure Functions app that fans out in parallel to health-check all services, query Log Analytics for request metrics, pull Digits Table Storage metrics, and fetch Azure Cost Management spend — returning everything in a single aggregated response.",
+    "summary": "Single aggregator endpoint that fans out in parallel to health-check momentum-finder and trail-finder, query Log Analytics (KQL) for request counts, latency, and recent errors, query the Digits metrics Table Storage table, and fetch Azure Cost Management MTD spend. Uses a system-assigned managed identity \u2014 no stored credentials.",
+    "description": "Azure Functions app that fans out in parallel to health-check all services, query Log Analytics for request metrics, pull Digits Table Storage metrics, and fetch Azure Cost Management spend \u2014 returning everything in a single aggregated response.",
     "features": [
       "Health checks for momentum-finder and trail-finder (HTTP /health)",
       "Log Analytics KQL queries for request counts, average latency, and errors per service (24h window)",
       "Digits metrics from Table Storage (request volume, error rate)",
-      "Azure Cost Management MTD spend breakdown — cached 1h due to API rate limits",
+      "Azure Cost Management MTD spend breakdown \u2014 cached 1h due to API rate limits",
       "GitHub Actions API integration for latest workflow run status and failed jobs (optional per app); prefers push/dispatch/release events over scheduled runs; skips empty results when GITHUB_TOKEN is unset or API returns nothing",
       "CORS OPTIONS handler added for preflight requests (Access-Control-Allow-Origin: *, Allow-Headers: Authorization Content-Type)",
       "ErrorRow objects now include error_type and status fields for enhanced debugging and analytics",
-      "All data returned in a single response — frontend polls every 60 seconds"
+      "All data returned in a single response \u2014 frontend polls every 60 seconds"
     ],
     "architecture": {
-      "overview": "Single HTTP-triggered function that executes all sub-queries in parallel via asyncio.gather. Uses a system-assigned Managed Identity — no credentials stored in app settings. RBAC roles are assigned by the azure-infrastructure package.",
+      "overview": "Single HTTP-triggered function that executes all sub-queries in parallel via asyncio.gather. Uses a system-assigned Managed Identity \u2014 no credentials stored in app settings. RBAC roles are assigned by the azure-infrastructure package.",
       "keyPoints": [
         "Managed Identity holds Log Analytics Reader (scoped to the shared workspace) and Cost Management Reader (scoped to subscription)",
-        "No API keys in environment variables — all Azure SDK auth flows through Managed Identity",
+        "No API keys in environment variables \u2014 all Azure SDK auth flows through Managed Identity",
         "Cost Management responses cached for 1h in memory; all other queries are live",
         "GitHub Actions API requires GITHUB_TOKEN env var; gracefully degrades if unset; skips empty results when no token or runs are available; prefers push/dispatch/release events over scheduled runs",
         "Frontend dashboard polls /api/dashboard every 60 seconds",
@@ -204,7 +204,7 @@
         "color": "blue"
       },
       {
-        "label": "dashboard-api (Azure Functions) — parallel fan-out",
+        "label": "dashboard-api (Azure Functions) \u2014 parallel fan-out",
         "color": "purple",
         "sublines": [
           "Health: GET momentum-finder /health, trail-finder /health",
@@ -238,11 +238,11 @@
     "summary": "Stores and serves AI-generated feature ideas in Azure Table Storage. Accepts browser JWT tokens via EasyAuth for read access and an X-Ideas-Key machine write-key for automated writes. Exposes endpoints to list and create ideas, manage projects, and trigger the ideas-bot Container App Job. Projects now support a single repository string instead of a list.",
     "description": "Azure Functions app that stores and serves feature ideas in Table Storage. Supports two auth modes: browser JWT tokens via EasyAuth for read access, and an X-Ideas-Key machine write-key for automated writes. Exposes a trigger endpoint for the ideas-bot.",
     "features": [
-      "PATCH /api/projects/{id} — updates project metadata, including associated repository, supports both EasyAuth JWT authentication and X-Ideas-Key machine write-key for access",
+      "PATCH /api/projects/{id} \u2014 updates project metadata, including associated repository, supports both EasyAuth JWT authentication and X-Ideas-Key machine write-key for access",
       "Supports bot-managed fields, including 'bot_status', 'bot_pr_url', 'bot_error', and the newly added 'bot_blocked_by' for cross-repo dependency tracking"
     ],
     "architecture": {
-      "overview": "HTTP-triggered Azure Functions backed by Table Storage. EasyAuth handles browser auth transparently at the Azure layer — no auth code in the application. A separate machine key enables automation (ideas-bot, external scripts) to write ideas without user credentials.",
+      "overview": "HTTP-triggered Azure Functions backed by Table Storage. EasyAuth handles browser auth transparently at the Azure layer \u2014 no auth code in the application. A separate machine key enables automation (ideas-bot, external scripts) to write ideas without user credentials.",
       "keyPoints": [
         "PATCH /projects/{id} endpoint updates project metadata, including the 'repo' field stored as a single string in Table Storage, now supports machine key authentication alongside user authentication",
         "Backward compatibility: existing entities with old 'repos' JSON list have their first entry promoted to the 'repo' field on read",
@@ -276,7 +276,7 @@
     "features": [
       "App-level retry mechanism for GPT-4o API calls with up to 4 attempts and exponential backoff (60/120/300s) to handle sustained 429 rate limits",
       "Sliding context window for GPT-4o tool-use loop now trims older exchanges beyond the last 14 to reduce token growth and further mitigate 429 risks",
-      "Decomposes complex ideas into 2–4 focused sub-tasks, each assigned to the correct project based on repo-specific work, reducing token usage and API load",
+      "Decomposes complex ideas into 2\u20134 focused sub-tasks, each assigned to the correct project based on repo-specific work, reducing token usage and API load",
       "Sub-tasks are now ordered and can be chained with hard dependencies, ensuring backend tasks complete before dependent frontend tasks",
       "Reduced token caps for tool outputs and agent loops: bash output capped at 2500 chars, read_file capped at 4000 chars, and max_tokens reduced to 4096",
       "Fetches CLAUDE.md from the target repository before the clarity check and agent execution, injecting repo-specific context to improve decision-making and reduce unnecessary questions",
@@ -291,7 +291,7 @@
       "keyPoints": [
         "GPT-4o tool-use loop now includes app-level retry mechanism with up to 4 attempts and exponential backoff (60/120/300s) for handling sustained 429 rate limits",
         "Sliding context window trims older exchanges beyond the last 14 to bound token usage and reduce 429 risks",
-        "Idea decomposition mechanism splits complex ideas into 2–4 focused sub-tasks, each assigned to the correct project based on repo-specific work, blocking the parent idea until all sub-tasks complete",
+        "Idea decomposition mechanism splits complex ideas into 2\u20134 focused sub-tasks, each assigned to the correct project based on repo-specific work, blocking the parent idea until all sub-tasks complete",
         "Sub-tasks are now ordered and can be chained with hard dependencies by setting 'depends_on_previous': true, ensuring backend tasks complete before dependent frontend tasks",
         "Token caps adjusted to reduce API load: bash output capped at 2500 chars, read_file capped at 4000 chars, and max_tokens reduced to 4096 in agent and repair loops",
         "CLAUDE.md from the target repository is fetched and injected into the clarity check and agent system prompt, enabling the bot to answer structural questions autonomously and start with architecture context",
@@ -304,13 +304,13 @@
     },
     "dataFlow": [
       {
-        "label": "Decompose complex ideas into sub-tasks if needed · block parent idea",
+        "label": "Decompose complex ideas into sub-tasks if needed \u00b7 block parent idea",
         "color": "blue",
         "sublines": [
-          "Evaluate idea complexity · create 2–4 focused sub-tasks",
+          "Evaluate idea complexity \u00b7 create 2\u20134 focused sub-tasks",
           "Assign exact project_name per subtask based on repo-specific work",
           "Order sub-tasks and chain dependencies if needed (e.g., backend before frontend)",
-          "File sub-tasks via Ideas API · update parent idea status"
+          "File sub-tasks via Ideas API \u00b7 update parent idea status"
         ]
       }
     ],
@@ -333,7 +333,7 @@
     "architecture": {
       "overview": "Modular Bicep files deployed at subscription scope. Each service has its own module. The Container App Environment module creates the shared Log Analytics workspace used for unified observability across all Container Apps. The arch-content-foundry module provisions an OpenAI resource with a GPT-4o deployment for the arch-content-update CI workflow.",
       "keyPoints": [
-        "Subscription-scope deployment — all resources land in a single resource group",
+        "Subscription-scope deployment \u2014 all resources land in a single resource group",
         "Managed Identity role assignments are defined alongside the resources that need them",
         "Container Registry uses admin credentials (not Managed Identity) for simplicity",
         "Log Analytics workspace is shared by momentum-finder, trail-finder, and dashboard-api",
@@ -350,32 +350,32 @@
     "description": "Azure Functions app that generates structured learning plans via the Claude API and stores them per user in Azure Table Storage. Google ID tokens are verified server-side for every request.",
     "features": [
       "Generates structured learning plans (phases, steps, resources) via Claude API",
-      "User authentication via Google OAuth — ID token verified server-side on every request",
+      "User authentication via Google OAuth \u2014 ID token verified server-side on every request",
       "Stores plans per user in Azure Table Storage (partition key = Google sub claim)",
       "List, create, retrieve, and delete plans per authenticated user",
       "Plan content stored as markdown; frontend renders it with a lightweight parser"
     ],
     "architecture": {
-      "overview": "HTTP-triggered Azure Functions backed by Table Storage. Google ID tokens are validated using Google's public key endpoint. The Claude API generates the plan as markdown given a topic, duration, and depth. No session state — fully stateless JWT verification per request.",
+      "overview": "HTTP-triggered Azure Functions backed by Table Storage. Google ID tokens are validated using Google's public key endpoint. The Claude API generates the plan as markdown given a topic, duration, and depth. No session state \u2014 fully stateless JWT verification per request.",
       "keyPoints": [
         "User isolation enforced at the storage level: partition key = Google sub claim",
         "Google token verification hits accounts.google.com/o/oauth2/v3/certs on each request (cached by the SDK)",
         "Claude API called with a structured prompt; plan markdown is stored as-is",
         "Frontend sends the Google ID token in Authorization: Bearer header",
-        "No admin interface — plan deletion is user-self-service only"
+        "No admin interface \u2014 plan deletion is user-self-service only"
       ]
     },
     "dataFlow": [
       {
-        "label": "User signs in — Google ID token returned to browser",
+        "label": "User signs in \u2014 Google ID token returned to browser",
         "color": "blue"
       },
       {
-        "label": "GET /api/plans — Authorization: Bearer {token}",
+        "label": "GET /api/plans \u2014 Authorization: Bearer {token}",
         "color": "green"
       },
       {
-        "label": "learning-plan-api verifies Google token · reads Table Storage",
+        "label": "learning-plan-api verifies Google token \u00b7 reads Table Storage",
         "color": "green",
         "sublines": [
           "returns plans for this user (partition = sub claim)"
@@ -386,10 +386,10 @@
         "color": "blue"
       },
       {
-        "label": "POST /api/plans/generate → Claude API",
+        "label": "POST /api/plans/generate \u2192 Claude API",
         "color": "orange",
         "sublines": [
-          "structured prompt → markdown learning plan returned"
+          "structured prompt \u2192 markdown learning plan returned"
         ]
       },
       {
@@ -403,21 +403,23 @@
     "description": "A serverless write API for quixotry.me's blog. Posts are markdown files with YAML frontmatter committed directly to GitHub; the API sits in front of that storage layer.",
     "features": [
       "Create, read, update, and delete blog posts via REST endpoints",
-      "Google ID token authentication (Authorization: Bearer header) — unified path for both web app and CLI clients",
+      "Google ID token authentication (Authorization: Bearer header) \u2014 unified path for both web app and CLI clients",
       "Per-post ownership: author_email stored in frontmatter; only the creator can edit or delete their posts",
       "Allowlist-gated writes via ALLOWED_WRITERS environment variable",
       "Legacy post support: posts without author_email can be edited by any allowlisted writer; first editor's email is stamped as author",
       "Slug auto-generation from post title using python-slugify",
-      "Published/draft state toggled via frontmatter field"
+      "Published/draft state toggled via frontmatter field",
+      "CLI authentication via Google OAuth InstalledAppFlow with cached ID tokens"
     ],
     "architecture": {
-      "overview": "Azure Functions v2 app (Python) deployed to a Consumption plan. Each HTTP trigger handles one REST operation. Post storage is GitHub — the API clones/reads/writes markdown files via the GitHub REST API (PyGithub). Auth uses google-auth to validate Google ID tokens server-side; no session state is maintained.",
+      "overview": "Azure Functions v2 app (Python) deployed to a Consumption plan. Each HTTP trigger handles one REST operation. Post storage is GitHub \u2014 the API clones/reads/writes markdown files via the GitHub REST API (PyGithub). Auth uses google-auth to validate Google ID tokens server-side; no session state is maintained.",
       "keyPoints": [
-        "Storage is GitHub, not a database — each post is a .md file with YAML frontmatter in skarumbu/quixotry repo",
+        "Storage is GitHub, not a database \u2014 each post is a .md file with YAML frontmatter in skarumbu/quixotry repo",
         "Google ID token validation via google.oauth2.id_token.verify_oauth2_token against GOOGLE_CLIENT_ID env var",
         "ALLOWED_WRITERS env var (comma-separated emails) gates POST; PUT/DELETE further enforce per-post ownership via author_email frontmatter field",
-        "No Azure Easy Auth — all auth is application-level; Microsoft identity provider is disabled on the Function App",
-        "python-frontmatter used to parse and serialise YAML + markdown body; python-slugify for URL-safe slug generation"
+        "No Azure Easy Auth \u2014 all auth is application-level; Microsoft identity provider is disabled on the Function App",
+        "python-frontmatter used to parse and serialise YAML + markdown body; python-slugify for URL-safe slug generation",
+        "CLI uses Google OAuth InstalledAppFlow for authentication, caching ID tokens locally for reuse"
       ]
     },
     "dataFlow": [
@@ -462,7 +464,7 @@
         ]
       }
     ],
-    "updatedAt": "2026-06-19",
+    "updatedAt": "2026-06-20",
     "updatedBySha": "6ed712b"
   }
 }

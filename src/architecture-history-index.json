@@ -1,5 +1,11 @@
 [
   {
+    "package": "posts-api",
+    "capturedAt": "2026-06-20",
+    "commitSha": "6ed712b",
+    "commitMessage": "Replace Azure Easy Auth with Google token auth; add post ownership model\n\nauth.py: validates Authorization: Bearer google_id_token via google-auth\nschema.py: build_post() accepts optional author_email stored in frontmatter\nfunction_app.py: on create stores author_email; on update/delete enforces\n  ownership (legacy posts fall through to ALLOWED_WRITERS allowlist)\npost.py: replace MSAL with Google InstalledAppFlow; CLI sends same header as web\nrequirements.txt: add google-auth; requirements-cli.txt: swap msal for google-auth-oauthlib\ntests: patch require_auth directly; 20 tests passing including ownership/allowlist cases\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>"
+  },
+  {
     "package": "ideas-bot",
     "capturedAt": "2026-06-17",
     "commitSha": "bf83d17",

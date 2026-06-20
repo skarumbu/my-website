@@ -1,0 +1,73 @@
+{
+  "package": "posts-api",
+  "capturedAt": "2026-06-20",
+  "commitSha": "6ed712b",
+  "commitMessage": "Replace Azure Easy Auth with Google token auth; add post ownership model\n\nauth.py: validates Authorization: Bearer google_id_token via google-auth\nschema.py: build_post() accepts optional author_email stored in frontmatter\nfunction_app.py: on create stores author_email; on update/delete enforces\n  ownership (legacy posts fall through to ALLOWED_WRITERS allowlist)\npost.py: replace MSAL with Google InstalledAppFlow; CLI sends same header as web\nrequirements.txt: add google-auth; requirements-cli.txt: swap msal for google-auth-oauthlib\ntests: patch require_auth directly; 20 tests passing including ownership/allowlist cases\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>",
+  "content": {
+    "summary": "Azure Functions (Python) API that manages markdown blog posts stored as files in a GitHub repository. Authentication is handled via Google ID tokens; post ownership is enforced per-creator, with an allowlist controlling who can write.",
+    "description": "A serverless write API for quixotry.me's blog. Posts are markdown files with YAML frontmatter committed directly to GitHub; the API sits in front of that storage layer.",
+    "features": [
+      "Create, read, update, and delete blog posts via REST endpoints",
+      "Google ID token authentication (Authorization: Bearer header) \u2014 unified path for both web app and CLI clients",
+      "Per-post ownership: author_email stored in frontmatter; only the creator can edit or delete their posts",
+      "Allowlist-gated writes via ALLOWED_WRITERS environment variable",
+      "Legacy post support: posts without author_email can be edited by any allowlisted writer; first editor's email is stamped as author",
+      "Slug auto-generation from post title using python-slugify",
+      "Published/draft state toggled via frontmatter field"
+    ],
+    "architecture": {
+      "overview": "Azure Functions v2 app (Python) deployed to a Consumption plan. Each HTTP trigger handles one REST operation. Post storage is GitHub \u2014 the API clones/reads/writes markdown files via the GitHub REST API (PyGithub). Auth uses google-auth to validate Google ID tokens server-side; no session state is maintained.",
+      "keyPoints": [
+        "Storage is GitHub, not a database \u2014 each post is a .md file with YAML frontmatter in skarumbu/quixotry repo",
+        "Google ID token validation via google.oauth2.id_token.verify_oauth2_token against GOOGLE_CLIENT_ID env var",
+        "ALLOWED_WRITERS env var (comma-separated emails) gates POST; PUT/DELETE further enforce per-post ownership via author_email frontmatter field",
+        "No Azure Easy Auth \u2014 all auth is application-level; Microsoft identity provider is disabled on the Function App",
+        "python-frontmatter used to parse and serialise YAML + markdown body; python-slugify for URL-safe slug generation"
+      ]
+    },
+    "dataFlow": [
+      {
+        "label": "Web app / CLI sends request",
+        "color": "blue",
+        "sublines": [
+          "Authorization: Bearer <google_id_token> header",
+          "JSON body for writes"
+        ]
+      },
+      {
+        "label": "Azure Function validates Google ID token",
+        "color": "orange",
+        "sublines": [
+          "google-auth verifies token signature and audience",
+          "Returns 401 on failure"
+        ]
+      },
+      {
+        "label": "Ownership / allowlist check",
+        "color": "orange",
+        "sublines": [
+          "POST: email must be in ALLOWED_WRITERS",
+          "PUT/DELETE: requester must match author_email (or be in allowlist for legacy posts)"
+        ]
+      },
+      {
+        "label": "GitHub API read/write",
+        "color": "green",
+        "sublines": [
+          "PyGithub reads or commits .md files to skarumbu/quixotry",
+          "File content is YAML frontmatter + markdown body"
+        ]
+      },
+      {
+        "label": "Response returned to client",
+        "color": "blue",
+        "sublines": [
+          "JSON with post data on reads",
+          "204 No Content on delete"
+        ]
+      }
+    ],
+    "updatedAt": "2026-06-19",
+    "updatedBySha": "6ed712b"
+  }
+}
