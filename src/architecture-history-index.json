@@ -2,6 +2,12 @@
   {
     "package": "posts-api",
     "capturedAt": "2026-06-20",
+    "commitSha": "d642b24",
+    "commitMessage": "fix: support multiple Google client IDs and fix CLI OAuth scope\n\nauth.py now accepts a comma-separated GOOGLE_CLIENT_ID env var so both\nthe web client (GIS) and desktop client (CLI) tokens pass validation.\n\npost.py fixes the scope from email to the full URL form to avoid\nan oauthlib scope-mismatch error on token exchange.\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>"
+  },
+  {
+    "package": "posts-api",
+    "capturedAt": "2026-06-20",
     "commitSha": "6ed712b",
     "commitMessage": "Replace Azure Easy Auth with Google token auth; add post ownership model\n\nauth.py: validates Authorization: Bearer google_id_token via google-auth\nschema.py: build_post() accepts optional author_email stored in frontmatter\nfunction_app.py: on create stores author_email; on update/delete enforces\n  ownership (legacy posts fall through to ALLOWED_WRITERS allowlist)\npost.py: replace MSAL with Google InstalledAppFlow; CLI sends same header as web\nrequirements.txt: add google-auth; requirements-cli.txt: swap msal for google-auth-oauthlib\ntests: patch require_auth directly; 20 tests passing including ownership/allowlist cases\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>"
   },

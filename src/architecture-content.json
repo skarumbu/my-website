@@ -404,22 +404,23 @@
     "features": [
       "Create, read, update, and delete blog posts via REST endpoints",
       "Google ID token authentication (Authorization: Bearer header) \u2014 unified path for both web app and CLI clients",
+      "Support for multiple Google client IDs via comma-separated GOOGLE_CLIENT_ID env var",
       "Per-post ownership: author_email stored in frontmatter; only the creator can edit or delete their posts",
       "Allowlist-gated writes via ALLOWED_WRITERS environment variable",
       "Legacy post support: posts without author_email can be edited by any allowlisted writer; first editor's email is stamped as author",
       "Slug auto-generation from post title using python-slugify",
       "Published/draft state toggled via frontmatter field",
-      "CLI authentication via Google OAuth InstalledAppFlow with cached ID tokens"
+      "CLI authentication via Google OAuth InstalledAppFlow with cached ID tokens and updated scope"
     ],
     "architecture": {
       "overview": "Azure Functions v2 app (Python) deployed to a Consumption plan. Each HTTP trigger handles one REST operation. Post storage is GitHub \u2014 the API clones/reads/writes markdown files via the GitHub REST API (PyGithub). Auth uses google-auth to validate Google ID tokens server-side; no session state is maintained.",
       "keyPoints": [
         "Storage is GitHub, not a database \u2014 each post is a .md file with YAML frontmatter in skarumbu/quixotry repo",
-        "Google ID token validation via google.oauth2.id_token.verify_oauth2_token against GOOGLE_CLIENT_ID env var",
+        "Google ID token validation via google.oauth2.id_token.verify_oauth2_token against multiple client IDs in GOOGLE_CLIENT_ID env var",
         "ALLOWED_WRITERS env var (comma-separated emails) gates POST; PUT/DELETE further enforce per-post ownership via author_email frontmatter field",
         "No Azure Easy Auth \u2014 all auth is application-level; Microsoft identity provider is disabled on the Function App",
         "python-frontmatter used to parse and serialise YAML + markdown body; python-slugify for URL-safe slug generation",
-        "CLI uses Google OAuth InstalledAppFlow for authentication, caching ID tokens locally for reuse"
+        "CLI uses Google OAuth InstalledAppFlow for authentication, caching ID tokens locally for reuse, with updated scope to https://www.googleapis.com/auth/userinfo.email"
       ]
     },
     "dataFlow": [
@@ -465,6 +466,6 @@
       }
     ],
     "updatedAt": "2026-06-20",
-    "updatedBySha": "6ed712b"
+    "updatedBySha": "d642b24"
   }
 }
