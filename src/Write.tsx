@@ -1,13 +1,12 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useMsal, useIsAuthenticated } from '@azure/msal-react';
-import { postsApiRequest } from './authConfig.js';
-import { acquireToken } from './auth.ts';
 import NavBar from './components/nav-bar.tsx';
 import Spinner from './components/Spinner.tsx';
 import './styling/write.css';
 
 const BASE_URL = process.env.REACT_APP_POSTS_API_BASE_URL;
+
+type AuthState = 'loading' | 'authenticated' | 'unauthenticated';
 
 interface Post {
   slug: string;
@@ -18,49 +17,140 @@ interface Post {
   updatedAt?: string;
 }
 
+function decodeJwtPayload(token: string): Record<string, unknown> {
+  try {
+    const payload = token.split('.')[1];
+    return JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/')));
+  } catch {
+    return {};
+  }
+}
+
+function isTokenExpired(token: string): boolean {
+  const payload = decodeJwtPayload(token);
+  const exp = payload['exp'] as number | undefined;
+  if (!exp) return false;
+  return Date.now() / 1000 > exp;
+}
+
 function Write() {
-  const { instance, accounts } = useMsal();
-  const isAuthenticated = useIsAuthenticated();
   const navigate = useNavigate();
+  const [authState, setAuthState] = useState<AuthState>('loading');
+  const [googleToken, setGoogleToken] = useState<string | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const googleBtnRef = useRef<HTMLDivElement>(null);
 
-  const getToken = useCallback(
-    () => acquireToken(instance, accounts[0], postsApiRequest, `${window.location.origin}/write`),
-    [instance, accounts]
-  );
+  const handleCredentialResponse = useCallback((response: { credential: string }) => {
+    const token = response.credential;
+    setGoogleToken(token);
+    setAuthState('authenticated');
+  }, []);
 
+  const initGoogleSignIn = useCallback(() => {
+    const g = (window as any).google;
+    if (!g?.accounts) return;
+    g.accounts.id.initialize({
+      client_id: process.env.REACT_APP_GOOGLE_CLIENT_ID,
+      callback: handleCredentialResponse,
+    });
+    if (googleBtnRef.current) {
+      g.accounts.id.renderButton(googleBtnRef.current, {
+        theme: 'outline',
+        size: 'large',
+        text: 'signin_with',
+        width: 280,
+      });
+    }
+  }, [handleCredentialResponse]);
+
+  // Restore token from sessionStorage on mount
   useEffect(() => {
-    if (!isAuthenticated) return;
+    const stored = sessionStorage.getItem('write_google_token');
+    if (stored && !isTokenExpired(stored)) {
+      setGoogleToken(stored);
+      setAuthState('authenticated');
+      return;
+    }
+    sessionStorage.removeItem('write_google_token');
+    setAuthState('unauthenticated');
+  }, []);
+
+  // Persist token to sessionStorage when it changes
+  useEffect(() => {
+    if (googleToken) {
+      sessionStorage.setItem('write_google_token', googleToken);
+    } else {
+      sessionStorage.removeItem('write_google_token');
+    }
+  }, [googleToken]);
+
+  // Load GIS and render button when unauthenticated
+  useEffect(() => {
+    if (authState !== 'unauthenticated') return;
+    const g = (window as any).google;
+    if (g?.accounts) {
+      initGoogleSignIn();
+      return;
+    }
+    const existing = document.querySelector('script[src*="accounts.google.com/gsi/client"]');
+    if (existing) {
+      existing.addEventListener('load', initGoogleSignIn);
+      return;
+    }
+    const script = document.createElement('script');
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.async = true;
+    script.defer = true;
+    script.onload = initGoogleSignIn;
+    document.head.appendChild(script);
+  }, [authState, initGoogleSignIn]);
+
+  // Re-render button when ref is available
+  useEffect(() => {
+    if (authState === 'unauthenticated' && (window as any).google?.accounts) {
+      initGoogleSignIn();
+    }
+  }, [authState, googleBtnRef.current, initGoogleSignIn]); // eslint-disable-line
+
+  // Load posts when authenticated
+  useEffect(() => {
+    if (authState !== 'authenticated') return;
     if (!BASE_URL) {
       setError('REACT_APP_POSTS_API_BASE_URL is not configured');
       return;
     }
     setLoading(true);
     setError(null);
-    getToken()
-      .then(token =>
-        fetch(`${BASE_URL}/api/posts`, {
-          headers: { Authorization: `Bearer ${token}` },
-        })
-      )
-      .then(res => {
+    (async () => {
+      try {
+        const res = await fetch(`${BASE_URL}/api/posts`, {
+          headers: { Authorization: `Bearer ${googleToken!}` },
+        });
+        if (res.status === 401) {
+          setGoogleToken(null);
+          sessionStorage.removeItem('write_google_token');
+          setAuthState('unauthenticated');
+          return;
+        }
         if (!res.ok) throw new Error(`${res.status}`);
-        return res.json();
-      })
-      .then(json => setPosts(json.posts ?? []))
-      .catch(e => setError(e.message))
-      .finally(() => setLoading(false));
-  }, [isAuthenticated]); // eslint-disable-line react-hooks/exhaustive-deps
+        const json = await res.json();
+        setPosts(json.posts ?? []);
+      } catch (e: any) {
+        setError(e.message);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [authState]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleDelete = async (slug: string, title: string) => {
     if (!window.confirm(`Delete "${title}"? This cannot be undone.`)) return;
     try {
-      const token = await getToken();
       const resp = await fetch(`${BASE_URL}/api/posts/${slug}`, {
         method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${googleToken!}` },
       });
       if (resp.ok || resp.status === 204) {
         setPosts(prev => prev.filter(p => p.slug !== slug));
@@ -72,24 +162,23 @@ function Write() {
     }
   };
 
-  if (!isAuthenticated) {
+  if (authState === 'loading') {
+    return (
+      <div className="write-page">
+        <NavBar />
+        <div className="write-content"><Spinner /></div>
+      </div>
+    );
+  }
+
+  if (authState === 'unauthenticated') {
     return (
       <div className="write-page">
         <NavBar />
         <div className="write-login-view">
           <h1>Sign in to write</h1>
-          <p>This area is private. Sign in with your Microsoft account to access the editor.</p>
-          <button
-            className="write-login-btn"
-            onClick={() =>
-              instance.loginRedirect({
-                ...postsApiRequest,
-                redirectUri: window.location.origin + '/write',
-              })
-            }
-          >
-            Sign in with Microsoft
-          </button>
+          <p>This area is private. Sign in with your Google account to access the editor.</p>
+          <div ref={googleBtnRef} />
         </div>
       </div>
     );

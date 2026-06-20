@@ -1,7 +1,6 @@
 import React from 'react';
 import { render, screen, waitFor, act, fireEvent } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
-import { useIsAuthenticated, useMsal } from '@azure/msal-react';
 import WriteEditor from './WriteEditor';
 
 // useBlocker requires a data router; MemoryRouter does not support it.
@@ -11,18 +10,14 @@ jest.mock('react-router-dom', () => ({
   useBlocker: () => ({ state: 'idle', proceed: jest.fn(), reset: jest.fn() }),
 }));
 
-// Helper: render the editor with a given route path + initial URL entry
+// Fake Google ID token with exp far in the future so isTokenExpired returns false
+const FAKE_TOKEN = 'eyJhbGciOiJSUzI1NiJ9.' +
+  btoa(JSON.stringify({ sub: '123', email: 'test@example.com', exp: 9999999999 })) +
+  '.fakesig';
+
+// Helper: render the editor with a given route path + initial URL entry (authenticated)
 function renderEditor(path: string, initialEntry: string) {
-  (useIsAuthenticated as jest.Mock).mockReturnValue(true);
-  (useMsal as jest.Mock).mockReturnValue({
-    instance: {
-      acquireTokenSilent: jest.fn().mockResolvedValue({ accessToken: 'tok' }),
-      acquireTokenRedirect: jest.fn(),
-      loginRedirect: jest.fn(),
-    },
-    inProgress: 'none',
-    accounts: [{ username: 'test@example.com' }],
-  });
+  sessionStorage.setItem('write_google_token', FAKE_TOKEN);
   return render(
     <MemoryRouter initialEntries={[initialEntry]}>
       <Routes>
@@ -35,13 +30,15 @@ function renderEditor(path: string, initialEntry: string) {
 beforeEach(() => {
   process.env.REACT_APP_POSTS_API_BASE_URL = 'http://test.local';
   global.fetch = jest.fn();
+  sessionStorage.clear();
   jest.useFakeTimers();
 });
 
 afterEach(() => {
   jest.runOnlyPendingTimers();
   jest.useRealTimers();
-  jest.resetAllMocks();
+  jest.restoreAllMocks();
+  sessionStorage.clear();
 });
 
 // EDIT-03: Title, description, and body fields render in editor
@@ -54,6 +51,7 @@ it('renders title input for new post', () => {
 it('loads existing post by slug from API', async () => {
   (global.fetch as jest.Mock).mockResolvedValue({
     ok: true,
+    status: 200,
     json: async () => ({
       post: {
         slug: 'my-post',
@@ -71,7 +69,7 @@ it('loads existing post by slug from API', async () => {
 
 // EDIT-06: Published checkbox state reflected in save payload
 it('reflects Published checkbox state in save payload', async () => {
-  (global.fetch as jest.Mock).mockResolvedValue({ ok: true, json: async () => ({ slug: 'new-slug' }) });
+  (global.fetch as jest.Mock).mockResolvedValue({ ok: true, status: 200, json: async () => ({ slug: 'new-slug' }) });
   renderEditor('/write/new', '/write/new');
   const checkbox = screen.getByRole('checkbox', { name: /published/i });
   fireEvent.click(checkbox);
@@ -96,9 +94,5 @@ it('blocks navigation when unsaved changes exist', async () => {
   renderEditor('/write/new', '/write/new');
   const titleInput = screen.getByPlaceholderText(/title/i);
   fireEvent.change(titleInput, { target: { value: 'Changed title' } });
-  // After a change, the blocker should be armed. The blocker itself is
-  // tested here by checking that the unsaved banner is present when
-  // navigation is attempted — the full integration is in WriteEditor.tsx
-  // (useBlocker). This stub verifies the changed state was recorded.
   expect(titleInput).toHaveValue('Changed title');
 });

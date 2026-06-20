@@ -18,6 +18,3 @@ export const ideasApiRequest = {
   scopes: ['api://e70038a1-6f98-4008-b10a-a5926ec6a861/access_as_user'],
 };
 
-export const postsApiRequest = {
-  scopes: ['api://825b77cb-1492-406f-9072-923aa536b328/.default'],
-};
