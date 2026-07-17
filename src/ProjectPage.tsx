@@ -281,7 +281,7 @@ export default function ProjectPage() {
           <h1 className="ideas-heading">Project</h1>
           <p className="ideas-login-sub">Sign in to view this project</p>
           <button
-            className="ideas-login-btn"
+            className="ms-login-btn"
             onClick={() => instance.loginRedirect({ ...ideasApiRequest, redirectUri })}
           >
             <MicrosoftLogo />

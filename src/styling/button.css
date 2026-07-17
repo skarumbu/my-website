@@ -1,7 +1,7 @@
-.button {  
+.button {
     background-color: transparent;
     margin-right: 10px;
-    margin-left: 10px;    
+    margin-left: 10px;
     color: white;
     cursor: pointer;
     font-size: large;
@@ -10,9 +10,30 @@
     border-radius: 5px;
     transition: background-color 0.3s, color 0.3s;
   }
-  
+
   .button:hover {
     background-color: white;
     color: #333;
   }
+
+/* ── Microsoft sign-in button (shared across pages) ── */
+.ms-login-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 24px;
+  background: #fff;
+  color: #0078d4;
+  border: 1.5px solid #0078d4;
+  border-radius: 999px;
+  font-size: 14px;
+  font-family: inherit;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 150ms, box-shadow 150ms;
+}
+.ms-login-btn:hover {
+  background: #f0f7ff;
+  box-shadow: 0 2px 8px rgba(0, 120, 212, 0.15);
+}
   

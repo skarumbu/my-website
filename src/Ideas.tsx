@@ -932,7 +932,7 @@ function Ideas() {
           <div className="ideas-eyebrow">The notebook</div>
           <h1 className="ideas-heading">Feature Ideas</h1>
           <p className="ideas-login-sub">Sign in to view and manage the feature backlog</p>
-          <button className="ideas-login-btn" onClick={handleLogin}>
+          <button className="ms-login-btn" onClick={handleLogin}>
             <MicrosoftLogo />
             Sign in with Microsoft
           </button>
