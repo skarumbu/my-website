@@ -262,6 +262,7 @@ export default function WriteEditor() {
           setGoogleToken(null);
           sessionStorage.removeItem('write_google_token');
           setAuthState('unauthenticated');
+          setSaving(false);
           return;
         }
         if (!resp.ok) throw new Error(`Save failed: ${resp.status}`);
@@ -282,6 +283,7 @@ export default function WriteEditor() {
           setGoogleToken(null);
           sessionStorage.removeItem('write_google_token');
           setAuthState('unauthenticated');
+          setSaving(false);
           return;
         }
         if (!resp.ok) throw new Error(`Save failed: ${resp.status}`);
