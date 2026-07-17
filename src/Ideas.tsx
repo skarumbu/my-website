@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import MicrosoftLogo from './components/MicrosoftLogo.tsx';
 import { Link } from 'react-router-dom';
 import NavBar from './components/nav-bar.tsx';
 import './styling/ideas.css';
@@ -931,7 +932,10 @@ function Ideas() {
           <div className="ideas-eyebrow">The notebook</div>
           <h1 className="ideas-heading">Feature Ideas</h1>
           <p className="ideas-login-sub">Sign in to view and manage the feature backlog</p>
-          <button className="ideas-login-btn" onClick={handleLogin}>Sign in with Microsoft</button>
+          <button className="ms-login-btn" onClick={handleLogin}>
+            <MicrosoftLogo />
+            Sign in with Microsoft
+          </button>
           {error && <p className="ideas-error">{error}</p>}
         </div>
       </div>

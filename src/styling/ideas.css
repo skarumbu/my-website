@@ -69,19 +69,7 @@
   z-index: 1;
 }
 .ideas-login-sub { font-size: 14px; color: var(--ink-2); margin: 0 0 8px; }
-.ideas-login-btn {
-  margin-top: 2rem;
-  padding: 10px 24px;
-  background: #0078d4;
-  color: #fff;
-  border: none;
-  border-radius: 999px;
-  font-size: 14px;
-  font-family: inherit;
-  cursor: pointer;
-  transition: background 150ms;
-}
-.ideas-login-btn:hover { background: #005fa3; }
+.ideas-login-view .ms-login-btn { margin-top: 2rem; }
 
 /* ── Header ─────────────────────────────────────────────────── */
 .ideas-header {

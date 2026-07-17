@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import MicrosoftLogo from './components/MicrosoftLogo.tsx';
 import NavBar from './components/nav-bar.tsx';
 import './styling/dashboard.css';
 import { useMsal, useIsAuthenticated } from "@azure/msal-react";
@@ -301,8 +302,9 @@ function Dashboard() {
           <p className="dash-slabel">Operations Dashboard</p>
           <h1 className="dash-login-heading">API Ops</h1>
           <p className="dash-login-sub">Sign in with your Microsoft account to continue</p>
-          <button className="dash-login-btn" onClick={() => instance.loginRedirect(dashboardApiRequest)}>
-            Sign in with Microsoft →
+          <button className="ms-login-btn" onClick={() => instance.loginRedirect(dashboardApiRequest)}>
+            <MicrosoftLogo />
+            Sign in with Microsoft
           </button>
         </main>
       </div>

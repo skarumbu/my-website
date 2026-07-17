@@ -193,18 +193,3 @@
   max-width: 400px;
 }
 
-.write-login-btn {
-  background: var(--accent);
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  padding: 8px 16px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  font-family: 'DM Sans', sans-serif;
-}
-
-.write-login-btn:hover {
-  background: var(--accent-dk);
-}

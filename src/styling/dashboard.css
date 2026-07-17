@@ -592,18 +592,6 @@
   margin: 0 0 .5rem;
 }
 .dash-login-sub { font-size: 14px; color: var(--muted); margin-bottom: 2rem; }
-.dash-login-btn {
-  padding: 10px 24px;
-  background: var(--accent);
-  color: white;
-  border: none;
-  border-radius: 6px;
-  font-size: 14px;
-  font-family: var(--fb);
-  cursor: pointer;
-  transition: filter .12s;
-}
-.dash-login-btn:hover { filter: brightness(.91); }
 
 /* ── Expandable card detail ──────────────────────────────── */
 .dash-hcard { cursor: pointer; }
