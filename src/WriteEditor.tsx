@@ -46,6 +46,7 @@ export default function WriteEditor() {
   const apiTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const latestDraft = useRef({ title, description, body, published });
   const unsavedSinceApiRef = useRef(false);
+  const loadedSlugRef = useRef<string | undefined>(undefined);
 
   // Sync latestDraft ref on every field change (no re-render cost)
   useEffect(() => {
@@ -147,13 +148,15 @@ export default function WriteEditor() {
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Load existing post — runs when slug or auth changes
+  // Load existing post — runs on first auth per slug; skips reload on re-auth
   useEffect(() => {
     if (authState !== 'authenticated') return;
     if (!slug) {
       setLoading(false);
       return;
     }
+    if (loadedSlugRef.current === slug) return;
+    loadedSlugRef.current = slug;
     if (!BASE_URL) {
       setError('API not configured');
       setLoading(false);
@@ -262,7 +265,7 @@ export default function WriteEditor() {
           setGoogleToken(null);
           sessionStorage.removeItem('write_google_token');
           setAuthState('unauthenticated');
-          setSaving(false);
+          setAutosaveStatus('Unsaved changes');
           return;
         }
         if (!resp.ok) throw new Error(`Save failed: ${resp.status}`);
@@ -283,7 +286,7 @@ export default function WriteEditor() {
           setGoogleToken(null);
           sessionStorage.removeItem('write_google_token');
           setAuthState('unauthenticated');
-          setSaving(false);
+          setAutosaveStatus('Unsaved changes');
           return;
         }
         if (!resp.ok) throw new Error(`Save failed: ${resp.status}`);
