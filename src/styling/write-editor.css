@@ -189,22 +189,6 @@
   max-width: 400px;
 }
 
-.editor-login-btn {
-  background: var(--accent);
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  padding: 8px 16px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  font-family: 'DM Sans', sans-serif;
-}
-
-.editor-login-btn:hover {
-  background: var(--accent-dk);
-}
-
 .editor-unsaved-banner {
   background: rgba(229, 83, 60, 0.08);
   border: 1px solid var(--accent);
