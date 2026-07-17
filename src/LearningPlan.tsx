@@ -190,6 +190,7 @@ function LearningPlan() {
         theme: 'outline',
         size: 'large',
         text: 'signin_with',
+        shape: 'pill',
         width: 280,
       });
     }

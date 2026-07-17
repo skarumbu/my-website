@@ -75,6 +75,7 @@ export default function WriteEditor() {
         theme: 'outline',
         size: 'large',
         text: 'signin_with',
+        shape: 'pill',
         width: 280,
       });
     }

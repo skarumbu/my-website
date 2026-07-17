@@ -70,18 +70,25 @@
 }
 .ideas-login-sub { font-size: 14px; color: var(--ink-2); margin: 0 0 8px; }
 .ideas-login-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
   margin-top: 2rem;
   padding: 10px 24px;
-  background: #0078d4;
-  color: #fff;
-  border: none;
+  background: #fff;
+  color: #0078d4;
+  border: 1.5px solid #0078d4;
   border-radius: 999px;
   font-size: 14px;
   font-family: inherit;
+  font-weight: 500;
   cursor: pointer;
-  transition: background 150ms;
+  transition: background 150ms, box-shadow 150ms;
 }
-.ideas-login-btn:hover { background: #005fa3; }
+.ideas-login-btn:hover {
+  background: #f0f7ff;
+  box-shadow: 0 2px 8px rgba(0, 120, 212, 0.15);
+}
 
 /* ── Header ─────────────────────────────────────────────────── */
 .ideas-header {
