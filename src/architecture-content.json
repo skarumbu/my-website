@@ -410,6 +410,7 @@
       "Legacy post support: posts without author_email can be edited by any allowlisted writer; first editor's email is stamped as author",
       "Slug auto-generation from post title using python-slugify",
       "Published/draft state toggled via frontmatter field",
+      "Optional description field for drafts; posts can be saved without a description",
       "CLI authentication via Google OAuth InstalledAppFlow with cached ID tokens and updated scope"
     ],
     "architecture": {
@@ -420,6 +421,7 @@
         "ALLOWED_WRITERS env var (comma-separated emails) gates POST; PUT/DELETE further enforce per-post ownership via author_email frontmatter field",
         "No Azure Easy Auth \u2014 all auth is application-level; Microsoft identity provider is disabled on the Function App",
         "python-frontmatter used to parse and serialise YAML + markdown body; python-slugify for URL-safe slug generation",
+        "Description field is now optional for drafts, allowing posts to be saved without it",
         "CLI uses Google OAuth InstalledAppFlow for authentication, caching ID tokens locally for reuse, with updated scope to https://www.googleapis.com/auth/userinfo.email"
       ]
     },
@@ -465,7 +467,7 @@
         ]
       }
     ],
-    "updatedAt": "2026-06-20",
-    "updatedBySha": "d642b24"
+    "updatedAt": "2026-07-18",
+    "updatedBySha": "7fb7608"
   }
 }
