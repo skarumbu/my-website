@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import Markdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import NavBar from './components/nav-bar.tsx';
 import Spinner from './components/Spinner.tsx';
 import './styling/post-reader.css';
@@ -65,7 +66,7 @@ function PostReader() {
               <p className="post-reader-desc">{post.description}</p>
             </div>
             <div className="post-reader-body">
-              <Markdown>{post.body}</Markdown>
+              <Markdown remarkPlugins={[remarkGfm]}>{post.body}</Markdown>
             </div>
           </>
         )}
