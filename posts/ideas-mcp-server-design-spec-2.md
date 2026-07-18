@@ -5,7 +5,7 @@ description: ''
 published: true
 slug: ideas-mcp-server-design-spec-2
 title: Ideas MCP Server — Design Spec
-updatedAt: '2026-07-18T02:40:50.086071+00:00'
+updatedAt: '2026-07-18T02:40:54.197303+00:00'
 ---
 
 ## Background
