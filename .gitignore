@@ -28,6 +28,5 @@ yarn-error.log*
 api/local.settings.json
 
 
-# Claude Code internal directory (local state excluded; project settings tracked)
+# Claude Code internal directory
 .claude/
-!.claude/settings.json
