@@ -271,6 +271,7 @@ export default function WriteEditor() {
         if (!resp.ok) throw new Error(`Save failed: ${resp.status}`);
         const { slug: newSlug } = await resp.json();
         localStorage.removeItem('write-new-draft');
+        setUnsavedSinceApi(false);
         navigate(`/write/${newSlug}`, { replace: true });
       } else {
         // Existing post: PUT
