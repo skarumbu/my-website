@@ -135,3 +135,105 @@ def test_api_post_sends_json_body():
         headers={"Authorization": "Bearer tok", "Content-Type": "application/json"},
         timeout=15,
     )
+
+
+# ── Tool handler tests ─────────────────────────────────────────────────────────
+
+import asyncio
+import importlib
+
+
+def _reload():
+    """Reload module so patched globals take effect."""
+    import ideas_mcp
+    importlib.reload(ideas_mcp)
+    return ideas_mcp
+
+
+@pytest.fixture(autouse=True)
+def set_env(monkeypatch):
+    monkeypatch.setenv("IDEAS_API_BASE_URL", "https://api.example.com")
+    monkeypatch.setenv("AZURE_TENANT_ID", "tenant-123")
+
+
+def _run(coro):
+    return asyncio.get_event_loop().run_until_complete(coro)
+
+
+def test_list_ideas_default_status_open():
+    all_ideas = [
+        {"id": "1", "title": "A", "status": "open", "project": "Digits"},
+        {"id": "2", "title": "B", "status": "done", "project": "Digits"},
+    ]
+    mod = _reload()
+    with patch.object(mod, "api_get", return_value={"ideas": all_ideas}):
+        result = _run(mod.call_tool("list_ideas", {}))
+    data = json.loads(result[0].text)
+    assert len(data) == 1
+    assert data[0]["id"] == "1"
+
+
+def test_list_ideas_status_all():
+    all_ideas = [
+        {"id": "1", "title": "A", "status": "open", "project": "X"},
+        {"id": "2", "title": "B", "status": "done", "project": "Y"},
+    ]
+    mod = _reload()
+    with patch.object(mod, "api_get", return_value={"ideas": all_ideas}):
+        result = _run(mod.call_tool("list_ideas", {"status": "all"}))
+    data = json.loads(result[0].text)
+    assert len(data) == 2
+
+
+def test_list_ideas_project_filter():
+    all_ideas = [
+        {"id": "1", "title": "A", "status": "open", "project": "Digits"},
+        {"id": "2", "title": "B", "status": "open", "project": "NBA Games"},
+    ]
+    mod = _reload()
+    with patch.object(mod, "api_get", return_value={"ideas": all_ideas}):
+        result = _run(mod.call_tool("list_ideas", {"project": "digits"}))
+    data = json.loads(result[0].text)
+    assert len(data) == 1
+    assert data[0]["project"] == "Digits"
+
+
+def test_get_idea():
+    idea = {"id": "abc", "title": "My idea", "status": "open"}
+    mod = _reload()
+    with patch.object(mod, "api_get", return_value=idea):
+        result = _run(mod.call_tool("get_idea", {"id": "abc"}))
+    data = json.loads(result[0].text)
+    assert data["id"] == "abc"
+
+
+def test_update_idea_status():
+    updated = {"id": "abc", "status": "done"}
+    mod = _reload()
+    with patch.object(mod, "api_patch", return_value=updated):
+        result = _run(mod.call_tool("update_idea_status", {"id": "abc", "status": "done"}))
+    data = json.loads(result[0].text)
+    assert data["status"] == "done"
+
+
+def test_add_update():
+    created = {"id": "upd-1", "content": "Shipped in PR #5"}
+    mod = _reload()
+    with patch.object(mod, "api_post", return_value=created):
+        result = _run(mod.call_tool("add_update", {"id": "abc", "content": "Shipped in PR #5"}))
+    data = json.loads(result[0].text)
+    assert data["content"] == "Shipped in PR #5"
+
+
+def test_tool_api_error_returns_error_string():
+    mod = _reload()
+    with patch.object(mod, "api_get", side_effect=RuntimeError("API error 403: Forbidden")):
+        result = _run(mod.call_tool("list_ideas", {}))
+    assert "Error" in result[0].text
+    assert "403" in result[0].text
+
+
+def test_unknown_tool_returns_error_string():
+    mod = _reload()
+    result = _run(mod.call_tool("nonexistent_tool", {}))
+    assert "Unknown tool" in result[0].text
