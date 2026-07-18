@@ -360,10 +360,15 @@ export default function WriteEditor() {
         {!loading && (
           <>
             {blocker.state === 'blocked' && (
-              <div className="editor-unsaved-banner">
-                <span>You have unsaved changes.</span>
-                <button onClick={() => blocker.proceed?.()}>Leave anyway</button>
-                <button onClick={() => blocker.reset?.()}>Stay</button>
+              <div className="editor-unsaved-modal-backdrop">
+                <div className="editor-unsaved-modal">
+                  <h2>Leave without saving?</h2>
+                  <p>Your changes will be lost. They&rsquo;re saved locally, but not published.</p>
+                  <div className="editor-unsaved-modal-actions">
+                    <button className="editor-unsaved-modal-leave" onClick={() => blocker.proceed?.()}>Leave</button>
+                    <button className="editor-unsaved-modal-stay" onClick={() => blocker.reset?.()}>Stay here</button>
+                  </div>
+                </div>
               </div>
             )}
             <div className="editor-toolbar">
