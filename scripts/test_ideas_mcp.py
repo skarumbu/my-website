@@ -1,6 +1,6 @@
 import json
 import pytest
-from unittest.mock import MagicMock, patch, mock_open
+from unittest.mock import MagicMock, patch
 
 
 # ── acquire_token ──────────────────────────────────────────────────────────
@@ -157,7 +157,7 @@ def set_env(monkeypatch):
 
 
 def _run(coro):
-    return asyncio.get_event_loop().run_until_complete(coro)
+    return asyncio.run(coro)
 
 
 def test_list_ideas_default_status_open():

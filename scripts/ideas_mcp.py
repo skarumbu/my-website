@@ -16,7 +16,7 @@ import mcp.types as types
 # ── Constants ─────────────────────────────────────────────────────────────────
 
 CLIENT_ID = "a235bf75-0ece-4d47-bbcd-40d6c5c80da1"
-SCOPES = ["api://e70038a1-6f98-4008-b10a-a5926ec6a861/access_as_user"]
+SCOPES = ["api://bb744b67-4a31-41ab-a52b-006f90fce6cb/access_as_user"]
 TOKEN_CACHE_PATH = Path.home() / ".ideas-mcp" / "token_cache.json"
 
 # ── Auth ──────────────────────────────────────────────────────────────────────
