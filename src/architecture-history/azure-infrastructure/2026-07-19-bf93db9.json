@@ -1,0 +1,34 @@
+{
+  "package": "azure-infrastructure",
+  "capturedAt": "2026-07-19",
+  "commitSha": "bf93db9",
+  "commitMessage": "Merge pull request #2 from skarumbu/fix/split-codex-model-deployment\n\nfix: deploy gpt-5.3-codex model independently of main infra",
+  "content": {
+    "summary": "Defines and provisions all Azure resources at subscription scope using Bicep. Modules cover the Static Web App, Container Registry, Container App Environment (shared Log Analytics workspace), momentum-finder and trail-finder Container Apps, Digits and Dashboard Azure Functions apps, and all RBAC role assignments.",
+    "description": "Bicep infrastructure-as-code package that defines and provisions every Azure resource in the system at subscription scope. Modules cover each service, the shared networking layer, and all RBAC role assignments.",
+    "features": [
+      "Azure Static Web App for the frontend (my-website)",
+      "Container Registry for Docker images (momentum-finder, trail-finder, ideas-bot)",
+      "Container App Environment with shared Log Analytics workspace",
+      "momentum-finder and trail-finder Container Apps (with scaling rules)",
+      "digits, dashboard-api, and ideas-api Azure Functions apps",
+      "All Managed Identity RBAC role assignments (Log Analytics Reader, Cost Management Reader)",
+      "Container App Job definition for ideas-bot",
+      "arch-content-foundry OpenAI resource with GPT-4o deployment (GlobalStandard, 50K TPM)"
+    ],
+    "architecture": {
+      "overview": "Modular Bicep files deployed at subscription scope. Each service has its own module. The Container App Environment module creates the shared Log Analytics workspace used for unified observability across all Container Apps. The arch-content-foundry module provisions an OpenAI resource with a GPT-4o deployment for the arch-content-update CI workflow.",
+      "keyPoints": [
+        "Subscription-scope deployment \u2014 all resources land in a single resource group",
+        "Managed Identity role assignments are defined alongside the resources that need them",
+        "Container Registry uses admin credentials (not Managed Identity) for simplicity",
+        "Log Analytics workspace is shared by momentum-finder, trail-finder, and dashboard-api",
+        "Scaling rules on Container Apps: min 0 replicas (scale to zero), max 10",
+        "arch-content-foundry OpenAI resource uses GlobalStandard SKU with 50K TPM capacity"
+      ]
+    },
+    "dataFlow": null,
+    "updatedAt": "2026-06-12",
+    "updatedBySha": "062ef0b"
+  }
+}

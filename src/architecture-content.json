@@ -328,22 +328,24 @@
       "digits, dashboard-api, and ideas-api Azure Functions apps",
       "All Managed Identity RBAC role assignments (Log Analytics Reader, Cost Management Reader)",
       "Container App Job definition for ideas-bot",
-      "arch-content-foundry OpenAI resource with GPT-4o deployment (GlobalStandard, 50K TPM)"
+      "arch-content-foundry OpenAI resource with GPT-4o deployment (GlobalStandard, 50K TPM)",
+      "Independent deployment of gpt-5.3-codex model for ideas-bot to handle quota constraints"
     ],
     "architecture": {
-      "overview": "Modular Bicep files deployed at subscription scope. Each service has its own module. The Container App Environment module creates the shared Log Analytics workspace used for unified observability across all Container Apps. The arch-content-foundry module provisions an OpenAI resource with a GPT-4o deployment for the arch-content-update CI workflow.",
+      "overview": "Modular Bicep files deployed at subscription scope. Each service has its own module. The Container App Environment module creates the shared Log Analytics workspace used for unified observability across all Container Apps. The arch-content-foundry module provisions an OpenAI resource with a GPT-4o deployment for the arch-content-update CI workflow. The gpt-5.3-codex model for ideas-bot is deployed independently to avoid quota-related deployment failures impacting the rest of the infrastructure.",
       "keyPoints": [
         "Subscription-scope deployment \u2014 all resources land in a single resource group",
         "Managed Identity role assignments are defined alongside the resources that need them",
         "Container Registry uses admin credentials (not Managed Identity) for simplicity",
         "Log Analytics workspace is shared by momentum-finder, trail-finder, and dashboard-api",
         "Scaling rules on Container Apps: min 0 replicas (scale to zero), max 10",
-        "arch-content-foundry OpenAI resource uses GlobalStandard SKU with 50K TPM capacity"
+        "arch-content-foundry OpenAI resource uses GlobalStandard SKU with 50K TPM capacity",
+        "gpt-5.3-codex model for ideas-bot is deployed separately to mitigate quota constraints"
       ]
     },
     "dataFlow": null,
-    "updatedAt": "2026-06-12",
-    "updatedBySha": "062ef0b"
+    "updatedAt": "2026-07-19",
+    "updatedBySha": "bf93db9"
   },
   "learning-plan-api": {
     "summary": "Generates structured learning plans via the Claude API and stores them per user in Azure Table Storage. Google ID tokens are verified server-side on every request, with user isolation enforced by partition key at the storage level.",

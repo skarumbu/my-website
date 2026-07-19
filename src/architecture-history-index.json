@@ -1,5 +1,11 @@
 [
   {
+    "package": "azure-infrastructure",
+    "capturedAt": "2026-07-19",
+    "commitSha": "bf93db9",
+    "commitMessage": "Merge pull request #2 from skarumbu/fix/split-codex-model-deployment\n\nfix: deploy gpt-5.3-codex model independently of main infra"
+  },
+  {
     "package": "posts-api",
     "capturedAt": "2026-07-18",
     "commitSha": "7fb7608",
