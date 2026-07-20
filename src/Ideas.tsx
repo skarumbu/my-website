@@ -529,7 +529,7 @@ interface CardProps {
 
 function IdeaCard({ idea, onView, onDelete, onSetState, onRunBot, updating, botRunning }: CardProps) {
   const [hover, setHover] = useState(false);
-  const [selectedModel, setSelectedModel] = useState('gpt-4.1-mini');
+  const [selectedModel, setSelectedModel] = useState('gpt-5-mini');
   const isDone = idea.status === 'done';
   const isDismissed = idea.status === 'dismissed';
   const rot = cardRot(idea.id);
@@ -599,7 +599,7 @@ function IdeaCard({ idea, onView, onDelete, onSetState, onRunBot, updating, botR
                 value={selectedModel}
                 onChange={e => setSelectedModel(e.target.value)}
               >
-                <option value="gpt-4.1-mini">gpt-4.1-mini</option>
+                <option value="gpt-5-mini">gpt-5-mini</option>
                 <option value="gpt-4.1">gpt-4.1</option>
                 <option value="gpt-4o">gpt-4o</option>
               </select>
