@@ -239,7 +239,8 @@
     "description": "Azure Functions app that stores and serves feature ideas in Table Storage. Supports two auth modes: browser JWT tokens via EasyAuth for read access, and an X-Ideas-Key machine write-key for automated writes. Exposes a trigger endpoint for the ideas-bot.",
     "features": [
       "PATCH /api/projects/{id} \u2014 updates project metadata, including associated repository, supports both EasyAuth JWT authentication and X-Ideas-Key machine write-key for access",
-      "Supports bot-managed fields, including 'bot_status', 'bot_pr_url', 'bot_error', and the newly added 'bot_blocked_by' for cross-repo dependency tracking"
+      "Supports bot-managed fields, including 'bot_status', 'bot_pr_url', 'bot_error', and the newly added 'bot_blocked_by' for cross-repo dependency tracking",
+      "Allows 'gpt-5-mini' as a valid model override for the ideas-bot, alongside existing supported models"
     ],
     "architecture": {
       "overview": "HTTP-triggered Azure Functions backed by Table Storage. EasyAuth handles browser auth transparently at the Azure layer \u2014 no auth code in the application. A separate machine key enables automation (ideas-bot, external scripts) to write ideas without user credentials.",
@@ -259,8 +260,8 @@
         ]
       }
     ],
-    "updatedAt": "2026-06-09",
-    "updatedBySha": "4616896",
+    "updatedAt": "2026-07-20",
+    "updatedBySha": "eb48f63",
     "designDocs": [
       {
         "title": "ADR: Per-Idea Status Updates",

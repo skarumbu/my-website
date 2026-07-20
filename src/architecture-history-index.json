@@ -1,5 +1,11 @@
 [
   {
+    "package": "ideas-api",
+    "capturedAt": "2026-07-20",
+    "commitSha": "eb48f63",
+    "commitMessage": "Merge pull request #3 from skarumbu/feat/gpt-5-mini-allowed-model\n\nfeat: allow gpt-5-mini as a run-bot model override"
+  },
+  {
     "package": "azure-infrastructure",
     "capturedAt": "2026-07-19",
     "commitSha": "bf93db9",
