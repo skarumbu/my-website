@@ -15,7 +15,7 @@ it('renders post list rows with title, date, and description', async () => {
   (global.fetch as jest.Mock).mockResolvedValue({
     ok: true,
     json: async () => ({
-      posts: [{ title: 'Hello World', slug: 'hello-world', date: '2026-05-30', description: 'A first post', updatedAt: '' }]
+      items: [{ title: 'Hello World', slug: 'hello-world', date: '2026-05-30', description: 'A first post', updatedAt: '' }]
     }),
   });
   render(<MemoryRouter><Posts /></MemoryRouter>);
@@ -28,7 +28,7 @@ it('renders post list rows with title, date, and description', async () => {
 it('shows empty-state message when posts array is empty', async () => {
   (global.fetch as jest.Mock).mockResolvedValue({
     ok: true,
-    json: async () => ({ posts: [] }),
+    json: async () => ({ items: [] }),
   });
   render(<MemoryRouter><Posts /></MemoryRouter>);
   await waitFor(() => expect(screen.getByText('No posts yet. Check back soon.')).toBeInTheDocument());

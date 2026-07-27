@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate, useBeforeUnload, useBlocker } from 'react-router-dom';
 import NavBar from './components/nav-bar.tsx';
 import Spinner from './components/Spinner.tsx';
+import { sectionUrl } from './lib/postsApi.ts';
 import './styling/write-editor.css';
 
 type AuthState = 'loading' | 'authenticated' | 'unauthenticated';
@@ -165,7 +166,7 @@ export default function WriteEditor() {
     setLoading(true);
     (async () => {
       try {
-        const res = await fetch(`${BASE_URL}/api/posts/${slug}`, {
+        const res = await fetch(sectionUrl('writing', slug), {
           headers: { Authorization: `Bearer ${googleToken!}` },
         });
         if (res.status === 401) {
@@ -212,7 +213,7 @@ export default function WriteEditor() {
         if (!token) return;
         try {
           setAutosaveStatus('Saving…');
-          const resp = await fetch(`${BASE_URL}/api/posts/${slug}`, {
+          const resp = await fetch(sectionUrl('writing', slug), {
             method: 'PUT',
             headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
             body: JSON.stringify(latestDraft.current),
@@ -253,7 +254,7 @@ export default function WriteEditor() {
       if (!token) throw new Error('Not signed in');
       if (!slug) {
         // New post: POST
-        const resp = await fetch(`${BASE_URL}/api/posts`, {
+        const resp = await fetch(sectionUrl('writing'), {
           method: 'POST',
           headers: {
             Authorization: `Bearer ${token}`,
@@ -275,7 +276,7 @@ export default function WriteEditor() {
         navigate(`/write/${newSlug}`, { replace: true });
       } else {
         // Existing post: PUT
-        const resp = await fetch(`${BASE_URL}/api/posts/${slug}`, {
+        const resp = await fetch(sectionUrl('writing', slug), {
           method: 'PUT',
           headers: {
             Authorization: `Bearer ${token}`,
@@ -312,7 +313,7 @@ export default function WriteEditor() {
     try {
       const token = googleToken;
       if (!token) throw new Error('Not signed in');
-      const resp = await fetch(`${BASE_URL}/api/posts/${slug}`, {
+      const resp = await fetch(sectionUrl('writing', slug), {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });

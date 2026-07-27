@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import NavBar from './components/nav-bar.tsx';
 import Spinner from './components/Spinner.tsx';
+import { sectionUrl, isApiConfigured } from './lib/postsApi.ts';
 import './styling/posts.css';
 
 interface Post {
@@ -24,19 +25,18 @@ function Posts() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const BASE_URL = process.env.REACT_APP_POSTS_API_BASE_URL;
-    if (!BASE_URL) {
+    if (!isApiConfigured()) {
       setError('REACT_APP_POSTS_API_BASE_URL is not configured');
       return;
     }
     setLoading(true);
     setError(null);
-    fetch(`${BASE_URL}/api/posts`)
+    fetch(sectionUrl('writing'))
       .then(res => {
         if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
         return res.json();
       })
-      .then(json => setPosts(json.posts ?? []))
+      .then(json => setPosts(json.items ?? []))
       .catch(e => setError(e.message))
       .finally(() => setLoading(false));
   }, []);

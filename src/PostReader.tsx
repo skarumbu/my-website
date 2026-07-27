@@ -4,6 +4,7 @@ import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import NavBar from './components/nav-bar.tsx';
 import Spinner from './components/Spinner.tsx';
+import { sectionUrl, isApiConfigured } from './lib/postsApi.ts';
 import './styling/post-reader.css';
 
 interface Post {
@@ -29,14 +30,13 @@ function PostReader() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const BASE_URL = process.env.REACT_APP_POSTS_API_BASE_URL;
-    if (!BASE_URL) {
+    if (!isApiConfigured()) {
       setError('REACT_APP_POSTS_API_BASE_URL is not configured');
       return;
     }
     setLoading(true);
     setError(null);
-    fetch(`${BASE_URL}/api/posts/${slug}`)
+    fetch(sectionUrl('writing', slug))
       .then(res => {
         if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
         return res.json();
