@@ -409,23 +409,26 @@
       "Support for multiple content sections, each with its own schema, visibility rules, and storage backend",
       "Google ID token authentication (Authorization: Bearer header) \u2014 unified path for both web app and CLI clients",
       "Support for multiple Google client IDs via comma-separated GOOGLE_CLIENT_ID env var",
-      "Per-item ownership: author_email stored in frontmatter; only the creator can edit or delete their items",
+      "Per-item ownership: author_email stored in metadata; only the creator can edit or delete their items",
       "Allowlist-gated writes via ALLOWED_WRITERS environment variable",
       "Legacy item support: items without author_email can be edited by any allowlisted writer; first editor's email is stamped as author",
       "Slug auto-generation from item title using storage backend-specific logic",
-      "Published/draft state toggled via frontmatter field for public sections",
+      "Published/draft state toggled via metadata field for public sections",
       "Optional description field for drafts; items can be saved without a description",
+      "Private-only sections (e.g., diary) with block-based content, gated via section-level visibility rules",
+      "Content-type dispatch: markdown (writing) vs blocks (diary) logic handled uniformly across operations",
       "CLI authentication via Google OAuth InstalledAppFlow with cached ID tokens and updated scope"
     ],
     "architecture": {
       "overview": "Azure Functions v2 app (Python) deployed to a Consumption plan. Each HTTP trigger handles one REST operation. Content is organized into named sections, each with its own schema, visibility rules, and storage backend. The default storage backend is GitHub, where items are stored as files. Auth uses google-auth to validate Google ID tokens server-side; no session state is maintained.",
       "keyPoints": [
-        "Content is organized into sections (e.g., 'writing'), each with its own schema and storage backend",
-        "Storage is GitHub by default \u2014 each item is a .md file with YAML frontmatter in skarumbu/quixotry repo",
+        "Content is organized into sections (e.g., 'writing', 'diary'), each with its own schema, content type, and storage backend",
+        "Storage backends include GitHub (markdown files with YAML frontmatter) and Azure Blob Storage (JSON blobs for block-based content)",
         "Google ID token validation via google.oauth2.id_token.verify_oauth2_token against multiple client IDs in GOOGLE_CLIENT_ID env var",
-        "ALLOWED_WRITERS env var (comma-separated emails) gates POST; PUT/DELETE further enforce per-item ownership via author_email frontmatter field",
+        "ALLOWED_WRITERS env var (comma-separated emails) gates POST; PUT/DELETE further enforce per-item ownership via author_email metadata field",
         "No Azure Easy Auth \u2014 all auth is application-level; Microsoft identity provider is disabled on the Function App",
         "python-frontmatter used to parse and serialize YAML + markdown body; storage backends handle slug generation and versioning",
+        "Diary section uses block-based content (e.g., text, stickers) with style keys validated and unknown fields stripped",
         "Description field is optional for drafts, allowing items to be saved without it",
         "CLI uses Google OAuth InstalledAppFlow for authentication, caching ID tokens locally for reuse, with updated scope to https://www.googleapis.com/auth/userinfo.email"
       ]
@@ -452,7 +455,7 @@
         "label": "Section resolution and validation",
         "color": "orange",
         "sublines": [
-          "Resolves section-specific schema, storage backend, and visibility rules",
+          "Resolves section-specific schema, content type, storage backend, and visibility rules",
           "Returns 404 if section is unknown"
         ]
       },
@@ -466,11 +469,19 @@
         ]
       },
       {
+        "label": "Content-type dispatch",
+        "color": "purple",
+        "sublines": [
+          "Markdown (writing): YAML frontmatter + markdown body",
+          "Blocks (diary): JSON with validated block types and style keys"
+        ]
+      },
+      {
         "label": "Storage backend read/write",
         "color": "green",
         "sublines": [
-          "Storage backend (e.g., GitHub) reads or commits files",
-          "File content is YAML frontmatter + markdown body"
+          "Storage backend (e.g., GitHub, Azure Blob Storage) reads or commits files/blobs",
+          "File content is YAML frontmatter + markdown body or JSON blocks"
         ]
       },
       {
@@ -483,6 +494,6 @@
       }
     ],
     "updatedAt": "2026-07-27",
-    "updatedBySha": "fb9b393"
+    "updatedBySha": "569896b"
   }
 }

@@ -2,6 +2,12 @@
   {
     "package": "posts-api",
     "capturedAt": "2026-07-27",
+    "commitSha": "569896b",
+    "commitMessage": "Merge pull request #3 from skarumbu/feat/diary-backend\n\nAdd private diary section (Blob-backed, block content)"
+  },
+  {
+    "package": "posts-api",
+    "capturedAt": "2026-07-27",
     "commitSha": "fb9b393",
     "commitMessage": "Merge pull request #2 from skarumbu/feat/sections-registry\n\nIntroduce section registry and storage abstraction"
   },
