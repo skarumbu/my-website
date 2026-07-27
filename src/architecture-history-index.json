@@ -2,6 +2,12 @@
   {
     "package": "posts-api",
     "capturedAt": "2026-07-27",
+    "commitSha": "5c0187d",
+    "commitMessage": "Merge pull request #4 from skarumbu/feat/diary-per-author-read-access\n\nRestrict private-section reads to the item's own author"
+  },
+  {
+    "package": "posts-api",
+    "capturedAt": "2026-07-27",
     "commitSha": "569896b",
     "commitMessage": "Merge pull request #3 from skarumbu/feat/diary-backend\n\nAdd private diary section (Blob-backed, block content)"
   },
