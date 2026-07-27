@@ -29,7 +29,7 @@ it('renders Your posts heading when authenticated and posts loaded', async () =>
   (global.fetch as jest.Mock).mockResolvedValue({
     ok: true,
     status: 200,
-    json: async () => ({ posts: [] }),
+    json: async () => ({ items: [] }),
   });
   render(<MemoryRouter><Write /></MemoryRouter>);
   await waitFor(() => expect(screen.getByText('Your posts')).toBeInTheDocument());

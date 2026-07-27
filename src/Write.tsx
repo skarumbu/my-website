@@ -2,9 +2,8 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import NavBar from './components/nav-bar.tsx';
 import Spinner from './components/Spinner.tsx';
+import { sectionUrl, isApiConfigured } from './lib/postsApi.ts';
 import './styling/write.css';
-
-const BASE_URL = process.env.REACT_APP_POSTS_API_BASE_URL;
 
 type AuthState = 'loading' | 'authenticated' | 'unauthenticated';
 
@@ -118,7 +117,7 @@ function Write() {
   // Load posts when authenticated
   useEffect(() => {
     if (authState !== 'authenticated') return;
-    if (!BASE_URL) {
+    if (!isApiConfigured()) {
       setError('REACT_APP_POSTS_API_BASE_URL is not configured');
       return;
     }
@@ -126,7 +125,7 @@ function Write() {
     setError(null);
     (async () => {
       try {
-        const res = await fetch(`${BASE_URL}/api/posts`, {
+        const res = await fetch(sectionUrl('writing'), {
           headers: { Authorization: `Bearer ${googleToken!}` },
         });
         if (res.status === 401) {
@@ -137,7 +136,7 @@ function Write() {
         }
         if (!res.ok) throw new Error(`${res.status}`);
         const json = await res.json();
-        setPosts(json.posts ?? []);
+        setPosts(json.items ?? []);
       } catch (e: any) {
         setError(e.message);
       } finally {
@@ -149,7 +148,7 @@ function Write() {
   const handleDelete = async (slug: string, title: string) => {
     if (!window.confirm(`Delete "${title}"? This cannot be undone.`)) return;
     try {
-      const resp = await fetch(`${BASE_URL}/api/posts/${slug}`, {
+      const resp = await fetch(sectionUrl('writing', slug), {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${googleToken!}` },
       });
