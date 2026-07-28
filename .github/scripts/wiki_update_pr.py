@@ -76,8 +76,19 @@ def strip_fences(text: str) -> str:
 
 
 def run(cmd, **kw):
-    result = subprocess.run(cmd, check=True, capture_output=True, text=True, **kw)
-    return result.stdout.strip()
+    try:
+        result = subprocess.run(cmd, check=True, capture_output=True, text=True, **kw)
+        return result.stdout.strip()
+    except subprocess.CalledProcessError as e:
+        # capture_output=True swallows the subprocess's own stdout/stderr into the
+        # exception — print it before re-raising, or the actual failure reason (e.g.
+        # gh's permission error) never appears anywhere in the workflow log.
+        print(f"Command failed: {' '.join(cmd)}", file=sys.stderr)
+        if e.stdout:
+            print(f"stdout:\n{e.stdout}", file=sys.stderr)
+        if e.stderr:
+            print(f"stderr:\n{e.stderr}", file=sys.stderr)
+        raise
 
 
 # ── Fetch the current wiki page list from my-website's main (for the "reuse an
@@ -139,8 +150,10 @@ Do NOT update docs for:
 Additionally, identify any OTHER wiki pages this diff is relevant to — cross-cutting
 concepts or patterns that span multiple services (e.g. authentication, caching
 strategy, rate limiting, observability conventions, external AI provider
-integration patterns). Existing wiki pages (reuse one of these keys if the diff
-relates to it — do not create a near-duplicate under a new key):
+integration patterns). Do NOT include '{repo_name}' itself here — its own page is
+already covered above by affected_sections; only list OTHER pages. Existing wiki
+pages (reuse one of these keys if the diff relates to it — do not create a
+near-duplicate under a new key):
 {existing_pages_list}
 
 For each relevant page (existing or new — at most {MAX_RELATED_PAGES}), add an entry
@@ -189,7 +202,14 @@ if not decision.get("needs_update"):
     sys.exit(0)
 
 affected = decision.get("affected_sections", ["features", "architecture"])
-related_page_updates = (decision.get("related_page_updates") or [])[:MAX_RELATED_PAGES]
+# The significance check can (and did, in practice) hallucinate the triggering
+# package itself as a "related page" — that's always redundant with the package's
+# own patch below, and would corrupt its page by merging topic-shaped content
+# (title/summary/sections) on top of it. Filter self-references out before the
+# MAX_RELATED_PAGES cap, so a self-reference never crowds out a real one.
+related_page_updates = [
+    r for r in (decision.get("related_page_updates") or []) if r.get("key") != repo_name
+][:MAX_RELATED_PAGES]
 
 # ── Phase 2a: generate the package's own content patch ───────────────────────
 
