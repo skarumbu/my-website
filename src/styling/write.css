@@ -9,21 +9,24 @@
 .write-content {
   max-width: 720px;
   margin: 0 auto;
-  padding: 48px 40px 120px;
+  padding: 64px 40px 120px;
 }
 
 .write-header-row {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 32px;
+  align-items: flex-end;
+  padding-bottom: 20px;
+  margin-bottom: 12px;
+  border-bottom: 2px dashed var(--line);
 }
 
 .write-heading {
-  font-family: 'Fraunces', serif;
-  font-size: 28px;
-  font-weight: 600;
-  line-height: 1.2;
+  font-family: 'Caprasimo', serif;
+  font-size: 34px;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: 1;
   color: var(--ink);
   margin: 0;
 }
@@ -32,16 +35,23 @@
   background: var(--accent);
   color: #fff;
   border: none;
-  border-radius: 8px;
-  padding: 8px 16px;
+  border-radius: 10px;
+  padding: 9px 18px;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   font-family: 'DM Sans', sans-serif;
+  box-shadow: 0 3px 0 var(--accent-dk);
+  transition: transform 120ms ease, box-shadow 120ms ease, background 120ms ease;
 }
 
 .write-new-btn:hover {
   background: var(--accent-dk);
+}
+
+.write-new-btn:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 var(--accent-dk);
 }
 
 .write-list {
@@ -193,3 +203,8 @@
   max-width: 400px;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .write-new-btn {
+    transition: none;
+  }
+}
