@@ -407,17 +407,27 @@ run(["git", "push", "--force", "origin", wiki_branch], cwd=cwd)
 print(f"Pushed {wiki_branch} to {MY_WEBSITE_REPO}")
 
 # ── Phase 4: open the wiki-update PR (if it doesn't already exist) ───────────
+#
+# Uses the REST API directly (`gh api`) rather than `gh pr create`/`gh pr list`/
+# `gh pr view`, which call GraphQL mutations/queries under the hood. Fine-grained
+# PATs have a known GitHub limitation where GraphQL's createPullRequest mutation
+# returns "Resource not accessible by personal access token" even with Pull
+# Requests: write granted (confirmed against WIKI_UPDATE_GH_TOKEN in practice) —
+# the REST endpoints don't have this issue, so everything against my-website
+# in this phase goes through them instead.
 
-existing_pr = run([
-    "gh", "pr", "list",
-    "--repo", MY_WEBSITE_REPO,
-    "--head", wiki_branch,
-    "--json", "number",
-    "--jq", ".[0].number // empty",
+my_website_owner, my_website_name = MY_WEBSITE_REPO.split("/")
+
+existing_prs_json = run([
+    "gh", "api",
+    f"repos/{MY_WEBSITE_REPO}/pulls",
+    "-f", f"head={my_website_owner}:{wiki_branch}",
+    "-f", "state=open",
 ], cwd=cwd, env={**os.environ, "GH_TOKEN": wiki_gh_token})
+existing_prs = json.loads(existing_prs_json)
 
-if existing_pr:
-    print(f"Wiki-update PR already open: {MY_WEBSITE_REPO}#{existing_pr} — updated in place.")
+if existing_prs:
+    print(f"Wiki-update PR already open: {MY_WEBSITE_REPO}#{existing_prs[0]['number']} — updated in place.")
 else:
     pr_body = (
         f"Proposed architecture wiki update for {repo_full}#{pr_number}.\n\n"
@@ -428,24 +438,22 @@ else:
         f"before merging — this does not auto-merge or auto-close when the source PR does; "
         f"merge it yourself whenever you're happy with it."
     )
-    run([
-        "gh", "pr", "create",
-        "--title", f"chore: {repo_name} wiki update ({repo_name}#{pr_number})",
-        "--body", pr_body,
-        "--base", "main",
-        "--head", wiki_branch,
-        "--repo", MY_WEBSITE_REPO,
+    create_resp = run([
+        "gh", "api",
+        f"repos/{MY_WEBSITE_REPO}/pulls",
+        "-f", f"title=chore: {repo_name} wiki update ({repo_name}#{pr_number})",
+        "-f", f"body={pr_body}",
+        "-f", "base=main",
+        "-f", f"head={wiki_branch}",
     ], cwd=cwd, env={**os.environ, "GH_TOKEN": wiki_gh_token})
-    print(f"Wiki-update PR opened against {MY_WEBSITE_REPO}")
+    wiki_pr_url = json.loads(create_resp)["html_url"]
+    print(f"Wiki-update PR opened against {MY_WEBSITE_REPO}: {wiki_pr_url}")
 
     # Only comment on the origin PR the first time this wiki-update PR is created —
     # not on every synchronize, to avoid spamming the code PR with repeat comments.
-    wiki_pr_url = run([
-        "gh", "pr", "view", wiki_branch,
-        "--repo", MY_WEBSITE_REPO,
-        "--json", "url",
-        "--jq", ".url",
-    ], cwd=cwd, env={**os.environ, "GH_TOKEN": wiki_gh_token})
+    # This uses GH_TOKEN (the calling repo's own default Actions token, not the
+    # fine-grained PAT), which doesn't have the GraphQL limitation above — `gh pr
+    # comment` is fine here.
     run([
         "gh", "pr", "comment", pr_number,
         "--repo", repo_full,
