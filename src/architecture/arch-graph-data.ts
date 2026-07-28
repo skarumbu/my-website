@@ -226,8 +226,8 @@ export const initialNodes: ArchNode[] = [
   },
 ];
 
-// Package keys used elsewhere (architecture-content.json, PackageDetail's PACKAGES) are always
-// hyphenated (e.g. "momentum-finder"), but several node ids here use underscores instead
+// Package keys used elsewhere (architecture-pages.json, packageTemplates' PACKAGE_TEMPLATES) are
+// always hyphenated (e.g. "momentum-finder"), but several node ids here use underscores instead
 // ("momentum_finder") because they were named after their GitHub repo folder, not the package key.
 // Normalize to hyphens so this map's keys always match the hyphenated package key convention.
 // Package keys don't always match their GitHub repo name either (e.g. `momentum-finder` is hosted

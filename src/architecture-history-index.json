@@ -1,258 +1,221 @@
 [
   {
-    "type": "package",
     "key": "posts-api",
     "capturedAt": "2026-07-27",
     "commitSha": "5c0187d",
     "commitMessage": "Merge pull request #4 from skarumbu/feat/diary-per-author-read-access\n\nRestrict private-section reads to the item's own author"
   },
   {
-    "type": "package",
     "key": "posts-api",
     "capturedAt": "2026-07-27",
     "commitSha": "569896b",
     "commitMessage": "Merge pull request #3 from skarumbu/feat/diary-backend\n\nAdd private diary section (Blob-backed, block content)"
   },
   {
-    "type": "package",
     "key": "posts-api",
     "capturedAt": "2026-07-27",
     "commitSha": "fb9b393",
     "commitMessage": "Merge pull request #2 from skarumbu/feat/sections-registry\n\nIntroduce section registry and storage abstraction"
   },
   {
-    "type": "package",
     "key": "ideas-api",
     "capturedAt": "2026-07-20",
     "commitSha": "eb48f63",
     "commitMessage": "Merge pull request #3 from skarumbu/feat/gpt-5-mini-allowed-model\n\nfeat: allow gpt-5-mini as a run-bot model override"
   },
   {
-    "type": "package",
     "key": "azure-infrastructure",
     "capturedAt": "2026-07-19",
     "commitSha": "bf93db9",
     "commitMessage": "Merge pull request #2 from skarumbu/fix/split-codex-model-deployment\n\nfix: deploy gpt-5.3-codex model independently of main infra"
   },
   {
-    "type": "package",
     "key": "posts-api",
     "capturedAt": "2026-07-18",
     "commitSha": "7fb7608",
     "commitMessage": "Merge pull request #1 from skarumbu/fix/optional-description\n\nfix: make description optional so drafts can be saved without it"
   },
   {
-    "type": "package",
     "key": "posts-api",
     "capturedAt": "2026-06-20",
     "commitSha": "d642b24",
     "commitMessage": "fix: support multiple Google client IDs and fix CLI OAuth scope\n\nauth.py now accepts a comma-separated GOOGLE_CLIENT_ID env var so both\nthe web client (GIS) and desktop client (CLI) tokens pass validation.\n\npost.py fixes the scope from email to the full URL form to avoid\nan oauthlib scope-mismatch error on token exchange.\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>"
   },
   {
-    "type": "package",
     "key": "posts-api",
     "capturedAt": "2026-06-20",
     "commitSha": "6ed712b",
     "commitMessage": "Replace Azure Easy Auth with Google token auth; add post ownership model\n\nauth.py: validates Authorization: Bearer google_id_token via google-auth\nschema.py: build_post() accepts optional author_email stored in frontmatter\nfunction_app.py: on create stores author_email; on update/delete enforces\n  ownership (legacy posts fall through to ALLOWED_WRITERS allowlist)\npost.py: replace MSAL with Google InstalledAppFlow; CLI sends same header as web\nrequirements.txt: add google-auth; requirements-cli.txt: swap msal for google-auth-oauthlib\ntests: patch require_auth directly; 20 tests passing including ownership/allowlist cases\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>"
   },
   {
-    "type": "package",
     "key": "ideas-bot",
     "capturedAt": "2026-06-17",
     "commitSha": "bf83d17",
     "commitMessage": "docs: add CLAUDE.md with posting-to-writing-API instructions\n\nDocuments env vars, one-time login flow, and a subprocess helper\nfunction for ideas-bot to create posts on quixotry.me headlessly.\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>"
   },
   {
-    "type": "package",
     "key": "ideas-bot",
     "capturedAt": "2026-06-16",
     "commitSha": "6053205",
     "commitMessage": "fix: chain dependent subtasks so backend runs before frontend"
   },
   {
-    "type": "package",
     "key": "ideas-bot",
     "capturedAt": "2026-06-16",
     "commitSha": "888f455",
     "commitMessage": "fix: surface agent explanation when no commits are made"
   },
   {
-    "type": "package",
     "key": "ideas-bot",
     "capturedAt": "2026-06-16",
     "commitSha": "b462924",
     "commitMessage": "fix: raise agent round limit to 60, add wrap-up nudge at round 50\n\n- Bumped hard cap from 40 to 60 rounds\n- At round 50, injects a user message telling the agent to commit what\n  it has and stop — so partial work is preserved rather than lost\n- On hitting the hard cap, does a best-effort commit before raising\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>"
   },
   {
-    "type": "package",
     "key": "ideas-bot",
     "capturedAt": "2026-06-12",
     "commitSha": "94eb719",
     "commitMessage": "feat: add query_table tool for Azure Table Storage access\n\nGives the agent read-only access to live ideas, projects, and updates\ntables so it can inspect record shapes and validate assumptions before\nwriting code.\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>"
   },
   {
-    "type": "package",
     "key": "ideas-bot",
     "capturedAt": "2026-06-12",
     "commitSha": "2b84a44",
     "commitMessage": "fix: pass prior Q&A to clarity check to prevent repeated questions\n\nMoves prior_updates fetch to before assess_idea_clarity so the bot\ncan see what was already asked and answered on previous triggers.\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>"
   },
   {
-    "type": "package",
     "key": "ideas-bot",
     "capturedAt": "2026-06-12",
     "commitSha": "e776913",
     "commitMessage": "feat: inject repo CLAUDE.md into clarity check and agent for better context\n\nBot was asking basic questions (where are ideas stored?) because it had no\ncodebase knowledge at clarity-check time. Now fetches CLAUDE.md from the\ntarget repo via GitHub API before the clarity check runs and injects it into:\n- assess_idea_clarity: so structural questions answerable from docs aren't asked\n- run_agent system prompt: so the agent starts with architecture context\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>"
   },
   {
-    "type": "package",
     "key": "azure-infrastructure",
     "capturedAt": "2026-06-12",
     "commitSha": "062ef0b",
     "commitMessage": "feat: add arch-content-foundry to Bicep (GlobalStandard gpt-4o 50K TPM)\n\nResource was created manually and had Standard SKU at 10K TPM, causing 429s\nin the arch-content-update CI workflow. Now managed via Bicep with\nGlobalStandard at 50K TPM. Deployment already updated live via CLI.\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>"
   },
   {
-    "type": "package",
     "key": "ideas-bot",
     "capturedAt": "2026-06-09",
     "commitSha": "2c2e1a3",
     "commitMessage": "fix: decompose subtasks now assign correct project per subtask\n\nPreviously all subtasks were filed under the parent idea's project,\ncausing frontend subtasks to land in the wrong repo. Now:\n- decompose_idea receives the full project list and includes it in the prompt\n- LLM must assign an exact project_name per subtask based on which repo the work belongs to\n- project_name is validated against known projects before use; falls back to parent if unrecognised\n- main() uses each subtask's project_name when creating the idea in the API\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>"
   },
   {
-    "type": "package",
     "key": "ideas-bot",
     "capturedAt": "2026-06-09",
     "commitSha": "25e78d6",
     "commitMessage": "fix: cut token pressure to reduce 429s\n\n- bash output cap: 8000 → 2500 chars\n- read_file cap: 8000 → 4000 chars\n- max_tokens: 8096 → 4096 in agent + repair loops\n- context window: last 30 → last 14 messages\n- final retry wait: 180s → 300s\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>"
   },
   {
-    "type": "package",
     "key": "ideas-bot",
     "capturedAt": "2026-06-09",
     "commitSha": "6d997fc",
     "commitMessage": "feat: decompose complex ideas into sub-tasks to avoid 429 rate limits\n\nBefore the agent loop, check whether the idea is complex enough to split.\nIf so, create 2-4 focused child ideas (same project/repo), block the parent,\nand exit. Each child runs with a small focused context — far fewer rounds.\n\nWhen re-triggered after all children complete: if they were subtasks,\nmark parent completed without running an agent loop.\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>"
   },
   {
-    "type": "package",
     "key": "ideas-bot",
     "capturedAt": "2026-06-09",
     "commitSha": "99c01d4",
     "commitMessage": "fix: app-level 429 retry with 60s backoff on top of SDK retries\n\nSDK max_retries=8 exhausts in ~2 min on sustained TPM limits.\n_chat_complete wraps all 3 call sites with up to 4 attempts,\nsleeping 60/120/180s between them before giving up.\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>"
   },
   {
-    "type": "package",
     "key": "ideas-bot",
     "capturedAt": "2026-06-09",
     "commitSha": "e9f8850",
     "commitMessage": "feat: cross-repo dependency ideas — bot blocks until deps complete\n\nWhen the agent discovers work that belongs in a different repo, it can\ncall create_idea to file a dependency. The original idea becomes blocked\nand will not push until all dependencies reach completed status.\nRe-triggering checks dependency statuses and unblocks automatically.\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>"
   },
   {
-    "type": "package",
     "key": "ideas-api",
     "capturedAt": "2026-06-09",
     "commitSha": "4616896",
     "commitMessage": "feat: add blocked bot_status and bot_blocked_by field for cross-repo dependencies\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>"
   },
   {
-    "type": "package",
     "key": "ideas-api",
     "capturedAt": "2026-06-09",
     "commitSha": "d72520d",
     "commitMessage": "refactor(projects): project = one repo; repos[] -> repo string\n\nAPI now accepts and returns a single `repo` string per project.\nBackward compat: existing entities with old `repos` JSON list have\ntheir first entry promoted on read.\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>"
   },
   {
-    "type": "package",
     "key": "ideas-bot",
     "capturedAt": "2026-06-09",
     "commitSha": "590069b",
     "commitMessage": "refactor(bot): project = one repo; remove multi-repo loop\n\nfetch_project_repo() returns a single string. Bot clones that one repo\nand opens one PR. No LLM inference, no loop.\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>"
   },
   {
-    "type": "package",
     "key": "ideas-bot",
     "capturedAt": "2026-06-09",
     "commitSha": "a824310",
     "commitMessage": "fix(bot): handle 429 rate limits - increase retries, cap context window\n\n- max_retries=8 lets the openai library back off and retry on 429/5xx\n- timeout=120s per request (was default 60s)\n- Sliding context window keeps system+user prompt + last 30 messages,\n  preventing unbounded growth that drives up per-round token usage\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>"
   },
   {
-    "type": "package",
     "key": "ideas-bot",
     "capturedAt": "2026-06-07",
     "commitSha": "95d0e6e",
     "commitMessage": "feat(bot): watch GitHub Actions CI and auto-repair on failure\n\nReplaces local npm build verification with GitHub Actions monitoring.\nAfter creating the PR, bot polls gh pr checks every 30s until all checks\ncomplete. On failure, fetches failed step logs via gh run view --log-failed,\nspawns a targeted repair agent, pushes the fix, and waits for CI again.\nWorks for any language/build system configured in the repo's CI.\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>"
   },
   {
-    "type": "package",
     "key": "ideas-api",
     "capturedAt": "2026-06-07",
     "commitSha": "91c5450",
     "commitMessage": "fix: allow machine key auth on PATCH /projects/{id}"
   },
   {
-    "type": "package",
     "key": "ideas-api",
     "capturedAt": "2026-06-07",
     "commitSha": "0dc7a44",
     "commitMessage": "feat: add repos field to projects, PATCH /projects/{id}, machine auth on GET /projects"
   },
   {
-    "type": "package",
     "key": "ideas-bot",
     "capturedAt": "2026-06-07",
     "commitSha": "d48fa3f",
     "commitMessage": "feat: resolve repos from project API instead of hardcoded REPO_MAP (BOT-02)"
   },
   {
-    "type": "package",
     "key": "ideas-api",
     "capturedAt": "2026-06-07",
     "commitSha": "f21218a",
     "commitMessage": "feat: add needs_info bot status and per-run model override\n\n- VALID_BOT_STATUSES now includes needs_info\n- run-bot endpoint reads optional model from request body and passes\n  AZURE_OPENAI_DEPLOYMENT override to the Container App Job execution\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>"
   },
   {
-    "type": "package",
     "key": "ideas-bot",
     "capturedAt": "2026-06-07",
     "commitSha": "9c304e9",
     "commitMessage": "feat: upgrade model default, add needs-info pre-flight and model slug in PR\n\n- Default deployment changed from gpt-4o to o3-mini\n- max_tokens raised from 4096 to 8096\n- assess_idea_clarity() pre-flight check: posts a bot comment and sets\n  needs_info status if the idea is too vague to implement autonomously\n- fetch_updates() / post_bot_update() helpers for ideas-api updates endpoint\n- Prior updates thread injected into agent context on re-trigger\n- Branch name and PR title now include model slug for A/B comparison\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>"
   },
   {
-    "type": "package",
     "key": "dashboard-api",
     "capturedAt": "2026-05-26",
     "commitSha": "b7176d7",
     "commitMessage": "feat: pass error_type and status through ErrorRow"
   },
   {
-    "type": "package",
     "key": "ideas-bot",
     "capturedAt": "2026-05-26",
     "commitSha": "2f2bb1b",
     "commitMessage": "feat: add structured logging via shared-logging"
   },
   {
-    "type": "package",
     "key": "dashboard-api",
     "capturedAt": "2026-05-14",
     "commitSha": "907ccf1",
     "commitMessage": "fix: skip empty github_actions results; increase run fetch to 10\n\nWhen GITHUB_TOKEN is unset or the API returns nothing, fetch_github_run\nreturns {}. Previously this was still added to the payload, causing the\nfrontend to render the GitHub section with all-undefined fields (showing\n— and \"just now\"). Now empty results are skipped so the section stays\nhidden until a token is configured.\n\nAlso bumps per_page from 5 to 10 for the runs query.\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>"
   },
   {
-    "type": "package",
     "key": "dashboard-api",
     "capturedAt": "2026-05-14",
     "commitSha": "a331caf",
     "commitMessage": "fix: prefer push/dispatch runs; add CORS OPTIONS handler\n\ngithub_checks.py: pick the first run with event in (push,\nworkflow_dispatch, release) rather than blindly taking runs[0], which\ncould be a scheduled or bot run. Adds event field to the response.\n\nfunction_app.py: add catch-all OPTIONS handler so browser preflight\nrequests get proper CORS headers (Access-Control-Allow-Origin: *,\nAllow-Headers: Authorization Content-Type). Fixes CORS errors in the\ndashboard frontend.\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>"
   },
   {
-    "type": "package",
     "key": "ideas-api",
     "capturedAt": "2026-05-13",
     "commitSha": "b62fc85",
     "commitMessage": "feat: add per-idea status updates (comments section)\n\nAdds GET/POST/DELETE endpoints under /api/ideas/{id}/updates backed by\na new Azure Table Storage table. Updates table is declared in\nazure-infrastructure rather than created lazily. CLAUDE.md updated to\nreflect current architecture, endpoints, and infra conventions.\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>"
   },
   {
-    "type": "package",
     "key": "dashboard-api",
     "capturedAt": "2026-05-13",
     "commitSha": "8ad2734",
