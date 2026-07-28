@@ -30,3 +30,4 @@ api/local.settings.json
 
 # Claude Code internal directory
 .claude/
+.superpowers/
