@@ -1,0 +1,57 @@
+name: Wiki Update PR (reusable)
+
+on:
+  workflow_call:
+    inputs:
+      repo_name:
+        required: true
+        type: string
+        description: "Page key matching architecture-pages.json (e.g. 'digits')"
+    secrets:
+      ARCH_CONTENT_FOUNDRY_KEY:
+        required: true
+      WIKI_UPDATE_GH_TOKEN:
+        required: true
+
+jobs:
+  wiki-update-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get PR diff
+        run: |
+          git fetch origin ${{ github.base_ref }}
+          git diff origin/${{ github.base_ref }}...HEAD | head -c 81920 > /tmp/pr.diff
+          echo "Diff size: $(wc -c < /tmp/pr.diff) bytes"
+
+      - name: Fetch wiki update script
+        run: |
+          curl -fsSL \
+            "https://raw.githubusercontent.com/skarumbu/my-website/main/.github/scripts/wiki_update_pr.py" \
+            -o /tmp/wiki_update_pr.py
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install openai
+
+      - name: Run wiki update
+        env:
+          ARCH_CONTENT_FOUNDRY_KEY: ${{ secrets.ARCH_CONTENT_FOUNDRY_KEY }}
+          WIKI_UPDATE_GH_TOKEN: ${{ secrets.WIKI_UPDATE_GH_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+          PR_DIFF_FILE: /tmp/pr.diff
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          REPO_NAME: ${{ inputs.repo_name }}
+          REPO_FULL: ${{ github.repository }}
+        run: python /tmp/wiki_update_pr.py
