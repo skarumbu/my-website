@@ -70,6 +70,7 @@ const Architecture: React.FC = () => {
                 ['ideas-bot',            'Autonomous agent: implements features and opens draft PRs',      'Container App Job'],
                 ['azure-infrastructure', 'Defines all Azure cloud resources (infra-as-code)',             'Provisioning only'],
                 ['learning-plan-api',    'Generates and stores AI-powered personalised learning plans',   'Azure Functions'],
+                ['posts-api',            'Manages content sections (writing, diary) stored on GitHub',    'Azure Functions'],
               ].map(([pkg, role, runs]) => (
                 <tr key={pkg as string} className="arch-table-row-clickable" onClick={() => setSelectedPkg(pkg as string)}>
                   <td>
@@ -105,6 +106,7 @@ const Architecture: React.FC = () => {
             { key: 'ideas-bot',            label: 'ideas-bot — Autonomous Feature Agent',      tech: ['Python 3.11', 'Azure Container App Job', 'Azure OpenAI (GPT-4o)', 'GitHub API'] },
             { key: 'azure-infrastructure', label: 'azure-infrastructure — Infrastructure as Code', tech: ['Azure Bicep', 'Azure RBAC', 'Managed Identity', 'Container Registry'] },
             { key: 'learning-plan-api',    label: 'learning-plan-api — Learning Plan API',     tech: ['Azure Functions v2', 'Python 3.11', 'Azure Table Storage', 'Claude API', 'Google OAuth'] },
+            { key: 'posts-api',            label: 'posts-api — Content Sections API',          tech: ['Azure Functions v2', 'Python 3.11', 'GitHub (storage backend)', 'Google ID token auth', 'python-frontmatter'] },
           ].map(({ key, label, tech }) => (
             <React.Fragment key={key}>
               <h3>
