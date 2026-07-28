@@ -1,0 +1,258 @@
+.diary-page {
+  min-height: 100vh;
+  background: var(--bg-1);
+  font-family: 'DM Sans', system-ui, sans-serif;
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+.diary-content {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 64px 40px 120px;
+}
+
+/* ── Writing / Diary switcher — shared shape with write.css. Duplicated
+   (not imported) because this page never loads write.css directly. ── */
+.write-section-switcher {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 28px;
+}
+
+.write-section-tab {
+  font-family: 'Caprasimo', serif;
+  font-size: 15px;
+  letter-spacing: -0.01em;
+  color: var(--ink-3);
+  text-decoration: none;
+  padding: 9px 20px 11px;
+  border-radius: 12px 12px 4px 4px;
+  background: rgba(255, 255, 255, 0.4);
+  transition: transform 160ms ease, background 160ms ease, box-shadow 160ms ease, color 160ms ease;
+}
+
+.write-section-tab:hover {
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.75);
+}
+
+.write-section-tab-active {
+  color: var(--ink);
+  background: var(--paper);
+  box-shadow:
+    0 3px 0 rgba(58, 36, 24, 0.12),
+    0 8px 16px rgba(58, 36, 24, 0.08);
+  transform: translateY(-2px);
+}
+
+.diary-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding-bottom: 20px;
+  margin-bottom: 32px;
+  border-bottom: 2px dashed var(--line);
+}
+
+.diary-heading {
+  font-family: 'Caprasimo', serif;
+  font-size: 34px;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  color: var(--ink);
+  margin: 0;
+}
+
+.diary-new-btn {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 9px 18px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  box-shadow: 0 3px 0 var(--accent-dk);
+  transition: transform 120ms ease, box-shadow 120ms ease, background 120ms ease;
+}
+
+.diary-new-btn:hover {
+  background: var(--accent-dk);
+}
+
+.diary-new-btn:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 var(--accent-dk);
+}
+
+/* ── Corkboard — a loose grid of tilted index cards, in contrast to
+   Writing's tidy list. Rotation alternates by position (pure CSS);
+   color is assigned per-entry by a hash of its slug (see Diary.tsx),
+   so each entry keeps the same color across reloads and reorders. ── */
+.diary-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 24px 20px;
+}
+
+.diary-row {
+  position: relative;
+  border-radius: 14px;
+  padding: 18px 18px 14px;
+  background: var(--paper);
+  box-shadow:
+    0 3px 0 rgba(58, 36, 24, 0.10),
+    0 8px 18px rgba(58, 36, 24, 0.08);
+  transition: transform 220ms cubic-bezier(.34,1.56,.64,1), box-shadow 220ms ease;
+}
+
+.diary-row:nth-child(7n+1) { transform: rotate(-2deg); }
+.diary-row:nth-child(7n+2) { transform: rotate(1.5deg); }
+.diary-row:nth-child(7n+3) { transform: rotate(-1deg); }
+.diary-row:nth-child(7n+4) { transform: rotate(2deg); }
+.diary-row:nth-child(7n+5) { transform: rotate(-2.5deg); }
+.diary-row:nth-child(7n+6) { transform: rotate(1deg); }
+.diary-row:nth-child(7n+7) { transform: rotate(-1.5deg); }
+
+.diary-row:hover {
+  transform: translateY(-4px) rotate(0deg);
+  box-shadow:
+    0 6px 0 rgba(58, 36, 24, 0.12),
+    0 14px 28px rgba(58, 36, 24, 0.14);
+}
+
+.diary-row-mint   { background: var(--c-mint); }
+.diary-row-butter { background: var(--c-butter); }
+.diary-row-sky    { background: var(--c-sky); }
+.diary-row-lilac  { background: var(--c-lilac); }
+.diary-row-coral  { background: var(--c-coral); }
+.diary-row-peach  { background: var(--c-peach); }
+.diary-row-rose   { background: var(--c-rose); }
+
+.diary-row-mint   .diary-row-title { color: var(--c-mint-ink); }
+.diary-row-butter .diary-row-title { color: var(--c-butter-ink); }
+.diary-row-sky    .diary-row-title { color: var(--c-sky-ink); }
+.diary-row-lilac  .diary-row-title { color: var(--c-lilac-ink); }
+.diary-row-coral  .diary-row-title { color: var(--c-coral-ink); }
+.diary-row-peach  .diary-row-title { color: var(--c-peach-ink); }
+.diary-row-rose   .diary-row-title { color: var(--c-rose-ink); }
+
+.diary-row-link {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-decoration: none;
+}
+
+.diary-row-title {
+  font-family: 'Fraunces', serif;
+  font-size: 19px;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.25;
+}
+
+.diary-row-link:hover .diary-row-title {
+  text-decoration: underline;
+}
+
+.diary-row-date {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--ink-2);
+  opacity: 0.75;
+}
+
+.diary-row-delete {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--ink-2);
+  opacity: 0.55;
+  padding: 8px;
+  min-width: 40px;
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+.diary-row-delete:hover {
+  opacity: 1;
+  color: var(--accent-dk);
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.diary-error {
+  font-size: 13px;
+  color: var(--accent);
+  margin: 0 0 12px;
+}
+
+.diary-empty {
+  text-align: center;
+  padding: 60px 0;
+  color: var(--ink-2);
+}
+
+.diary-empty h2 {
+  font-family: 'Fraunces', serif;
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--ink);
+  margin: 0 0 8px;
+}
+
+.diary-empty p {
+  font-size: 16px;
+  margin: 0 0 24px;
+}
+
+.diary-login-view {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  text-align: center;
+  gap: 16px;
+}
+
+.diary-login-view h1 {
+  font-family: 'Fraunces', serif;
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--ink);
+  margin: 0;
+}
+
+.diary-login-view p {
+  font-size: 16px;
+  color: var(--ink-2);
+  margin: 0;
+  max-width: 400px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .diary-row {
+    transition: none;
+  }
+  .diary-row:hover {
+    transform: none;
+  }
+  .write-section-tab,
+  .diary-new-btn {
+    transition: none;
+  }
+}

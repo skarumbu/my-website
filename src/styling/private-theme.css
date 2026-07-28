@@ -1,0 +1,28 @@
+/* Shared design tokens for the private authoring area (Write/WriteEditor,
+   Diary/DiaryEditor/DiaryViewer). Values mirror the public site's palette
+   (home.css / ideas.css) exactly — this is the same house, back office —
+   plus one addition (--paper) for card faces that need to read as distinct
+   from the page background. Imported directly by every private-area
+   component so each route works correctly on a cold deep link, without
+   depending on whichever public page happened to load first. */
+
+@import url('https://fonts.googleapis.com/css2?family=Caprasimo&family=Fraunces:opsz,wght,SOFT@9..144,400..800,100&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap');
+
+:root {
+  --bg-1: #FFEFD9;
+  --paper: #FFFDF8;
+  --ink: #3A2418;
+  --ink-2: #6B4A3A;
+  --ink-3: #A38876;
+  --line: #F0D7B6;
+  --accent: #E5533C;
+  --accent-dk: #B83D2A;
+  --good: #4FA86E;
+  --c-mint: #C9EBD1;   --c-mint-ink: #2D6E47;
+  --c-butter: #FFE793; --c-butter-ink: #7A5B16;
+  --c-sky: #BFE1F2;    --c-sky-ink: #2C5F7E;
+  --c-lilac: #E1D2F2;  --c-lilac-ink: #573E89;
+  --c-coral: #FFC2B0;  --c-coral-ink: #A6422F;
+  --c-peach: #FCD9A6;  --c-peach-ink: #8A5320;
+  --c-rose: #FFCDD8;   --c-rose-ink: #93384F;
+}

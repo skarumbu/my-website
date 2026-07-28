@@ -2,13 +2,14 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate, useBeforeUnload, useBlocker } from 'react-router-dom';
 import NavBar from './components/nav-bar.tsx';
 import Spinner from './components/Spinner.tsx';
+import BlockEditorRow from './components/BlockEditorRow.tsx';
 import { sectionUrl } from './lib/postsApi.ts';
 import { useGoogleAuth } from './lib/useGoogleAuth.ts';
+import { Block } from './lib/diaryTypes.ts';
 import './styling/private-theme.css';
-import './styling/write-editor.css';
+import './styling/diary-editor.css';
 
-export default function WriteEditor() {
-  // Read at render time so tests can set process.env before rendering
+export default function DiaryEditor() {
   const BASE_URL = process.env.REACT_APP_POSTS_API_BASE_URL;
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
@@ -16,9 +17,7 @@ export default function WriteEditor() {
   const { authState, googleToken, googleBtnRef, signOut } = useGoogleAuth();
 
   const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [body, setBody] = useState('');
-  const [published, setPublished] = useState(false);
+  const [blocks, setBlocks] = useState<Block[]>([]);
   const [loading, setLoading] = useState(!!slug);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -27,38 +26,39 @@ export default function WriteEditor() {
 
   const localTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const apiTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const latestDraft = useRef({ title, description, body, published });
+  const latestDraft = useRef({ title, blocks });
   const unsavedSinceApiRef = useRef(false);
   const loadedSlugRef = useRef<string | undefined>(undefined);
 
-  // Sync latestDraft ref on every field change (no re-render cost)
   useEffect(() => {
-    latestDraft.current = { title, description, body, published };
-  }, [title, description, body, published]);
+    latestDraft.current = { title, blocks };
+  }, [title, blocks]);
 
-  // Sync unsavedSinceApiRef so background timers can read it without stale closure
   useEffect(() => {
     unsavedSinceApiRef.current = unsavedSinceApi;
   }, [unsavedSinceApi]);
 
-  // localStorage restore effect — runs once on mount
+  const markDirty = () => {
+    setUnsavedSinceApi(true);
+    setAutosaveStatus('Unsaved changes');
+  };
+
+  // localStorage restore — runs once on mount
   useEffect(() => {
     if (authState !== 'authenticated') return;
-    const key = slug ? `write-draft-${slug}` : 'write-new-draft';
+    const key = slug ? `diary-draft-${slug}` : 'diary-new-draft';
     const raw = localStorage.getItem(key);
     if (!raw) return;
     try {
       const draft = JSON.parse(raw);
       if (draft.title !== undefined) setTitle(draft.title);
-      if (draft.description !== undefined) setDescription(draft.description);
-      if (draft.body !== undefined) setBody(draft.body);
-      if (draft.published !== undefined) setPublished(draft.published);
+      if (draft.blocks !== undefined) setBlocks(draft.blocks);
     } catch {
       // corrupt draft — ignore
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Load existing post — runs on first auth per slug; skips reload on re-auth
+  // Load existing entry — runs on first auth per slug
   useEffect(() => {
     if (authState !== 'authenticated') return;
     if (!slug) {
@@ -75,7 +75,7 @@ export default function WriteEditor() {
     setLoading(true);
     (async () => {
       try {
-        const res = await fetch(sectionUrl('writing', slug), {
+        const res = await fetch(sectionUrl('diary', slug), {
           headers: { Authorization: `Bearer ${googleToken!}` },
         });
         if (res.status === 401) {
@@ -84,11 +84,8 @@ export default function WriteEditor() {
         }
         if (!res.ok) throw new Error(`${res.status}`);
         const json = await res.json();
-        const post = json.post ?? json;
-        setTitle(post.title ?? '');
-        setDescription(post.description ?? '');
-        setBody(post.body ?? '');
-        setPublished(post.published ?? false);
+        setTitle(json.title ?? '');
+        setBlocks(json.blocks ?? []);
       } catch (e: any) {
         setError(e.message);
       } finally {
@@ -97,22 +94,17 @@ export default function WriteEditor() {
     })();
   }, [slug, authState]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // getTokenSilent: background autosave — returns null if not signed in (never redirects)
-  const getTokenSilent = useCallback((): string | null => {
-    return googleToken;
-  }, [googleToken]);
+  const getTokenSilent = useCallback((): string | null => googleToken, [googleToken]);
 
   // Two-tier autosave — only when authenticated
   useEffect(() => {
     if (authState !== 'authenticated') return;
-    const lsKey = slug ? `write-draft-${slug}` : 'write-new-draft';
+    const lsKey = slug ? `diary-draft-${slug}` : 'diary-new-draft';
 
-    // Tier 1: localStorage every 2s
     localTimerRef.current = setInterval(() => {
       localStorage.setItem(lsKey, JSON.stringify({ ...latestDraft.current, savedAt: Date.now() }));
     }, 2000);
 
-    // Tier 2: API save every 45s — silent, never redirects
     if (slug && BASE_URL) {
       apiTimerRef.current = setInterval(async () => {
         if (!unsavedSinceApiRef.current) return;
@@ -120,7 +112,7 @@ export default function WriteEditor() {
         if (!token) return;
         try {
           setAutosaveStatus('Saving…');
-          const resp = await fetch(sectionUrl('writing', slug), {
+          const resp = await fetch(sectionUrl('diary', slug), {
             method: 'PUT',
             headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
             body: JSON.stringify(latestDraft.current),
@@ -160,14 +152,10 @@ export default function WriteEditor() {
       const token = googleToken;
       if (!token) throw new Error('Not signed in');
       if (!slug) {
-        // New post: POST
-        const resp = await fetch(sectionUrl('writing'), {
+        const resp = await fetch(sectionUrl('diary'), {
           method: 'POST',
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ title, description, body, published }),
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title, blocks }),
         });
         if (resp.status === 401) {
           signOut();
@@ -176,18 +164,14 @@ export default function WriteEditor() {
         }
         if (!resp.ok) throw new Error(`Save failed: ${resp.status}`);
         const { slug: newSlug } = await resp.json();
-        localStorage.removeItem('write-new-draft');
+        localStorage.removeItem('diary-new-draft');
         setUnsavedSinceApi(false);
-        navigate(`/write/${newSlug}`, { replace: true });
+        navigate(`/diary/${newSlug}/edit`, { replace: true });
       } else {
-        // Existing post: PUT
-        const resp = await fetch(sectionUrl('writing', slug), {
+        const resp = await fetch(sectionUrl('diary', slug), {
           method: 'PUT',
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ title, description, body, published }),
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title, blocks }),
         });
         if (resp.status === 401) {
           signOut();
@@ -195,8 +179,8 @@ export default function WriteEditor() {
           return;
         }
         if (!resp.ok) throw new Error(`Save failed: ${resp.status}`);
-        const lsKey = `write-draft-${slug}`;
-        localStorage.setItem(lsKey, JSON.stringify({ title, description, body, published, savedAt: Date.now() }));
+        const lsKey = `diary-draft-${slug}`;
+        localStorage.setItem(lsKey, JSON.stringify({ title, blocks, savedAt: Date.now() }));
       }
       setUnsavedSinceApi(false);
       setAutosaveStatus('Saved');
@@ -211,19 +195,18 @@ export default function WriteEditor() {
 
   const handleDelete = async () => {
     if (!slug) return;
-    if (!window.confirm('Delete this post? This cannot be undone.')) return;
+    if (!window.confirm('Delete this entry? This cannot be undone.')) return;
     if (!BASE_URL) { setError('API not configured'); return; }
     try {
       const token = googleToken;
       if (!token) throw new Error('Not signed in');
-      const resp = await fetch(sectionUrl('writing', slug), {
+      const resp = await fetch(sectionUrl('diary', slug), {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
-      // CRITICAL: never call resp.json() on DELETE — 204 has no body
       if (resp.ok || resp.status === 204) {
-        localStorage.removeItem(`write-draft-${slug}`);
-        navigate('/write');
+        localStorage.removeItem(`diary-draft-${slug}`);
+        navigate('/diary');
       } else {
         setError(`Delete failed: ${resp.status}`);
       }
@@ -232,23 +215,53 @@ export default function WriteEditor() {
     }
   };
 
-  // Auth gate — AFTER all hooks, BEFORE render
+  const addTextBlock = () => {
+    setBlocks(prev => [...prev, { type: 'text', content: '', style: { rotation: (Math.random() * 6 - 3) } }]);
+    markDirty();
+  };
+
+  const addStickerBlock = () => {
+    setBlocks(prev => [...prev, { type: 'sticker', emoji: '🌻', style: { rotation: (Math.random() * 10 - 5) } }]);
+    markDirty();
+  };
+
+  const updateBlock = (index: number, updated: Block) => {
+    setBlocks(prev => prev.map((b, i) => (i === index ? updated : b)));
+    markDirty();
+  };
+
+  const moveBlock = (index: number, direction: -1 | 1) => {
+    setBlocks(prev => {
+      const next = [...prev];
+      const target = index + direction;
+      if (target < 0 || target >= next.length) return prev;
+      [next[index], next[target]] = [next[target], next[index]];
+      return next;
+    });
+    markDirty();
+  };
+
+  const deleteBlock = (index: number) => {
+    setBlocks(prev => prev.filter((_, i) => i !== index));
+    markDirty();
+  };
+
   if (authState === 'loading') {
     return (
-      <div className="editor-page">
+      <div className="diary-editor-page">
         <NavBar />
-        <div className="editor-content"><Spinner /></div>
+        <div className="diary-editor-content"><Spinner /></div>
       </div>
     );
   }
 
   if (authState === 'unauthenticated') {
     return (
-      <div className="editor-page">
+      <div className="diary-editor-page">
         <NavBar />
-        <div className="editor-login-view">
-          <h1>Sign in to write</h1>
-          <p>This area is private. Sign in with your Google account to access the editor.</p>
+        <div className="diary-editor-login-view">
+          <h1>Sign in to your diary</h1>
+          <p>This is your private space. Sign in with your Google account to open it.</p>
           <div ref={googleBtnRef} />
         </div>
       </div>
@@ -256,92 +269,65 @@ export default function WriteEditor() {
   }
 
   return (
-    <div className="editor-page">
+    <div className="diary-editor-page">
       <NavBar />
-      <div className="editor-content">
-        {error && <p className="editor-error">{error}</p>}
+      <div className="diary-editor-content">
+        {error && <p className="diary-editor-error">{error}</p>}
         {loading && <Spinner />}
         {!loading && (
           <>
             {blocker.state === 'blocked' && (
-              <div className="editor-unsaved-modal-backdrop">
-                <div className="editor-unsaved-modal">
+              <div className="diary-editor-unsaved-modal-backdrop">
+                <div className="diary-editor-unsaved-modal">
                   <h2>Leave without saving?</h2>
-                  <p>Your changes will be lost. They&rsquo;re saved locally, but not published.</p>
-                  <div className="editor-unsaved-modal-actions">
-                    <button className="editor-unsaved-modal-leave" onClick={() => blocker.proceed?.()}>Leave</button>
-                    <button className="editor-unsaved-modal-stay" onClick={() => blocker.reset?.()}>Stay here</button>
+                  <p>Your changes will be lost. They&rsquo;re saved locally, but not synced.</p>
+                  <div className="diary-editor-unsaved-modal-actions">
+                    <button onClick={() => blocker.proceed?.()}>Leave</button>
+                    <button onClick={() => blocker.reset?.()}>Stay here</button>
                   </div>
                 </div>
               </div>
             )}
-            <div className="editor-toolbar">
-              <a href="/write" className="editor-back">
-                &larr; All posts
-              </a>
-              <span className="editor-autosave">{autosaveStatus}</span>
-              <div className="editor-actions">
-                <button
-                  className="editor-save-btn"
-                  disabled={saving}
-                  onClick={handleSave}
-                >
+            <div className="diary-editor-toolbar">
+              <a href="/diary" className="diary-editor-back">&larr; Diary</a>
+              <span className="diary-editor-autosave">{autosaveStatus}</span>
+              <div className="diary-editor-actions">
+                <button className="diary-editor-save-btn" disabled={saving} onClick={handleSave}>
                   {saving ? 'Saving…' : 'Save'}
                 </button>
-                <label className="editor-publish-group">
-                  <input
-                    type="checkbox"
-                    checked={published}
-                    onChange={e => {
-                      setPublished(e.target.checked);
-                      setUnsavedSinceApi(true);
-                      setAutosaveStatus('Unsaved changes');
-                    }}
-                  />
-                  <span>Published</span>
-                </label>
                 {slug && (
-                  <button className="editor-delete-btn" onClick={handleDelete}>
-                    Delete Post
+                  <button className="diary-editor-delete-btn" onClick={handleDelete}>
+                    Delete Entry
                   </button>
                 )}
               </div>
             </div>
-            <hr className="editor-divider" />
+            <hr className="diary-editor-divider" />
             <input
               type="text"
-              className="editor-field-title"
-              placeholder="Title"
+              className="diary-editor-field-title"
+              placeholder="Give this page a title…"
               value={title}
-              onChange={e => {
-                setTitle(e.target.value);
-                setUnsavedSinceApi(true);
-                setAutosaveStatus('Unsaved changes');
-              }}
+              onChange={e => { setTitle(e.target.value); markDirty(); }}
             />
-            <input
-              type="text"
-              className="editor-field-desc"
-              placeholder="Description"
-              value={description}
-              onChange={e => {
-                setDescription(e.target.value);
-                setUnsavedSinceApi(true);
-                setAutosaveStatus('Unsaved changes');
-              }}
-            />
-            <hr className="editor-divider" />
-            <textarea
-              className="editor-field-body"
-              placeholder="Write in markdown…"
-              value={body}
-              rows={12}
-              onChange={e => {
-                setBody(e.target.value);
-                setUnsavedSinceApi(true);
-                setAutosaveStatus('Unsaved changes');
-              }}
-            />
+            <div className="diary-editor-blocks">
+              {blocks.map((block, index) => (
+                <BlockEditorRow
+                  key={index}
+                  block={block}
+                  onChange={updated => updateBlock(index, updated)}
+                  onMoveUp={() => moveBlock(index, -1)}
+                  onMoveDown={() => moveBlock(index, 1)}
+                  onDelete={() => deleteBlock(index)}
+                  isFirst={index === 0}
+                  isLast={index === blocks.length - 1}
+                />
+              ))}
+            </div>
+            <div className="diary-editor-add-row">
+              <button type="button" onClick={addTextBlock}>+ Text</button>
+              <button type="button" onClick={addStickerBlock}>+ Sticker</button>
+            </div>
           </>
         )}
       </div>
