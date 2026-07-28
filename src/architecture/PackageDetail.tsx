@@ -1,6 +1,7 @@
 import React from 'react';
 import archContent from '../architecture-content.json';
 import historyIndex from '../architecture-history-index.json';
+import { repoUrlByPackage } from './arch-graph-data.ts';
 
 type HistoryEntry = { package: string; capturedAt: string; commitSha: string; commitMessage: string };
 const allHistory = historyIndex as HistoryEntry[];
@@ -476,6 +477,7 @@ const PackageDetail: React.FC<Props> = ({ packageKey, onBack }) => {
     (gen as any).designDocs ?? [];
 
   const pkgHistory = allHistory.filter(e => e.package === packageKey);
+  const repoUrl = repoUrlByPackage[packageKey];
 
   return (
     <div>
@@ -582,7 +584,18 @@ const PackageDetail: React.FC<Props> = ({ packageKey, onBack }) => {
                 {pkgHistory.map((e, i) => (
                   <li key={i} className="arch-history-entry">
                     <span className="arch-history-date">{e.capturedAt}</span>
-                    <code className="arch-history-sha">{e.commitSha}</code>
+                    {repoUrl ? (
+                      <a
+                        className="arch-history-sha"
+                        href={`${repoUrl}/commit/${e.commitSha}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <code>{e.commitSha}</code>
+                      </a>
+                    ) : (
+                      <code className="arch-history-sha">{e.commitSha}</code>
+                    )}
                     <span className="arch-history-msg">{e.commitMessage.split('\n')[0]}</span>
                   </li>
                 ))}

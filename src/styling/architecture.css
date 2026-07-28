@@ -639,7 +639,8 @@ details[open] .arch-history-summary::before { content: '▾ '; }
   font-size: 0.8rem;
 }
 .arch-history-date { color: #8b949e; white-space: nowrap; min-width: 6rem; }
-.arch-history-sha { font-size: 0.72rem; color: #8b949e; }
+.arch-history-sha { font-size: 0.72rem; color: #8b949e; text-decoration: none; }
+a.arch-history-sha:hover { text-decoration: underline; color: #58a6ff; }
 .arch-history-msg { color: #e6edf3; }
 
 @media (max-width: 640px) {

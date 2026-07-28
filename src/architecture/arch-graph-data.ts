@@ -226,6 +226,17 @@ export const initialNodes: ArchNode[] = [
   },
 ];
 
+// Package keys used elsewhere (architecture-content.json, PackageDetail's PACKAGES) are always
+// hyphenated (e.g. "momentum-finder"), but several node ids here use underscores instead
+// ("momentum_finder") because they were named after their GitHub repo folder, not the package key.
+// Normalize to hyphens so this map's keys always match the hyphenated package key convention.
+// Package keys don't always match their GitHub repo name either (e.g. `momentum-finder` is hosted
+// at `github.com/skarumbu/momentum_finder`) — derive the mapping from the diagram's own repoUrl
+// data so it can never drift out of sync with it, rather than reconstructing URLs from the key.
+export const repoUrlByPackage: Record<string, string> = Object.fromEntries(
+  initialNodes.filter(n => n.data.repoUrl).map(n => [n.id.replace(/_/g, '-'), n.data.repoUrl])
+);
+
 export const initialEdges: ArchEdge[] = [
   {
     id: 'e-browser-spa',
