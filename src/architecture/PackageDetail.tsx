@@ -1,24 +1,10 @@
-import React, { useState } from 'react';
+import React from 'react';
 import archContent from '../architecture-content.json';
 import historyIndex from '../architecture-history-index.json';
-import historySnapshots from '../architecture-history-snapshots.json';
 import { repoUrlByPackage } from './arch-graph-data.ts';
-import HistoryDiff from './HistoryDiff.tsx';
 
 type HistoryEntry = { package: string; capturedAt: string; commitSha: string; commitMessage: string };
 const allHistory = historyIndex as HistoryEntry[];
-
-// CRA/webpack has no runtime glob import (`import(`./x/${var}.json`)`), and its build-time
-// alternative (require.context) only works under webpack, not Jest — so instead of loading each
-// snapshot file individually, they're pre-aggregated at generation time into one flat JSON file
-// (keyed by "<package>/<date>-<sha>.json", matching each snapshot's original per-file path),
-// which is just a plain import and works identically in the browser and in tests. The pipeline
-// that writes new per-file snapshots must also append to this aggregated file.
-const snapshotsByPath = historySnapshots as Record<string, any>;
-
-function loadSnapshotContent(pkg: string, capturedAt: string, commitSha: string): any | null {
-  return snapshotsByPath[`${pkg}/${capturedAt}-${commitSha}.json`] ?? null;
-}
 
 type GeneratedContent = {
   summary?: string;
@@ -464,7 +450,6 @@ interface Props {
 }
 
 const PackageDetail: React.FC<Props> = ({ packageKey, onBack }) => {
-  const [expandedDiff, setExpandedDiff] = useState<number | null>(null);
   const staticPkg = PACKAGES[packageKey];
 
   if (!staticPkg) {
@@ -493,14 +478,6 @@ const PackageDetail: React.FC<Props> = ({ packageKey, onBack }) => {
 
   const pkgHistory = allHistory.filter(e => e.package === packageKey);
   const repoUrl = repoUrlByPackage[packageKey];
-  // History entries are newest-first; each snapshot captures content as it was BEFORE that
-  // update. So the "after" state for an entry is the next-newer entry's snapshot — or, for the
-  // newest entry, today's live generated content.
-  const pkgHistoryWithDiffs = pkgHistory.map((e, i) => ({
-    entry: e,
-    before: loadSnapshotContent(packageKey, e.capturedAt, e.commitSha),
-    after: i > 0 ? loadSnapshotContent(packageKey, pkgHistory[i - 1].capturedAt, pkgHistory[i - 1].commitSha) : gen,
-  }));
 
   return (
     <div>
@@ -604,31 +581,22 @@ const PackageDetail: React.FC<Props> = ({ packageKey, onBack }) => {
                 Change history <span className="arch-history-count">({pkgHistory.length})</span>
               </summary>
               <ul className="arch-history-list">
-                {pkgHistoryWithDiffs.map(({ entry: e, before, after }, i) => (
-                  <li key={i} className="arch-history-entry-wrap">
-                    <div className="arch-history-entry">
-                      <span className="arch-history-date">{e.capturedAt}</span>
-                      {repoUrl ? (
-                        <a
-                          className="arch-history-sha"
-                          href={`${repoUrl}/commit/${e.commitSha}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          <code>{e.commitSha}</code>
-                        </a>
-                      ) : (
-                        <code className="arch-history-sha">{e.commitSha}</code>
-                      )}
-                      <span className="arch-history-msg">{e.commitMessage.split('\n')[0]}</span>
-                      <button
-                        className="arch-history-diff-toggle"
-                        onClick={() => setExpandedDiff(expandedDiff === i ? null : i)}
+                {pkgHistory.map((e, i) => (
+                  <li key={i} className="arch-history-entry">
+                    <span className="arch-history-date">{e.capturedAt}</span>
+                    {repoUrl ? (
+                      <a
+                        className="arch-history-sha"
+                        href={`${repoUrl}/commit/${e.commitSha}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
                       >
-                        {expandedDiff === i ? 'Hide changes' : 'View changes'}
-                      </button>
-                    </div>
-                    {expandedDiff === i && <HistoryDiff before={before} after={after} />}
+                        <code>{e.commitSha}</code>
+                      </a>
+                    ) : (
+                      <code className="arch-history-sha">{e.commitSha}</code>
+                    )}
+                    <span className="arch-history-msg">{e.commitMessage.split('\n')[0]}</span>
                   </li>
                 ))}
               </ul>
