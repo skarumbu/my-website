@@ -1,118 +1,24 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import NavBar from './components/nav-bar.tsx';
 import Spinner from './components/Spinner.tsx';
+import StudioSummary from './components/StudioSummary.tsx';
 import { sectionUrl, isApiConfigured } from './lib/postsApi.ts';
+import { useGoogleAuth } from './lib/useGoogleAuth.ts';
+import { Post } from './lib/writeTypes.ts';
+import { DiaryEntry } from './lib/diaryTypes.ts';
+import './styling/private-theme.css';
 import './styling/write.css';
-
-type AuthState = 'loading' | 'authenticated' | 'unauthenticated';
-
-interface Post {
-  slug: string;
-  title: string;
-  description: string;
-  date: string;
-  published: boolean;
-  updatedAt?: string;
-}
-
-function decodeJwtPayload(token: string): Record<string, unknown> {
-  try {
-    const payload = token.split('.')[1];
-    return JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/')));
-  } catch {
-    return {};
-  }
-}
-
-function isTokenExpired(token: string): boolean {
-  const payload = decodeJwtPayload(token);
-  const exp = payload['exp'] as number | undefined;
-  if (!exp) return false;
-  return Date.now() / 1000 > exp;
-}
 
 function Write() {
   const navigate = useNavigate();
-  const [authState, setAuthState] = useState<AuthState>('loading');
-  const [googleToken, setGoogleToken] = useState<string | null>(null);
+  const { authState, googleToken, googleBtnRef, signOut } = useGoogleAuth();
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const googleBtnRef = useRef<HTMLDivElement>(null);
-
-  const handleCredentialResponse = useCallback((response: { credential: string }) => {
-    const token = response.credential;
-    setGoogleToken(token);
-    setAuthState('authenticated');
-  }, []);
-
-  const initGoogleSignIn = useCallback(() => {
-    const g = (window as any).google;
-    if (!g?.accounts) return;
-    g.accounts.id.initialize({
-      client_id: process.env.REACT_APP_GOOGLE_CLIENT_ID,
-      callback: handleCredentialResponse,
-    });
-    if (googleBtnRef.current) {
-      g.accounts.id.renderButton(googleBtnRef.current, {
-        theme: 'outline',
-        size: 'large',
-        text: 'signin_with',
-        shape: 'pill',
-        width: 280,
-      });
-    }
-  }, [handleCredentialResponse]);
-
-  // Restore token from sessionStorage on mount
-  useEffect(() => {
-    const stored = sessionStorage.getItem('write_google_token');
-    if (stored && !isTokenExpired(stored)) {
-      setGoogleToken(stored);
-      setAuthState('authenticated');
-      return;
-    }
-    sessionStorage.removeItem('write_google_token');
-    setAuthState('unauthenticated');
-  }, []);
-
-  // Persist token to sessionStorage when it changes
-  useEffect(() => {
-    if (googleToken) {
-      sessionStorage.setItem('write_google_token', googleToken);
-    } else {
-      sessionStorage.removeItem('write_google_token');
-    }
-  }, [googleToken]);
-
-  // Load GIS and render button when unauthenticated
-  useEffect(() => {
-    if (authState !== 'unauthenticated') return;
-    const g = (window as any).google;
-    if (g?.accounts) {
-      initGoogleSignIn();
-      return;
-    }
-    const existing = document.querySelector('script[src*="accounts.google.com/gsi/client"]');
-    if (existing) {
-      existing.addEventListener('load', initGoogleSignIn);
-      return;
-    }
-    const script = document.createElement('script');
-    script.src = 'https://accounts.google.com/gsi/client';
-    script.async = true;
-    script.defer = true;
-    script.onload = initGoogleSignIn;
-    document.head.appendChild(script);
-  }, [authState, initGoogleSignIn]);
-
-  // Re-render button when ref is available
-  useEffect(() => {
-    if (authState === 'unauthenticated' && (window as any).google?.accounts) {
-      initGoogleSignIn();
-    }
-  }, [authState, googleBtnRef.current, initGoogleSignIn]); // eslint-disable-line
+  const [diaryEntries, setDiaryEntries] = useState<DiaryEntry[]>([]);
+  const [diaryLoading, setDiaryLoading] = useState(false);
+  const [diaryError, setDiaryError] = useState(false);
 
   // Load posts when authenticated
   useEffect(() => {
@@ -129,9 +35,7 @@ function Write() {
           headers: { Authorization: `Bearer ${googleToken!}` },
         });
         if (res.status === 401) {
-          setGoogleToken(null);
-          sessionStorage.removeItem('write_google_token');
-          setAuthState('unauthenticated');
+          signOut();
           return;
         }
         if (!res.ok) throw new Error(`${res.status}`);
@@ -141,6 +45,37 @@ function Write() {
         setError(e.message);
       } finally {
         setLoading(false);
+      }
+    })();
+  }, [authState]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Load diary entries alongside posts, for the studio summary cards. Kept
+  // in its own error/loading state so a diary outage never blocks or
+  // clears the posts list above.
+  useEffect(() => {
+    if (authState !== 'authenticated') return;
+    if (!isApiConfigured()) {
+      setDiaryError(true);
+      return;
+    }
+    setDiaryLoading(true);
+    setDiaryError(false);
+    (async () => {
+      try {
+        const res = await fetch(sectionUrl('diary'), {
+          headers: { Authorization: `Bearer ${googleToken!}` },
+        });
+        if (res.status === 401) {
+          signOut();
+          return;
+        }
+        if (!res.ok) throw new Error(`${res.status}`);
+        const json = await res.json();
+        setDiaryEntries(json.items ?? []);
+      } catch {
+        setDiaryError(true);
+      } finally {
+        setDiaryLoading(false);
       }
     })();
   }, [authState]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -188,6 +123,14 @@ function Write() {
     <div className="write-page">
       <NavBar />
       <div className="write-content">
+        <StudioSummary
+          posts={posts}
+          diaryEntries={diaryEntries}
+          diaryLoading={diaryLoading}
+          diaryError={diaryError}
+          onNewPost={() => navigate('/write/new')}
+          onNewEntry={() => navigate('/diary/new')}
+        />
         <div className="write-header-row">
           <h1 className="write-heading">Your posts</h1>
           <button className="write-new-btn" onClick={() => navigate('/write/new')}>
