@@ -1,0 +1,139 @@
+.diary-viewer-page {
+  min-height: 100vh;
+  background: var(--bg-1);
+  font-family: 'DM Sans', system-ui, sans-serif;
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+.diary-viewer-content {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 48px 40px 120px;
+}
+
+.diary-viewer-back {
+  font-size: 13px;
+  color: var(--ink-3);
+  text-decoration: none;
+}
+
+.diary-viewer-back:hover {
+  color: var(--ink);
+  text-decoration: underline;
+}
+
+.diary-viewer-header {
+  margin: 24px 0 40px;
+}
+
+.diary-viewer-title {
+  font-family: 'Fraunces', serif;
+  font-size: 32px;
+  font-weight: 600;
+  color: var(--ink);
+  margin: 0 0 8px;
+}
+
+.diary-viewer-date {
+  font-size: 14px;
+  color: var(--ink-3);
+  margin: 0 0 8px;
+}
+
+.diary-viewer-edit-link {
+  font-size: 13px;
+  color: var(--accent);
+}
+
+.diary-viewer-error {
+  font-size: 16px;
+  color: var(--ink-2);
+}
+
+/* ── The opened scrapbook page — each block is a pinned scrap, alternating
+   a slight left/right offset so the stack reads as handmade, not a form. ── */
+.diary-viewer-page-surface {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.diary-viewer-block {
+  position: relative;
+  border-radius: 4px 4px 12px 12px;
+  padding: 18px 22px;
+  background: var(--paper);
+  box-shadow:
+    0 3px 0 rgba(58, 36, 24, 0.08),
+    0 10px 20px rgba(58, 36, 24, 0.10);
+  font-size: 16px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  width: fit-content;
+  max-width: 100%;
+}
+
+.diary-viewer-block::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 22px;
+  height: 12px;
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(58, 36, 24, 0.08);
+  border-radius: 2px;
+  box-shadow: 0 1px 2px rgba(58, 36, 24, 0.1);
+}
+
+.diary-viewer-block:nth-child(odd) {
+  align-self: flex-start;
+  margin-left: 4%;
+}
+
+.diary-viewer-block:nth-child(even) {
+  align-self: flex-end;
+  margin-right: 4%;
+}
+
+.diary-viewer-block-sticker {
+  padding: 10px 14px;
+  background: transparent;
+  box-shadow: none;
+}
+
+.diary-viewer-block-sticker::before {
+  display: none;
+}
+
+.diary-viewer-sticker {
+  font-size: 44px;
+  display: block;
+}
+
+.diary-viewer-login-view {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  text-align: center;
+  gap: 16px;
+}
+
+.diary-viewer-login-view h1 {
+  font-family: 'Fraunces', serif;
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--ink);
+  margin: 0;
+}
+
+.diary-viewer-login-view p {
+  font-size: 16px;
+  color: var(--ink-2);
+  margin: 0;
+  max-width: 400px;
+}

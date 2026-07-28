@@ -57,21 +57,30 @@
   background: var(--accent);
   color: #fff;
   border: none;
-  border-radius: 8px;
-  padding: 8px 16px;
+  border-radius: 10px;
+  padding: 9px 18px;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   font-family: 'DM Sans', sans-serif;
+  box-shadow: 0 3px 0 var(--accent-dk);
+  transition: transform 120ms ease, box-shadow 120ms ease, background 120ms ease;
 }
 
 .editor-save-btn:hover {
   background: var(--accent-dk);
 }
 
+.editor-save-btn:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 var(--accent-dk);
+}
+
 .editor-save-btn:disabled {
   opacity: 0.65;
   cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
 }
 
 .editor-publish-group {
@@ -87,12 +96,13 @@
   background: transparent;
   border: 1px solid var(--accent-dk);
   color: var(--accent-dk);
-  border-radius: 8px;
-  padding: 8px 16px;
+  border-radius: 10px;
+  padding: 9px 18px;
   font-size: 13px;
   font-weight: 400;
   cursor: pointer;
   font-family: 'DM Sans', sans-serif;
+  transition: background 120ms ease;
 }
 
 .editor-delete-btn:hover {
@@ -101,7 +111,7 @@
 
 .editor-divider {
   border: none;
-  border-top: 1px solid var(--line);
+  border-top: 2px dashed var(--line);
   margin: 16px 0;
 }
 
@@ -250,4 +260,10 @@
   cursor: pointer;
 }
 .editor-unsaved-modal-stay:hover { opacity: 0.85; }
+
+@media (prefers-reduced-motion: reduce) {
+  .editor-save-btn {
+    transition: none;
+  }
+}
 
