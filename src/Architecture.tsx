@@ -2,23 +2,51 @@ import React, { useState } from 'react';
 import NavBar from './components/nav-bar.tsx';
 import './styling/architecture.css';
 import archContent from './architecture-content.json';
+import archTopics from './architecture-topics.json';
 import ArchDiagram from './architecture/ArchDiagram.tsx';
 import PackageDetail from './architecture/PackageDetail.tsx';
+import TopicDetail from './architecture/TopicDetail.tsx';
 
 type GeneratedSummary = { summary?: string };
 const pkgSummary = archContent as Record<string, GeneratedSummary>;
 
+type TopicSummary = { title: string; summary: string };
+const topicSummaries = archTopics as Record<string, TopicSummary>;
+
+type Selection = { type: 'package' | 'topic'; key: string } | null;
 
 const Architecture: React.FC = () => {
   const today = new Date().toISOString().split('T')[0];
-  const [selectedPkg, setSelectedPkg] = useState<string | null>(null);
+  const [selection, setSelection] = useState<Selection>(null);
 
-  if (selectedPkg) {
+  if (selection?.type === 'package') {
     return (
       <div className="arch-page">
         <NavBar />
         <div className="arch-content">
-          <PackageDetail packageKey={selectedPkg} onBack={() => setSelectedPkg(null)} />
+          <PackageDetail
+            key={selection.key}
+            packageKey={selection.key}
+            onBack={() => setSelection(null)}
+            onSelectTopic={(slug) => setSelection({ type: 'topic', key: slug })}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  if (selection?.type === 'topic') {
+    return (
+      <div className="arch-page">
+        <NavBar />
+        <div className="arch-content">
+          <TopicDetail
+            key={selection.key}
+            topicSlug={selection.key}
+            onBack={() => setSelection(null)}
+            onSelectPackage={(key) => setSelection({ type: 'package', key })}
+            onSelectTopic={(slug) => setSelection({ type: 'topic', key: slug })}
+          />
         </div>
       </div>
     );
@@ -40,6 +68,7 @@ const Architecture: React.FC = () => {
             <li><a href="#overview">Overview</a></li>
             <li><a href="#diagram">System Diagram</a></li>
             <li><a href="#packages">Packages</a></li>
+            <li><a href="#topics">Topics</a></li>
             <li><a href="#data-flows">Data Flows</a></li>
             <li><a href="#cicd">CI/CD &amp; Deployment</a></li>
             <li><a href="#design-docs">Design Doc Generation</a></li>
@@ -72,7 +101,7 @@ const Architecture: React.FC = () => {
                 ['learning-plan-api',    'Generates and stores AI-powered personalised learning plans',   'Azure Functions'],
                 ['posts-api',            'Manages content sections (writing, diary) stored on GitHub',    'Azure Functions'],
               ].map(([pkg, role, runs]) => (
-                <tr key={pkg as string} className="arch-table-row-clickable" onClick={() => setSelectedPkg(pkg as string)}>
+                <tr key={pkg as string} className="arch-table-row-clickable" onClick={() => setSelection({ type: 'package', key: pkg as string })}>
                   <td>
                     <button className="arch-pkg-link">
                       <code className="arch-inline-code">{pkg}</code>
@@ -110,7 +139,7 @@ const Architecture: React.FC = () => {
           ].map(({ key, label, tech }) => (
             <React.Fragment key={key}>
               <h3>
-                <button className="arch-pkg-h3-link" onClick={() => setSelectedPkg(key)}>
+                <button className="arch-pkg-h3-link" onClick={() => setSelection({ type: 'package', key })}>
                   {label} ↗
                 </button>
               </h3>
@@ -122,6 +151,40 @@ const Architecture: React.FC = () => {
               </div>
             </React.Fragment>
           ))}
+        </section>
+
+        {/* ── Topics ── */}
+        <section className="arch-section" id="topics">
+          <h2>Topics</h2>
+          <p>
+            Cross-cutting concepts and patterns that span multiple packages — the general
+            philosophy behind a shared approach, not just what one package does.
+          </p>
+          {Object.keys(topicSummaries).length === 0 ? (
+            <p className="arch-pkg-overview-summary">No topics yet.</p>
+          ) : (
+            <table className="arch-table">
+              <thead>
+                <tr><th>Topic</th><th>Summary</th></tr>
+              </thead>
+              <tbody>
+                {Object.entries(topicSummaries).map(([slug, t]) => (
+                  <tr
+                    key={slug}
+                    className="arch-table-row-clickable"
+                    onClick={() => setSelection({ type: 'topic', key: slug })}
+                  >
+                    <td>
+                      <button className="arch-pkg-link">
+                        <code className="arch-inline-code">{t.title}</code>
+                      </button>
+                    </td>
+                    <td>{t.summary}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </section>
 
         {/* ── 4. Data Flows ── */}

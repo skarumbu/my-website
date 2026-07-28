@@ -104,6 +104,36 @@
   color: #e6edf3;
 }
 
+.arch-related-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+}
+
+.arch-related-chip {
+  background: #1c0e38;
+  border: 1px solid #6e40c9;
+  border-radius: 999px;
+  padding: 0.25rem 0.8rem;
+  font-size: 0.8rem;
+  color: #bc8cff;
+  cursor: pointer;
+}
+.arch-related-chip:hover { background: #2a1655; }
+
+.arch-inline-topic-link {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: #bc8cff;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.arch-inline-topic-link:hover { color: #d2a8ff; }
+
 /* ── Flow diagram boxes ─────────────────────────────────── */
 .arch-flow {
   display: flex;

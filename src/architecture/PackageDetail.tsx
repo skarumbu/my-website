@@ -1,10 +1,9 @@
 import React from 'react';
 import archContent from '../architecture-content.json';
-import historyIndex from '../architecture-history-index.json';
+import archTopics from '../architecture-topics.json';
 import { repoUrlByPackage } from './arch-graph-data.ts';
-
-type HistoryEntry = { package: string; capturedAt: string; commitSha: string; commitMessage: string };
-const allHistory = historyIndex as HistoryEntry[];
+import { allHistory } from './historyUtils.ts';
+import LinkedText from './LinkedText.tsx';
 
 type GeneratedContent = {
   summary?: string;
@@ -16,6 +15,22 @@ type GeneratedContent = {
   updatedBySha?: string;
 };
 const generated = archContent as Record<string, GeneratedContent>;
+
+type TopicContent = { title: string; relatedPackages?: string[] };
+const topics = archTopics as Record<string, TopicContent>;
+
+// A package doesn't store its own "related topics" list — that would let the two files
+// disagree about the same relationship. Instead, derive the reverse mapping from each topic's
+// own relatedPackages[] at render time, so there's exactly one place this relationship lives.
+const topicsByPackage: Record<string, { slug: string; title: string }[]> = (() => {
+  const map: Record<string, { slug: string; title: string }[]> = {};
+  for (const [slug, t] of Object.entries(topics)) {
+    for (const pkg of t.relatedPackages ?? []) {
+      (map[pkg] ??= []).push({ slug, title: t.title });
+    }
+  }
+  return map;
+})();
 
 // ── Data ─────────────────────────────────────────────────────────────────────
 
@@ -447,9 +462,10 @@ const PACKAGES: Record<string, PkgData> = {
 interface Props {
   packageKey: string;
   onBack: () => void;
+  onSelectTopic: (slug: string) => void;
 }
 
-const PackageDetail: React.FC<Props> = ({ packageKey, onBack }) => {
+const PackageDetail: React.FC<Props> = ({ packageKey, onBack, onSelectTopic }) => {
   const staticPkg = PACKAGES[packageKey];
 
   if (!staticPkg) {
@@ -476,7 +492,7 @@ const PackageDetail: React.FC<Props> = ({ packageKey, onBack }) => {
   const designDocs: { title: string; href: string; date: string; description: string }[] =
     (gen as any).designDocs ?? [];
 
-  const pkgHistory = allHistory.filter(e => e.package === packageKey);
+  const pkgHistory = allHistory.filter(e => e.type === 'package' && e.key === packageKey);
   const repoUrl = repoUrlByPackage[packageKey];
 
   return (
@@ -495,7 +511,7 @@ const PackageDetail: React.FC<Props> = ({ packageKey, onBack }) => {
           )}
         </div>
         <p className="arch-pkg-role">{pkg.role}</p>
-        <p className="arch-pkg-desc">{pkg.description}</p>
+        <p className="arch-pkg-desc"><LinkedText text={pkg.description} onSelectTopic={onSelectTopic} /></p>
         <div className="arch-tech-stack" style={{ marginTop: '1rem' }}>
           {pkg.techStack.map(t => (
             <span key={t} className="arch-tech-item">{t}</span>
@@ -509,19 +525,37 @@ const PackageDetail: React.FC<Props> = ({ packageKey, onBack }) => {
         <section className="arch-section">
           <h2>Features</h2>
           <ul className="arch-pkg-features">
-            {pkg.features.map((f, i) => <li key={i}>{f}</li>)}
+            {pkg.features.map((f, i) => (
+              <li key={i}><LinkedText text={f} onSelectTopic={onSelectTopic} /></li>
+            ))}
           </ul>
         </section>
 
         {/* ── Architecture ── */}
         <section className="arch-section">
           <h2>Architecture</h2>
-          <p>{pkg.architecture.overview}</p>
+          <p><LinkedText text={pkg.architecture.overview} onSelectTopic={onSelectTopic} /></p>
           <h3>Key design points</h3>
           <ul className="arch-pkg-keypoints">
-            {pkg.architecture.keyPoints.map((k, i) => <li key={i}>{k}</li>)}
+            {pkg.architecture.keyPoints.map((k, i) => (
+              <li key={i}><LinkedText text={k} onSelectTopic={onSelectTopic} /></li>
+            ))}
           </ul>
         </section>
+
+        {/* ── Related Topics ── */}
+        {(topicsByPackage[packageKey]?.length ?? 0) > 0 && (
+          <section className="arch-section">
+            <h2>Related Topics</h2>
+            <div className="arch-related-chips">
+              {topicsByPackage[packageKey].map(({ slug, title }) => (
+                <button key={slug} className="arch-related-chip" onClick={() => onSelectTopic(slug)}>
+                  {title}
+                </button>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* ── Data Flow ── */}
         {pkg.dataFlow && (

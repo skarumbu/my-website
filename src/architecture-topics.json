@@ -1,0 +1,28 @@
+{
+  "authentication": {
+    "title": "Authentication",
+    "summary": "How user identity is verified across the system: mostly server-side Google ID token validation, with one Azure EasyAuth exception.",
+    "body": {
+      "overview": "Most backend services validate a Google ID token themselves, server-side, on every request — no session state, no cookies, just a Bearer token checked against Google's public keys. ideas-api is the one exception: it delegates token validation to Azure's EasyAuth layer instead of doing it in application code.",
+      "sections": [
+        {
+          "heading": "Google ID token (application-level)",
+          "content": "posts-api and learning-plan-api both validate the caller's Google ID token themselves, in application code, via the google-auth library — checking the token's signature and audience against one or more configured Google OAuth client IDs. This is the default pattern for any new backend service: no Azure-specific auth wiring, works identically whether the caller is the web app or a CLI tool, and keeps auth logic visible and testable in the service's own codebase rather than delegated to platform configuration."
+        },
+        {
+          "heading": "Azure EasyAuth (platform-level)",
+          "content": "ideas-api instead relies on Azure Functions' built-in EasyAuth: Azure validates the Google ID token at the platform layer before the request ever reaches application code, then injects the validated identity as a request header. This means less code in ideas-api itself, but the auth behavior lives in Azure Function App configuration rather than in the repo — a real tradeoff worth knowing before assuming \"how auth works\" from reading the code alone."
+        },
+        {
+          "heading": "General philosophy",
+          "content": "Prefer application-level Google ID token validation for new services — it's portable, testable, and doesn't depend on Azure-specific platform configuration a future migration would need to reproduce. EasyAuth is not being actively adopted further; it's a historical choice on ideas-api, not the recommended pattern going forward."
+        }
+      ]
+    },
+    "relatedPackages": ["posts-api", "learning-plan-api", "ideas-api"],
+    "relatedTopics": [],
+    "updatedAt": "2026-07-28",
+    "updatedBySha": "seed",
+    "updatedByPackage": "my-website"
+  }
+}
