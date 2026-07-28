@@ -407,6 +407,38 @@ const PACKAGES: Record<string, PkgData> = {
       { label: 'POST /api/plans saves plan to Table Storage', color: 'green' },
     ],
   },
+  'posts-api': {
+    name: 'posts-api',
+    role: 'Manages content sections (writing, diary) stored on GitHub',
+    runsOn: 'Azure Functions',
+
+    description:
+      'Azure Functions (Python) API that manages content sections, such as markdown blog posts and diary entries, stored as files in a GitHub repository. Authentication is handled via Google ID tokens; content ownership is enforced per-creator, with an allowlist controlling who can write.',
+    features: [
+      'Create, read, update, and delete content items in named sections via REST endpoints',
+      'Support for multiple content sections (writing, diary), each with its own schema and visibility rules',
+      'Google ID token authentication — unified path for both the web app and CLI clients',
+      'Per-item ownership: author_email stored in frontmatter; only the creator can edit or delete their items',
+      'Allowlist-gated writes via an ALLOWED_WRITERS environment variable',
+    ],
+    architecture: {
+      overview:
+        'Azure Functions v2 app (Python) on a Consumption plan. Each HTTP trigger handles one REST operation. Content is organised into named sections, each with its own schema, visibility rules, and storage backend — the default backend is GitHub, where items are stored as .md files with YAML frontmatter.',
+      keyPoints: [
+        'Storage is GitHub by default — each item is a file with YAML frontmatter, committed via the GitHub API',
+        'Google ID token validated server-side against one or more configured client IDs — no Azure EasyAuth',
+        'Private sections (e.g. diary) require allowlist membership for all operations, including reads',
+        'Public sections (e.g. writing) support a published/draft toggle in frontmatter',
+      ],
+    },
+    techStack: ['Azure Functions v2', 'Python 3.11', 'GitHub (storage backend)', 'Google ID token auth', 'python-frontmatter'],
+    pipeline: [
+      { label: 'git push\nmain' },
+      { label: 'GitHub Actions', color: 'blue' },
+      { label: 'func publish\n--python' },
+      { label: 'Live on\nAzure Functions', color: 'green' },
+    ],
+  },
 };
 
 // ── Component ─────────────────────────────────────────────────────────────────
