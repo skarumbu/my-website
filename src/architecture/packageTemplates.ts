@@ -1,53 +1,16 @@
-import React from 'react';
-import archContent from '../architecture-content.json';
-import historyIndex from '../architecture-history-index.json';
-import { repoUrlByPackage } from './arch-graph-data.ts';
+// Static template for every page that's a package: the fields every deployable service page
+// must have (runsOn/techStack/pipeline), plus fallback description/features/architecture/dataFlow
+// used until LLM-generated content (src/architecture-pages.json) has something to merge over.
+// repoUrl is intentionally NOT duplicated here — it's derived from arch-graph-data.ts, the single
+// source of truth for repo URLs, at the point these templates are turned into full PackagePages.
 
-type HistoryEntry = { package: string; capturedAt: string; commitSha: string; commitMessage: string };
-const allHistory = historyIndex as HistoryEntry[];
+import { PackagePage, PipelineStep, FlowStep } from './pageTypes.ts';
 
-type GeneratedContent = {
-  summary?: string;
-  description?: string;
-  features?: string[];
-  architecture?: { overview?: string; keyPoints?: string[] };
-  dataFlow?: { label: string; color?: string; sublines?: string[] }[] | null;
-  updatedAt?: string;
-  updatedBySha?: string;
-};
-const generated = archContent as Record<string, GeneratedContent>;
+type PackageTemplate = Omit<PackagePage, 'key' | 'repoUrl' | 'relatedPages' | 'sections' | 'summary' | 'updatedAt' | 'updatedBySha' | 'updatedByPackage'>;
 
-// ── Data ─────────────────────────────────────────────────────────────────────
-
-interface FlowStep {
-  label: string;
-  sublines?: string[];
-  color?: 'blue' | 'green' | 'orange' | 'purple';
-}
-
-interface PipelineStep {
-  label: string;
-  color?: 'blue' | 'green' | 'orange';
-}
-
-interface PkgData {
-  name: string;
-  role: string;
-  runsOn: string;
-  description: string;
-  features: string[];
-  architecture: {
-    overview: string;
-    keyPoints: string[];
-  };
-  techStack: string[];
-  pipeline: PipelineStep[];
-  dataFlow?: FlowStep[];
-}
-
-const PACKAGES: Record<string, PkgData> = {
+export const PACKAGE_TEMPLATES: Record<string, PackageTemplate> = {
   'my-website': {
-    name: 'my-website',
+    title: 'my-website',
     role: 'React SPA — user-facing frontend',
     runsOn: 'Azure Static Web Apps',
     description:
@@ -82,10 +45,9 @@ const PACKAGES: Record<string, PkgData> = {
   },
 
   'digits': {
-    name: 'digits',
+    title: 'digits',
     role: 'Generates and serves daily Digits puzzles',
     runsOn: 'Azure Functions',
-
     description:
       'Azure Functions app that generates, stores, and serves daily number puzzles. Each request is instrumented with metrics rows written to Table Storage so the dashboard can track volume and latency.',
     features: [
@@ -121,10 +83,9 @@ const PACKAGES: Record<string, PkgData> = {
   },
 
   'momentum-finder': {
-    name: 'momentum-finder',
+    title: 'momentum-finder',
     role: 'Identifies momentum shifts in live NBA games',
     runsOn: 'Azure Container Apps',
-
     description:
       'FastAPI Container App that analyses live NBA game data to detect and surface momentum shifts. Scales automatically between 0 and 10 replicas and emits structured JSON logs for dashboard monitoring.',
     features: [
@@ -161,10 +122,9 @@ const PACKAGES: Record<string, PkgData> = {
   },
 
   'trail-finder': {
-    name: 'trail-finder',
+    title: 'trail-finder',
     role: 'Trail recommendations + conditions via Google Places & AI',
     runsOn: 'Azure Container Apps',
-
     description:
       'FastAPI Container App that generates personalised trail recommendations for a given city. Fans out across Google Places, weather, and search APIs, then synthesizes a condition summary and gear list with Azure OpenAI. Results are cached 24h per location.',
     features: [
@@ -205,10 +165,9 @@ const PACKAGES: Record<string, PkgData> = {
   },
 
   'dashboard-api': {
-    name: 'dashboard-api',
+    title: 'dashboard-api',
     role: 'Aggregates health, metrics, and cost across all services',
     runsOn: 'Azure Functions',
-
     description:
       'Azure Functions app that fans out in parallel to health-check all services, query Log Analytics for request metrics, pull Digits Table Storage metrics, and fetch Azure Cost Management spend — returning everything in a single aggregated response.',
     features: [
@@ -250,10 +209,9 @@ const PACKAGES: Record<string, PkgData> = {
   },
 
   'ideas-api': {
-    name: 'ideas-api',
+    title: 'ideas-api',
     role: 'Stores/serves AI-generated feature ideas; triggers ideas-bot',
     runsOn: 'Azure Functions',
-
     description:
       'Azure Functions app that stores and serves feature ideas in Table Storage. Supports two auth modes: browser JWT tokens via EasyAuth for read access, and an X-Ideas-Key machine write-key for automated writes. Exposes a trigger endpoint for the ideas-bot.',
     features: [
@@ -292,7 +250,7 @@ const PACKAGES: Record<string, PkgData> = {
   },
 
   'ideas-bot': {
-    name: 'ideas-bot',
+    title: 'ideas-bot',
     role: 'Autonomous agent: implements features and opens draft PRs',
     runsOn: 'Container App Job',
     description:
@@ -333,7 +291,7 @@ const PACKAGES: Record<string, PkgData> = {
   },
 
   'azure-infrastructure': {
-    name: 'azure-infrastructure',
+    title: 'azure-infrastructure',
     role: 'Defines all Azure cloud resources (infra-as-code)',
     runsOn: 'Provisioning only',
     description:
@@ -368,10 +326,9 @@ const PACKAGES: Record<string, PkgData> = {
   },
 
   'learning-plan-api': {
-    name: 'learning-plan-api',
+    title: 'learning-plan-api',
     role: 'Generates and stores AI-powered personalised learning plans',
     runsOn: 'Azure Functions',
-
     description:
       'Azure Functions app that generates structured learning plans via the Claude API and stores them per user in Azure Table Storage. Google ID tokens are verified server-side for every request.',
     features: [
@@ -408,11 +365,11 @@ const PACKAGES: Record<string, PkgData> = {
       { label: 'POST /api/plans saves plan to Table Storage', color: 'green' },
     ],
   },
+
   'posts-api': {
-    name: 'posts-api',
+    title: 'posts-api',
     role: 'Manages content sections (writing, diary) stored on GitHub',
     runsOn: 'Azure Functions',
-
     description:
       'Azure Functions (Python) API that manages content sections, such as markdown blog posts and diary entries, stored as files in a GitHub repository. Authentication is handled via Google ID tokens; content ownership is enforced per-creator, with an allowlist controlling who can write.',
     features: [
@@ -442,172 +399,4 @@ const PACKAGES: Record<string, PkgData> = {
   },
 };
 
-// ── Component ─────────────────────────────────────────────────────────────────
-
-interface Props {
-  packageKey: string;
-  onBack: () => void;
-}
-
-const PackageDetail: React.FC<Props> = ({ packageKey, onBack }) => {
-  const staticPkg = PACKAGES[packageKey];
-
-  if (!staticPkg) {
-    return (
-      <div style={{ padding: '2rem', color: '#8b949e' }}>
-        <button className="arch-pkg-back" onClick={onBack}>← Back to Architecture</button>
-        <p style={{ marginTop: '1rem' }}>Package not found: {packageKey}</p>
-      </div>
-    );
-  }
-
-  // Merge LLM-generated content over the static defaults
-  const gen = generated[packageKey] ?? {};
-  const pkg = {
-    ...staticPkg,
-    description: gen.description ?? staticPkg.description,
-    features: gen.features ?? staticPkg.features,
-    architecture: {
-      ...staticPkg.architecture,
-      ...(gen.architecture ?? {}),
-    },
-    dataFlow: gen.dataFlow !== undefined ? (gen.dataFlow ?? staticPkg.dataFlow) : staticPkg.dataFlow,
-  };
-  const designDocs: { title: string; href: string; date: string; description: string }[] =
-    (gen as any).designDocs ?? [];
-
-  const pkgHistory = allHistory.filter(e => e.package === packageKey);
-  const repoUrl = repoUrlByPackage[packageKey];
-
-  return (
-    <div>
-      <button className="arch-pkg-back" onClick={onBack}>← Architecture</button>
-
-      {/* ── Header ── */}
-      <div className="arch-pkg-header">
-        <div className="arch-pkg-header-top">
-          <code className="arch-pkg-name">{pkg.name}</code>
-          <span className="arch-pkg-runs-on">{pkg.runsOn}</span>
-          {gen.updatedAt && (
-            <span className="arch-pkg-ai-badge" title={`Updated from commit ${gen.updatedBySha}`}>
-              ✦ docs updated {gen.updatedAt}
-            </span>
-          )}
-        </div>
-        <p className="arch-pkg-role">{pkg.role}</p>
-        <p className="arch-pkg-desc">{pkg.description}</p>
-        <div className="arch-tech-stack" style={{ marginTop: '1rem' }}>
-          {pkg.techStack.map(t => (
-            <span key={t} className="arch-tech-item">{t}</span>
-          ))}
-        </div>
-      </div>
-
-      <div className="arch-pkg-body">
-
-        {/* ── Features ── */}
-        <section className="arch-section">
-          <h2>Features</h2>
-          <ul className="arch-pkg-features">
-            {pkg.features.map((f, i) => <li key={i}>{f}</li>)}
-          </ul>
-        </section>
-
-        {/* ── Architecture ── */}
-        <section className="arch-section">
-          <h2>Architecture</h2>
-          <p>{pkg.architecture.overview}</p>
-          <h3>Key design points</h3>
-          <ul className="arch-pkg-keypoints">
-            {pkg.architecture.keyPoints.map((k, i) => <li key={i}>{k}</li>)}
-          </ul>
-        </section>
-
-        {/* ── Data Flow ── */}
-        {pkg.dataFlow && (
-          <section className="arch-section">
-            <h2>Data Flow</h2>
-            <div className="arch-flow">
-              {pkg.dataFlow.map((step, i) => (
-                <React.Fragment key={i}>
-                  <div className={`arch-flow-box${step.color ? ` ${step.color}` : ''}`}>
-                    {step.label}
-                    {step.sublines?.map((s, j) => <small key={j}>{s}</small>)}
-                  </div>
-                  {i < pkg.dataFlow!.length - 1 && <div className="arch-flow-down">↓</div>}
-                </React.Fragment>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* ── CI/CD ── */}
-        <section className="arch-section">
-          <h2>CI / CD</h2>
-          <div className="arch-pipeline">
-            {pkg.pipeline.map((step, i) => (
-              <React.Fragment key={i}>
-                <div className={`arch-pipeline-box${step.color ? ` ${step.color}` : ''}`}>
-                  {step.label}
-                </div>
-                {i < pkg.pipeline.length - 1 && (
-                  <span className="arch-pipeline-arrow">→</span>
-                )}
-              </React.Fragment>
-            ))}
-          </div>
-        </section>
-
-        {/* ── Design Docs ── */}
-        {designDocs.length > 0 && (
-          <section className="arch-section">
-            <h2>Design Docs</h2>
-            <ul className="arch-design-docs">
-              {designDocs.map((d, i) => (
-                <li key={i}>
-                  <a href={d.href} target="_blank" rel="noopener noreferrer">{d.title}</a>
-                  <span className="arch-design-doc-meta">{d.date} — {d.description}</span>
-                </li>
-              ))}
-            </ul>
-          </section>
-        )}
-
-        {/* ── Change History ── */}
-        {pkgHistory.length > 0 && (
-          <section className="arch-section">
-            <details className="arch-history">
-              <summary className="arch-history-summary">
-                Change history <span className="arch-history-count">({pkgHistory.length})</span>
-              </summary>
-              <ul className="arch-history-list">
-                {pkgHistory.map((e, i) => (
-                  <li key={i} className="arch-history-entry">
-                    <span className="arch-history-date">{e.capturedAt}</span>
-                    {repoUrl ? (
-                      <a
-                        className="arch-history-sha"
-                        href={`${repoUrl}/commit/${e.commitSha}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        <code>{e.commitSha}</code>
-                      </a>
-                    ) : (
-                      <code className="arch-history-sha">{e.commitSha}</code>
-                    )}
-                    <span className="arch-history-msg">{e.commitMessage.split('\n')[0]}</span>
-                  </li>
-                ))}
-              </ul>
-            </details>
-          </section>
-        )}
-
-      </div>
-    </div>
-  );
-};
-
-export { PACKAGES };
-export default PackageDetail;
+export type { PipelineStep, FlowStep };

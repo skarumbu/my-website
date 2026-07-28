@@ -1,24 +1,33 @@
 import React, { useState } from 'react';
 import NavBar from './components/nav-bar.tsx';
 import './styling/architecture.css';
-import archContent from './architecture-content.json';
+import archPages from './architecture-pages.json';
+import { PACKAGE_TEMPLATES } from './architecture/packageTemplates.ts';
 import ArchDiagram from './architecture/ArchDiagram.tsx';
-import PackageDetail from './architecture/PackageDetail.tsx';
+import PageDetail from './architecture/PageDetail.tsx';
 
-type GeneratedSummary = { summary?: string };
-const pkgSummary = archContent as Record<string, GeneratedSummary>;
+type GeneratedPageSummary = { title?: string; summary?: string };
+const pageSummaries = archPages as Record<string, GeneratedPageSummary>;
 
+// A page is "a package" precisely when it has a static template — see pageTypes.ts.
+const packageKeys = Object.keys(PACKAGE_TEMPLATES);
+const nonPackageKeys = Object.keys(pageSummaries).filter(k => !PACKAGE_TEMPLATES[k]);
 
 const Architecture: React.FC = () => {
   const today = new Date().toISOString().split('T')[0];
-  const [selectedPkg, setSelectedPkg] = useState<string | null>(null);
+  const [selection, setSelection] = useState<string | null>(null);
 
-  if (selectedPkg) {
+  if (selection) {
     return (
       <div className="arch-page">
         <NavBar />
         <div className="arch-content">
-          <PackageDetail packageKey={selectedPkg} onBack={() => setSelectedPkg(null)} />
+          <PageDetail
+            key={selection}
+            pageKey={selection}
+            onBack={() => setSelection(null)}
+            onSelectPage={setSelection}
+          />
         </div>
       </div>
     );
@@ -40,6 +49,7 @@ const Architecture: React.FC = () => {
             <li><a href="#overview">Overview</a></li>
             <li><a href="#diagram">System Diagram</a></li>
             <li><a href="#packages">Packages</a></li>
+            <li><a href="#topics">Topics</a></li>
             <li><a href="#data-flows">Data Flows</a></li>
             <li><a href="#cicd">CI/CD &amp; Deployment</a></li>
             <li><a href="#design-docs">Design Doc Generation</a></li>
@@ -60,26 +70,15 @@ const Architecture: React.FC = () => {
               <tr><th>Package</th><th>Role</th><th>Runs on</th></tr>
             </thead>
             <tbody>
-              {[
-                ['my-website',           'React SPA — the user-facing frontend',                          'Azure Static Web Apps'],
-                ['digits',               'Generates and serves Digits puzzles',                           'Azure Functions'],
-                ['momentum-finder',      'Identifies momentum shifts in live NBA games',                  'Azure Container Apps'],
-                ['trail-finder',         'Trail recommendations + conditions via Google Places & AI',     'Azure Container Apps'],
-                ['dashboard-api',        'Aggregates health, metrics, and cost across all services',      'Azure Functions'],
-                ['ideas-api',            'Stores/serves AI-generated feature ideas; triggers ideas-bot',  'Azure Functions'],
-                ['ideas-bot',            'Autonomous agent: implements features and opens draft PRs',      'Container App Job'],
-                ['azure-infrastructure', 'Defines all Azure cloud resources (infra-as-code)',             'Provisioning only'],
-                ['learning-plan-api',    'Generates and stores AI-powered personalised learning plans',   'Azure Functions'],
-                ['posts-api',            'Manages content sections (writing, diary) stored on GitHub',    'Azure Functions'],
-              ].map(([pkg, role, runs]) => (
-                <tr key={pkg as string} className="arch-table-row-clickable" onClick={() => setSelectedPkg(pkg as string)}>
+              {packageKeys.map(key => (
+                <tr key={key} className="arch-table-row-clickable" onClick={() => setSelection(key)}>
                   <td>
                     <button className="arch-pkg-link">
-                      <code className="arch-inline-code">{pkg}</code>
+                      <code className="arch-inline-code">{key}</code>
                     </button>
                   </td>
-                  <td>{role}</td>
-                  <td>{runs}</td>
+                  <td>{PACKAGE_TEMPLATES[key].role}</td>
+                  <td>{PACKAGE_TEMPLATES[key].runsOn}</td>
                 </tr>
               ))}
             </tbody>
@@ -96,32 +95,55 @@ const Architecture: React.FC = () => {
         <section className="arch-section" id="packages">
           <h2>3. Packages</h2>
 
-          {[
-            { key: 'my-website',           label: 'my-website — Frontend SPA',               tech: ['React 18', 'TypeScript', 'React Router v6', 'Create React App', 'Azure Static Web Apps', 'Google Maps JS SDK'] },
-            { key: 'digits',               label: 'digits — Puzzle API',                      tech: ['Azure Functions v2', 'Python 3.11', 'Azure Table Storage'] },
-            { key: 'momentum-finder',      label: 'momentum-finder — NBA Momentum API',        tech: ['FastAPI', 'Python 3.11', 'Azure Container Apps', 'Log Analytics'] },
-            { key: 'trail-finder',         label: 'trail-finder — Trail Recommendations API',  tech: ['FastAPI', 'Python 3.11', 'Azure Container Apps', 'Google Places API', 'Open-Meteo', 'Azure OpenAI', 'Log Analytics'] },
-            { key: 'dashboard-api',        label: 'dashboard-api — Ops Dashboard API',         tech: ['Azure Functions v2', 'Python 3.11', 'Managed Identity', 'azure-monitor-query', 'Azure Cost Management'] },
-            { key: 'ideas-api',            label: 'ideas-api — Ideas Board API',               tech: ['Azure Functions v2', 'Python 3.11', 'Azure Table Storage', 'EasyAuth', 'Managed Identity'] },
-            { key: 'ideas-bot',            label: 'ideas-bot — Autonomous Feature Agent',      tech: ['Python 3.11', 'Azure Container App Job', 'Azure OpenAI (GPT-4o)', 'GitHub API'] },
-            { key: 'azure-infrastructure', label: 'azure-infrastructure — Infrastructure as Code', tech: ['Azure Bicep', 'Azure RBAC', 'Managed Identity', 'Container Registry'] },
-            { key: 'learning-plan-api',    label: 'learning-plan-api — Learning Plan API',     tech: ['Azure Functions v2', 'Python 3.11', 'Azure Table Storage', 'Claude API', 'Google OAuth'] },
-            { key: 'posts-api',            label: 'posts-api — Content Sections API',          tech: ['Azure Functions v2', 'Python 3.11', 'GitHub (storage backend)', 'Google ID token auth', 'python-frontmatter'] },
-          ].map(({ key, label, tech }) => (
+          {packageKeys.map(key => (
             <React.Fragment key={key}>
               <h3>
-                <button className="arch-pkg-h3-link" onClick={() => setSelectedPkg(key)}>
-                  {label} ↗
+                <button className="arch-pkg-h3-link" onClick={() => setSelection(key)}>
+                  {key} ↗
                 </button>
               </h3>
               <p className="arch-pkg-overview-summary">
-                {pkgSummary[key]?.summary ?? ''}
+                {pageSummaries[key]?.summary ?? ''}
               </p>
               <div className="arch-tech-stack">
-                {tech.map(t => <span key={t} className="arch-tech-item">{t}</span>)}
+                {PACKAGE_TEMPLATES[key].techStack.map(t => <span key={t} className="arch-tech-item">{t}</span>)}
               </div>
             </React.Fragment>
           ))}
+        </section>
+
+        {/* ── Topics ── */}
+        <section className="arch-section" id="topics">
+          <h2>Topics</h2>
+          <p>
+            Cross-cutting concepts and patterns that span multiple packages — the general
+            philosophy behind a shared approach, not just what one package does.
+          </p>
+          {nonPackageKeys.length === 0 ? (
+            <p className="arch-pkg-overview-summary">No topics yet.</p>
+          ) : (
+            <table className="arch-table">
+              <thead>
+                <tr><th>Topic</th><th>Summary</th></tr>
+              </thead>
+              <tbody>
+                {nonPackageKeys.map(key => (
+                  <tr
+                    key={key}
+                    className="arch-table-row-clickable"
+                    onClick={() => setSelection(key)}
+                  >
+                    <td>
+                      <button className="arch-pkg-link">
+                        <code className="arch-inline-code">{pageSummaries[key]?.title ?? key}</code>
+                      </button>
+                    </td>
+                    <td>{pageSummaries[key]?.summary}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </section>
 
         {/* ── 4. Data Flows ── */}
