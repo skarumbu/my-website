@@ -65,12 +65,17 @@ export function useGoogleAuth() {
     setAuthState('unauthenticated');
   }, []);
 
-  // Persist token to sessionStorage when it changes
+  // Persist token to sessionStorage when it changes. Only writes on a
+  // truthy token — clearing storage is handled explicitly by the restore
+  // effect above (no valid token found) and by signOut() below. An
+  // unconditional removeItem() here raced with the restore effect's
+  // setGoogleToken() on mount: this effect would still see the
+  // pre-update `null` closure value and delete the token the restore
+  // effect had just found, before the state update had a chance to
+  // commit — most visible under StrictMode's double-invoked effects.
   useEffect(() => {
     if (googleToken) {
       sessionStorage.setItem(TOKEN_KEY, googleToken);
-    } else {
-      sessionStorage.removeItem(TOKEN_KEY);
     }
   }, [googleToken]);
 
