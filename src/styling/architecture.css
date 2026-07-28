@@ -639,8 +639,41 @@ details[open] .arch-history-summary::before { content: '▾ '; }
   font-size: 0.8rem;
 }
 .arch-history-date { color: #8b949e; white-space: nowrap; min-width: 6rem; }
-.arch-history-sha { font-size: 0.72rem; color: #8b949e; }
+.arch-history-sha { font-size: 0.72rem; color: #8b949e; text-decoration: none; }
+a.arch-history-sha:hover { text-decoration: underline; color: #58a6ff; }
 .arch-history-msg { color: #e6edf3; }
+
+.arch-history-entry-wrap { display: flex; flex-direction: column; }
+
+.arch-history-diff-toggle {
+  background: none;
+  border: 1px solid #30363d;
+  border-radius: 4px;
+  color: #8b949e;
+  font-size: 0.7rem;
+  padding: 1px 6px;
+  cursor: pointer;
+  margin-left: auto;
+  white-space: nowrap;
+}
+.arch-history-diff-toggle:hover { color: #e6edf3; border-color: #8b949e; }
+
+.arch-history-diff {
+  margin: 6px 0 4px;
+  padding: 8px 10px;
+  background: #0d1117;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-x: auto;
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+}
+.arch-diff-add { color: #3fb950; }
+.arch-diff-remove { color: #f85149; }
+.arch-diff-common { color: #8b949e; }
+.arch-history-diff-empty { color: #8b949e; font-size: 0.78rem; font-style: italic; margin: 6px 0 0; }
 
 @media (max-width: 640px) {
   .arch-panel {
