@@ -1,5 +1,25 @@
 [
   {
+    "key": "authentication",
+    "capturedAt": "2026-07-29",
+    "commitSha": "70acb64",
+    "commitMessage": "Pilot: switch to PR-time wiki-update-pr pipeline",
+    "triggeringPackage": "posts-api"
+  },
+  {
+    "key": "azure-infrastructure",
+    "capturedAt": "2026-07-29",
+    "commitSha": "70acb64",
+    "commitMessage": "Pilot: switch to PR-time wiki-update-pr pipeline",
+    "triggeringPackage": "posts-api"
+  },
+  {
+    "key": "posts-api",
+    "capturedAt": "2026-07-29",
+    "commitSha": "70acb64",
+    "commitMessage": "Pilot: switch to PR-time wiki-update-pr pipeline"
+  },
+  {
     "key": "posts-api",
     "capturedAt": "2026-07-27",
     "commitSha": "5c0187d",
@@ -69,7 +89,7 @@
     "key": "ideas-bot",
     "capturedAt": "2026-06-16",
     "commitSha": "b462924",
-    "commitMessage": "fix: raise agent round limit to 60, add wrap-up nudge at round 50\n\n- Bumped hard cap from 40 to 60 rounds\n- At round 50, injects a user message telling the agent to commit what\n  it has and stop — so partial work is preserved rather than lost\n- On hitting the hard cap, does a best-effort commit before raising\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>"
+    "commitMessage": "fix: raise agent round limit to 60, add wrap-up nudge at round 50\n\n- Bumped hard cap from 40 to 60 rounds\n- At round 50, injects a user message telling the agent to commit what\n  it has and stop \u2014 so partial work is preserved rather than lost\n- On hitting the hard cap, does a best-effort commit before raising\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>"
   },
   {
     "key": "ideas-bot",
@@ -105,13 +125,13 @@
     "key": "ideas-bot",
     "capturedAt": "2026-06-09",
     "commitSha": "25e78d6",
-    "commitMessage": "fix: cut token pressure to reduce 429s\n\n- bash output cap: 8000 → 2500 chars\n- read_file cap: 8000 → 4000 chars\n- max_tokens: 8096 → 4096 in agent + repair loops\n- context window: last 30 → last 14 messages\n- final retry wait: 180s → 300s\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>"
+    "commitMessage": "fix: cut token pressure to reduce 429s\n\n- bash output cap: 8000 \u2192 2500 chars\n- read_file cap: 8000 \u2192 4000 chars\n- max_tokens: 8096 \u2192 4096 in agent + repair loops\n- context window: last 30 \u2192 last 14 messages\n- final retry wait: 180s \u2192 300s\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>"
   },
   {
     "key": "ideas-bot",
     "capturedAt": "2026-06-09",
     "commitSha": "6d997fc",
-    "commitMessage": "feat: decompose complex ideas into sub-tasks to avoid 429 rate limits\n\nBefore the agent loop, check whether the idea is complex enough to split.\nIf so, create 2-4 focused child ideas (same project/repo), block the parent,\nand exit. Each child runs with a small focused context — far fewer rounds.\n\nWhen re-triggered after all children complete: if they were subtasks,\nmark parent completed without running an agent loop.\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>"
+    "commitMessage": "feat: decompose complex ideas into sub-tasks to avoid 429 rate limits\n\nBefore the agent loop, check whether the idea is complex enough to split.\nIf so, create 2-4 focused child ideas (same project/repo), block the parent,\nand exit. Each child runs with a small focused context \u2014 far fewer rounds.\n\nWhen re-triggered after all children complete: if they were subtasks,\nmark parent completed without running an agent loop.\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>"
   },
   {
     "key": "ideas-bot",
@@ -123,7 +143,7 @@
     "key": "ideas-bot",
     "capturedAt": "2026-06-09",
     "commitSha": "e9f8850",
-    "commitMessage": "feat: cross-repo dependency ideas — bot blocks until deps complete\n\nWhen the agent discovers work that belongs in a different repo, it can\ncall create_idea to file a dependency. The original idea becomes blocked\nand will not push until all dependencies reach completed status.\nRe-triggering checks dependency statuses and unblocks automatically.\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>"
+    "commitMessage": "feat: cross-repo dependency ideas \u2014 bot blocks until deps complete\n\nWhen the agent discovers work that belongs in a different repo, it can\ncall create_idea to file a dependency. The original idea becomes blocked\nand will not push until all dependencies reach completed status.\nRe-triggering checks dependency statuses and unblocks automatically.\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>"
   },
   {
     "key": "ideas-api",
@@ -201,7 +221,7 @@
     "key": "dashboard-api",
     "capturedAt": "2026-05-14",
     "commitSha": "907ccf1",
-    "commitMessage": "fix: skip empty github_actions results; increase run fetch to 10\n\nWhen GITHUB_TOKEN is unset or the API returns nothing, fetch_github_run\nreturns {}. Previously this was still added to the payload, causing the\nfrontend to render the GitHub section with all-undefined fields (showing\n— and \"just now\"). Now empty results are skipped so the section stays\nhidden until a token is configured.\n\nAlso bumps per_page from 5 to 10 for the runs query.\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>"
+    "commitMessage": "fix: skip empty github_actions results; increase run fetch to 10\n\nWhen GITHUB_TOKEN is unset or the API returns nothing, fetch_github_run\nreturns {}. Previously this was still added to the payload, causing the\nfrontend to render the GitHub section with all-undefined fields (showing\n\u2014 and \"just now\"). Now empty results are skipped so the section stays\nhidden until a token is configured.\n\nAlso bumps per_page from 5 to 10 for the runs query.\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>"
   },
   {
     "key": "dashboard-api",
