@@ -24,11 +24,12 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Get PR diff
+      - name: Get PR diff and head commit message
         run: |
           git fetch origin ${{ github.base_ref }}
           git diff origin/${{ github.base_ref }}...HEAD | head -c 81920 > /tmp/pr.diff
           echo "Diff size: $(wc -c < /tmp/pr.diff) bytes"
+          git log -1 HEAD --format=%B > /tmp/head-commit-message.txt
 
       - name: Fetch wiki update script
         run: |
@@ -51,6 +52,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           PR_DIFF_FILE: /tmp/pr.diff
           PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          HEAD_COMMIT_MESSAGE_FILE: /tmp/head-commit-message.txt
           PR_URL: ${{ github.event.pull_request.html_url }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}

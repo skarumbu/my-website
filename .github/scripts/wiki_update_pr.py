@@ -22,6 +22,12 @@ Required env vars:
   HEAD_SHA                  - Full SHA of the PR's current head commit
   REPO_NAME                 - Page key matching architecture-pages.json (e.g. "digits")
   REPO_FULL                 - Full repo slug of the calling repo (e.g. "skarumbu/digits")
+
+Optional env vars (used for extra prompt context and a more useful history
+commitMessage — degrades gracefully if either is empty/missing):
+  PR_BODY                   - The PR's own description, as written by the author
+  HEAD_COMMIT_MESSAGE_FILE  - Path to a file containing the full message (subject +
+                              body) of the PR's head commit
 """
 
 import json
@@ -60,9 +66,28 @@ head_sha = os.environ["HEAD_SHA"]
 repo_name = os.environ["REPO_NAME"]
 repo_full = os.environ["REPO_FULL"]
 wiki_gh_token = os.environ["WIKI_UPDATE_GH_TOKEN"]
+pr_body = os.environ.get("PR_BODY", "").strip()
+head_commit_message = ""
+head_commit_message_file = os.environ.get("HEAD_COMMIT_MESSAGE_FILE", "")
+if head_commit_message_file and os.path.exists(head_commit_message_file):
+    with open(head_commit_message_file, "r", encoding="utf-8", errors="replace") as f:
+        head_commit_message = f.read().strip()
 today = date.today().isoformat()
 short_sha = head_sha[:7]
 wiki_branch = f"wiki-update/{repo_name}-pr-{pr_number}"
+
+# The PR title alone is often too terse to judge intent from — fold in the PR's own
+# description and the head commit's full message (subject + body) when available, so
+# the "why", not just the "what", reaches the model. Also gives a much more useful
+# history commitMessage than the bare title (the frontend already only ever displays
+# its first line — see PageDetail.tsx — so a fuller message here is pure upside).
+context_parts = [f"PR title: {pr_title}"]
+if pr_body:
+    context_parts.append(f"PR description:\n{pr_body}")
+if head_commit_message and head_commit_message != pr_title:
+    context_parts.append(f"Latest commit message:\n{head_commit_message}")
+pr_context = "\n\n".join(context_parts)
+history_commit_message = head_commit_message or pr_title
 
 
 def strip_fences(text: str) -> str:
@@ -125,7 +150,8 @@ existing_pages_list = "\n".join(f"- {key}: {p.get('title', key)}" for key, p in 
 significance_prompt = f"""You are a technical architect reviewing a pull request for the '{repo_name}' service,
 before it merges, to decide whether the architecture wiki needs updating.
 
-PR title: {pr_title}
+{pr_context}
+
 PR diff (truncated to 80KB):
 {diff}
 
@@ -146,6 +172,11 @@ Do NOT update docs for:
 - Test-only changes
 - Lint, formatting, or comment changes
 - Minor copy or UI tweaks
+- CI/CD workflow or repo tooling changes (e.g. adding/editing a GitHub Actions
+  workflow) — these are about how the repo is maintained, not about what the
+  service itself does or how it's architected. Only flag a CI/CD change if it
+  changes something a caller of this service would notice (e.g. a new deployment
+  target that changes runtime behavior), not the automation itself.
 
 Additionally, identify any OTHER wiki pages this diff is relevant to — cross-cutting
 concepts or patterns that span multiple services (e.g. authentication, caching
@@ -155,6 +186,15 @@ already covered above by affected_sections; only list OTHER pages. Existing wiki
 pages (reuse one of these keys if the diff relates to it — do not create a
 near-duplicate under a new key):
 {existing_pages_list}
+
+Be conservative: most diffs relate to zero other pages. Only propose one if the
+diff represents a genuine instance of an established cross-cutting pattern (e.g.
+this service adopting the same auth approach documented on the "authentication"
+page) — never because the diff merely *mentions* a word like "auth" or "token" in
+passing (e.g. a CI token used to call an API is not an authentication-pattern
+change). Never describe a change as having happened to any OTHER page's own
+service/repo — you only have this diff, which is entirely about '{repo_name}';
+you have no evidence anything changed anywhere else.
 
 For each relevant page (existing or new — at most {MAX_RELATED_PAGES}), add an entry
 to "related_page_updates":
@@ -219,9 +259,11 @@ sections_desc = ", ".join(affected) if affected else "features, architecture"
 update_prompt = f"""You are updating the architecture wiki page for the '{repo_name}' package.
 
 Current content for this page:
-{json.dumps(current_page, indent=2)}
+{json.dumps(current_page, indent=2, ensure_ascii=False)}
 
-Pull request: {pr_title} ({repo_name}#{pr_number})
+Pull request: {repo_name}#{pr_number}
+{pr_context}
+
 PR diff:
 {diff}
 
@@ -284,9 +326,11 @@ describing a CROSS-CUTTING CONCEPT/PATTERN used across multiple services, not on
 specific package.
 
 {"This page does not exist yet — create it from scratch." if is_new else
- f"Current content for this page:{chr(10)}{json.dumps(current_related, indent=2)}"}
+ f"Current content for this page:{chr(10)}{json.dumps(current_related, indent=2, ensure_ascii=False)}"}
 
-The '{repo_name}' package just made this change, in pull request {pr_title} ({repo_name}#{pr_number}):
+The '{repo_name}' package just made this change, in pull request {repo_name}#{pr_number}:
+{pr_context}
+
 PR diff (truncated):
 {diff}
 
@@ -302,6 +346,15 @@ Generate a JSON object for this page with these fields:
 - "relatedPages": array of page keys this page applies to (always include
   "{repo_name}"; add others only if you have specific evidence they use the same
   pattern — do not guess)
+
+This diff is entirely about '{repo_name}'. You have no evidence about what changed
+in any OTHER service's own code or resources, so never write a sentence implying
+one did (e.g. do not say another package's infrastructure or config was "updated"
+or "integrated" because of this diff). This page describes the general pattern —
+only add content that's actually true of the pattern itself, and if you're not
+confident the diff adds anything genuinely new to say about the pattern, return
+the existing content unchanged rather than padding it with a vague or speculative
+sentence.
 
 Content in "description" or any section's "content" may reference another wiki page
 inline via [[key|display text]] — only using an existing key from the list below,
@@ -359,7 +412,7 @@ history_index.insert(0, {
     "key": repo_name,
     "capturedAt": today,
     "commitSha": short_sha,
-    "commitMessage": pr_title,
+    "commitMessage": history_commit_message,
 })
 
 # Merge the package's own patch
@@ -388,16 +441,16 @@ for key, content in generated_related_pages.items():
         "key": key,
         "capturedAt": today,
         "commitSha": short_sha,
-        "commitMessage": pr_title,
+        "commitMessage": history_commit_message,
         "triggeringPackage": repo_name,
     })
 
 with open(pages_path, "w", encoding="utf-8") as f:
-    json.dump(full_pages, f, indent=2)
+    json.dump(full_pages, f, indent=2, ensure_ascii=False)
     f.write("\n")
 
 with open(history_index_path, "w", encoding="utf-8") as f:
-    json.dump(history_index, f, indent=2)
+    json.dump(history_index, f, indent=2, ensure_ascii=False)
     f.write("\n")
 
 run(["git", "add", PAGES_FILE, HISTORY_INDEX_FILE], cwd=cwd)
@@ -419,7 +472,7 @@ existing_pr = run([
 if existing_pr:
     print(f"Wiki-update PR already open: {MY_WEBSITE_REPO}#{existing_pr} — updated in place.")
 else:
-    pr_body = (
+    wiki_pr_body = (
         f"Proposed architecture wiki update for {repo_full}#{pr_number}.\n\n"
         f"**Source PR:** {pr_url}\n"
         f"**Reason:** {decision['reason']}\n\n"
@@ -431,7 +484,7 @@ else:
     run([
         "gh", "pr", "create",
         "--title", f"chore: {repo_name} wiki update ({repo_name}#{pr_number})",
-        "--body", pr_body,
+        "--body", wiki_pr_body,
         "--base", "main",
         "--head", wiki_branch,
         "--repo", MY_WEBSITE_REPO,
