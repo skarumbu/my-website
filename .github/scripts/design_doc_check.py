@@ -46,6 +46,16 @@ repo_name = os.environ["REPO_NAME"]
 repo_full = os.environ["REPO_FULL"]
 branch_name = os.environ["BRANCH_NAME"]
 
+
+def run(cmd, **kw):
+    result = subprocess.run(cmd, check=True, capture_output=True, text=True, **kw)
+    return result.stdout.strip()
+
+
+# Repos in this org don't all share the same default branch (e.g. dashboard_api
+# uses "master"), so ask GitHub instead of assuming "main".
+default_branch = run(["gh", "api", f"repos/{repo_full}", "--jq", ".default_branch"])
+
 # ── Phase 1: significance check ──────────────────────────────────────────────
 
 significance_prompt = f"""You are a technical architect reviewing a pull request for the '{repo_name}' service.
@@ -140,7 +150,7 @@ Write a concise ADR in this exact Markdown format (no extra sections):
 
 ## Relevant Code
 <bullet list of the most important changed files with GitHub permalink links using the format:
-`[path/to/file](https://github.com/{repo_full}/blob/main/path/to/file)`>
+`[path/to/file](https://github.com/{repo_full}/blob/{default_branch}/path/to/file)`>
 """
 
 resp2 = client.chat.completions.create(
@@ -164,20 +174,12 @@ print(f"Wrote {filepath}")
 
 # ── Phase 3: commit, push, open PR ───────────────────────────────────────────
 
-def run(cmd, **kw):
-    result = subprocess.run(cmd, check=True, capture_output=True, text=True, **kw)
-    return result.stdout.strip()
-
 run(["git", "config", "user.email", "github-actions[bot]@users.noreply.github.com"])
 run(["git", "config", "user.name", "github-actions[bot]"])
 run(["git", "checkout", "-b", branch_name])
 run(["git", "add", filepath])
 run(["git", "commit", "-m", f"docs: add ADR for {feature_name} ({repo_name}#{pr_number})"])
 run(["git", "push", "origin", branch_name])
-
-# Repos in this org don't all share the same default branch (e.g. dashboard_api
-# uses "master"), so ask GitHub instead of assuming "main".
-default_branch = run(["gh", "api", f"repos/{repo_full}", "--jq", ".default_branch"])
 
 pr_body = f"""Automatically generated Architecture Decision Record for {repo_name}#{pr_number}.
 
