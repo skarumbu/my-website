@@ -181,21 +181,23 @@
       "Digits metrics from Table Storage (request volume, error rate)",
       "Azure Cost Management MTD spend breakdown — cached 1h due to API rate limits",
       "GitHub Actions API integration for latest workflow run status and failed jobs (optional per app); prefers push/dispatch/release events over scheduled runs; skips empty results when GITHUB_TOKEN is unset or API returns nothing",
+      "GitHub Pulls API integration for open pull request metadata (optional per app); includes PR number, title, author, creation date, draft status, and link; skips empty results when GITHUB_TOKEN is unset or API returns nothing",
       "CORS OPTIONS handler added for preflight requests (Access-Control-Allow-Origin: *, Allow-Headers: Authorization Content-Type)",
       "ErrorRow objects now include error_type and status fields for enhanced debugging and analytics",
       "All data returned in a single response — frontend polls every 60 seconds"
     ],
     "architecture": {
-      "overview": "Single HTTP-triggered function that executes all sub-queries in parallel via asyncio.gather. Uses a system-assigned Managed Identity — no credentials stored in app settings. RBAC roles are assigned by the azure-infrastructure package.",
+      "overview": "Single HTTP-triggered function that executes all sub-queries in parallel via asyncio.gather. Uses a system-assigned Managed Identity — no credentials stored in app settings. RBAC roles are assigned by the [[azure-infrastructure]] package. Includes optional GitHub API integrations for workflow run status and open pull request metadata.",
       "keyPoints": [
         "Managed Identity holds Log Analytics Reader (scoped to the shared workspace) and Cost Management Reader (scoped to subscription)",
         "No API keys in environment variables — all Azure SDK auth flows through Managed Identity",
         "Cost Management responses cached for 1h in memory; all other queries are live",
         "GitHub Actions API requires GITHUB_TOKEN env var; gracefully degrades if unset; skips empty results when no token or runs are available; prefers push/dispatch/release events over scheduled runs",
+        "GitHub Pulls API requires GITHUB_TOKEN env var; gracefully degrades if unset; skips empty results when no token or open PRs are available; fetches up to 20 open PRs per repository",
         "Frontend dashboard polls /api/dashboard every 60 seconds",
         "Parallel fan-out keeps response time under 3s even with 5+ downstream calls",
         "CORS OPTIONS handler added to support browser preflight requests (Access-Control-Allow-Origin: *, Allow-Headers: Authorization Content-Type)",
-        "ErrorRow objects now include error_type and status fields, ensuring richer error context across health checks, metrics queries, and GitHub Actions logs"
+        "ErrorRow objects now include error_type and status fields, ensuring richer error context across health checks, metrics queries, and GitHub API integrations"
       ]
     },
     "dataFlow": [
@@ -211,7 +213,8 @@
           "Log Analytics KQL: request counts, latency, errors (24h)",
           "Table Storage: digits metrics rows (24h)",
           "Cost Management: MTD spend by service (1h cache)",
-          "GitHub Actions: latest workflow run status (optional per app)"
+          "GitHub Actions: latest workflow run status (optional per app)",
+          "GitHub Pulls: open pull request metadata (optional per app)"
         ]
       },
       {
@@ -219,7 +222,7 @@
         "color": "green"
       },
       {
-        "label": "Dashboard renders health pills, metrics tables, cost breakdown, GitHub Actions status",
+        "label": "Dashboard renders health pills, metrics tables, cost breakdown, GitHub Actions status, open pull requests",
         "color": "blue"
       }
     ],
@@ -231,8 +234,8 @@
         "description": "Adds GitHub Actions last-run status to each service card, replaces the flat metrics table with inline accordion expansion."
       }
     ],
-    "updatedAt": "2026-05-26",
-    "updatedBySha": "b7176d7"
+    "updatedAt": "2026-07-30",
+    "updatedBySha": "522df21"
   },
   "ideas-api": {
     "summary": "Stores and serves AI-generated feature ideas in Azure Table Storage. Accepts browser JWT tokens via EasyAuth for read access and an X-Ideas-Key machine write-key for automated writes. Exposes endpoints to list and create ideas, manage projects, and trigger the ideas-bot Container App Job. Projects now support a single repository string instead of a list.",
@@ -433,8 +436,8 @@
   },
   "authentication": {
     "title": "Authentication",
-    "summary": "How user identity is verified across the system: mostly server-side Google ID token validation, with one Azure EasyAuth exception.",
-    "description": "Most backend services validate a Google ID token themselves, server-side, on every request — no session state, no cookies, just a Bearer token checked against Google's public keys. ideas-api is the one exception: it delegates token validation to Azure's EasyAuth layer instead of doing it in application code.",
+    "summary": "How user identity is verified across the system: mostly server-side Google ID token validation, with one Azure EasyAuth exception and GitHub token usage in dashboard-api.",
+    "description": "Most backend services validate a Google ID token themselves, server-side, on every request — no session state, no cookies, just a Bearer token checked against Google's public keys. ideas-api is the one exception: it delegates token validation to Azure's EasyAuth layer instead of doing it in application code. Additionally, dashboard-api uses a GitHub token for authentication when interacting with the GitHub Pulls API, aligning with the pattern of token-based authentication for external integrations.",
     "sections": [
       {
         "heading": "Google ID token (application-level)",
@@ -445,17 +448,22 @@
         "content": "ideas-api instead relies on Azure Functions' built-in EasyAuth: Azure validates the Google ID token at the platform layer before the request ever reaches application code, then injects the validated identity as a request header. This means less code in ideas-api itself, but the auth behavior lives in Azure Function App configuration rather than in the repo — a real tradeoff worth knowing before assuming \"how auth works\" from reading the code alone."
       },
       {
+        "heading": "GitHub token (external integration)",
+        "content": "dashboard-api uses a GitHub token to authenticate requests to the GitHub Pulls API, enabling the service to fetch metadata about open pull requests from repositories. This token-based authentication approach ensures secure access to GitHub resources and aligns with the general philosophy of using Bearer tokens for external integrations. The implementation gracefully handles missing tokens or API errors, ensuring reliability without compromising user experience."
+      },
+      {
         "heading": "General philosophy",
-        "content": "Prefer application-level Google ID token validation for new services — it's portable, testable, and doesn't depend on Azure-specific platform configuration a future migration would need to reproduce. EasyAuth is not being actively adopted further; it's a historical choice on ideas-api, not the recommended pattern going forward."
+        "content": "Prefer application-level Google ID token validation for new services — it's portable, testable, and doesn't depend on Azure-specific platform configuration a future migration would need to reproduce. EasyAuth is not being actively adopted further; it's a historical choice on ideas-api, not the recommended pattern going forward. For external integrations, token-based authentication (e.g., GitHub token) is consistent with this philosophy, providing secure and direct access to third-party APIs without relying on platform-specific mechanisms."
       }
     ],
     "relatedPages": [
       "posts-api",
       "learning-plan-api",
-      "ideas-api"
+      "ideas-api",
+      "dashboard-api"
     ],
-    "updatedAt": "2026-07-28",
-    "updatedBySha": "seed",
-    "updatedByPackage": "my-website"
+    "updatedAt": "2026-07-30",
+    "updatedBySha": "522df21",
+    "updatedByPackage": "dashboard-api"
   }
 }
