@@ -173,7 +173,7 @@
     ]
   },
   "dashboard-api": {
-    "summary": "Single aggregator endpoint that fans out in parallel to health-check momentum-finder and trail-finder, query Log Analytics (KQL) for request counts, latency, and recent errors, query the Digits metrics Table Storage table, and fetch Azure Cost Management MTD spend. Uses a system-assigned managed identity — no stored credentials.",
+    "summary": "Single aggregator endpoint that fans out in parallel to health-check momentum-finder and trail-finder, query Log Analytics (KQL) for request counts, latency, and recent errors, query the Digits metrics Table Storage table, fetch Azure Cost Management MTD spend, and retrieve metadata about open pull requests from GitHub repositories. Uses a system-assigned managed identity — no stored credentials.",
     "description": "Azure Functions app that fans out in parallel to health-check all services, query Log Analytics for request metrics, pull Digits Table Storage metrics, and fetch Azure Cost Management spend — returning everything in a single aggregated response.",
     "features": [
       "Health checks for momentum-finder and trail-finder (HTTP /health)",
@@ -181,17 +181,19 @@
       "Digits metrics from Table Storage (request volume, error rate)",
       "Azure Cost Management MTD spend breakdown — cached 1h due to API rate limits",
       "GitHub Actions API integration for latest workflow run status and failed jobs (optional per app); prefers push/dispatch/release events over scheduled runs; skips empty results when GITHUB_TOKEN is unset or API returns nothing",
+      "GitHub Pulls API integration to fetch metadata about open pull requests (optional per app); includes PR number, title, author, draft status, creation date, and URL; skips empty results when GITHUB_TOKEN is unset or API returns nothing",
       "CORS OPTIONS handler added for preflight requests (Access-Control-Allow-Origin: *, Allow-Headers: Authorization Content-Type)",
       "ErrorRow objects now include error_type and status fields for enhanced debugging and analytics",
       "All data returned in a single response — frontend polls every 60 seconds"
     ],
     "architecture": {
-      "overview": "Single HTTP-triggered function that executes all sub-queries in parallel via asyncio.gather. Uses a system-assigned Managed Identity — no credentials stored in app settings. RBAC roles are assigned by the azure-infrastructure package.",
+      "overview": "Single HTTP-triggered function that executes all sub-queries in parallel via asyncio.gather. Uses a system-assigned Managed Identity — no credentials stored in app settings. RBAC roles are assigned by the azure-infrastructure package. The API also integrates with the GitHub Pulls API to fetch metadata about open pull requests, enhancing repository activity visibility.",
       "keyPoints": [
         "Managed Identity holds Log Analytics Reader (scoped to the shared workspace) and Cost Management Reader (scoped to subscription)",
         "No API keys in environment variables — all Azure SDK auth flows through Managed Identity",
         "Cost Management responses cached for 1h in memory; all other queries are live",
         "GitHub Actions API requires GITHUB_TOKEN env var; gracefully degrades if unset; skips empty results when no token or runs are available; prefers push/dispatch/release events over scheduled runs",
+        "GitHub Pulls API requires GITHUB_TOKEN env var; gracefully degrades if unset; skips empty results when no token or open PRs are available; fetches PR metadata including number, title, author, draft status, creation date, and URL",
         "Frontend dashboard polls /api/dashboard every 60 seconds",
         "Parallel fan-out keeps response time under 3s even with 5+ downstream calls",
         "CORS OPTIONS handler added to support browser preflight requests (Access-Control-Allow-Origin: *, Allow-Headers: Authorization Content-Type)",
@@ -211,7 +213,8 @@
           "Log Analytics KQL: request counts, latency, errors (24h)",
           "Table Storage: digits metrics rows (24h)",
           "Cost Management: MTD spend by service (1h cache)",
-          "GitHub Actions: latest workflow run status (optional per app)"
+          "GitHub Actions: latest workflow run status (optional per app)",
+          "GitHub Pulls: open pull requests metadata (optional per app)"
         ]
       },
       {
@@ -219,7 +222,7 @@
         "color": "green"
       },
       {
-        "label": "Dashboard renders health pills, metrics tables, cost breakdown, GitHub Actions status",
+        "label": "Dashboard renders health pills, metrics tables, cost breakdown, GitHub Actions status, open pull requests",
         "color": "blue"
       }
     ],
@@ -231,8 +234,8 @@
         "description": "Adds GitHub Actions last-run status to each service card, replaces the flat metrics table with inline accordion expansion."
       }
     ],
-    "updatedAt": "2026-05-26",
-    "updatedBySha": "b7176d7"
+    "updatedAt": "2026-07-30",
+    "updatedBySha": "fd2b1ca"
   },
   "ideas-api": {
     "summary": "Stores and serves AI-generated feature ideas in Azure Table Storage. Accepts browser JWT tokens via EasyAuth for read access and an X-Ideas-Key machine write-key for automated writes. Exposes endpoints to list and create ideas, manage projects, and trigger the ideas-bot Container App Job. Projects now support a single repository string instead of a list.",
@@ -433,8 +436,8 @@
   },
   "authentication": {
     "title": "Authentication",
-    "summary": "How user identity is verified across the system: mostly server-side Google ID token validation, with one Azure EasyAuth exception.",
-    "description": "Most backend services validate a Google ID token themselves, server-side, on every request — no session state, no cookies, just a Bearer token checked against Google's public keys. ideas-api is the one exception: it delegates token validation to Azure's EasyAuth layer instead of doing it in application code.",
+    "summary": "How user identity is verified across the system: mostly server-side Google ID token validation, with one Azure EasyAuth exception and GitHub token use for external API integrations.",
+    "description": "Most backend services validate a Google ID token themselves, server-side, on every request — no session state, no cookies, just a Bearer token checked against Google's public keys. ideas-api is the one exception: it delegates token validation to Azure's EasyAuth layer instead of doing it in application code. Additionally, some services use other tokens, such as GITHUB_TOKEN, for authenticating external API calls, which are managed separately from user identity validation.",
     "sections": [
       {
         "heading": "Google ID token (application-level)",
@@ -445,17 +448,22 @@
         "content": "ideas-api instead relies on Azure Functions' built-in EasyAuth: Azure validates the Google ID token at the platform layer before the request ever reaches application code, then injects the validated identity as a request header. This means less code in ideas-api itself, but the auth behavior lives in Azure Function App configuration rather than in the repo — a real tradeoff worth knowing before assuming \"how auth works\" from reading the code alone."
       },
       {
+        "heading": "External API tokens",
+        "content": "Some services, such as [[dashboard-api|dashboard-api]], use tokens like GITHUB_TOKEN to authenticate calls to external APIs. These tokens are managed separately from user identity validation and are typically injected into the service's runtime environment as configuration secrets. For example, dashboard-api uses GITHUB_TOKEN to fetch metadata from the GitHub Pulls API, ensuring secure and reliable integration with external systems."
+      },
+      {
         "heading": "General philosophy",
-        "content": "Prefer application-level Google ID token validation for new services — it's portable, testable, and doesn't depend on Azure-specific platform configuration a future migration would need to reproduce. EasyAuth is not being actively adopted further; it's a historical choice on ideas-api, not the recommended pattern going forward."
+        "content": "Prefer application-level Google ID token validation for new services — it's portable, testable, and doesn't depend on Azure-specific platform configuration a future migration would need to reproduce. EasyAuth is not being actively adopted further; it's a historical choice on ideas-api, not the recommended pattern going forward. For external API integrations, use dedicated tokens like GITHUB_TOKEN, keeping them isolated from user authentication logic to maintain clarity and security."
       }
     ],
     "relatedPages": [
       "posts-api",
       "learning-plan-api",
-      "ideas-api"
+      "ideas-api",
+      "dashboard-api"
     ],
-    "updatedAt": "2026-07-28",
-    "updatedBySha": "seed",
-    "updatedByPackage": "my-website"
+    "updatedAt": "2026-07-30",
+    "updatedBySha": "fd2b1ca",
+    "updatedByPackage": "dashboard-api"
   }
 }
