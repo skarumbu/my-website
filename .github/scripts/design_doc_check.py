@@ -175,6 +175,10 @@ run(["git", "add", filepath])
 run(["git", "commit", "-m", f"docs: add ADR for {feature_name} ({repo_name}#{pr_number})"])
 run(["git", "push", "origin", branch_name])
 
+# Repos in this org don't all share the same default branch (e.g. dashboard_api
+# uses "master"), so ask GitHub instead of assuming "main".
+default_branch = run(["gh", "api", f"repos/{repo_full}", "--jq", ".default_branch"])
+
 pr_body = f"""Automatically generated Architecture Decision Record for {repo_name}#{pr_number}.
 
 **Source PR:** {pr_url}
@@ -187,7 +191,7 @@ run([
     "gh", "pr", "create",
     "--title", f"docs: ADR for {feature_name}",
     "--body", pr_body,
-    "--base", "main",
+    "--base", default_branch,
     "--head", branch_name,
     "--repo", repo_full,
 ], env={**os.environ, "GH_TOKEN": os.environ["GH_TOKEN"]})
