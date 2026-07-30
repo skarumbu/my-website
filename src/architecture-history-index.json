@@ -1,5 +1,18 @@
 [
   {
+    "key": "authentication",
+    "capturedAt": "2026-07-30",
+    "commitSha": "89e393a",
+    "commitMessage": "Merge 89e393a13d4a946211a0f273db0bb8bda870099b into a4057680b8a2d56cb6ab4b99cd42c6e33284ab6a",
+    "triggeringPackage": "dashboard-api"
+  },
+  {
+    "key": "dashboard-api",
+    "capturedAt": "2026-07-30",
+    "commitSha": "89e393a",
+    "commitMessage": "Merge 89e393a13d4a946211a0f273db0bb8bda870099b into a4057680b8a2d56cb6ab4b99cd42c6e33284ab6a"
+  },
+  {
     "key": "posts-api",
     "capturedAt": "2026-07-27",
     "commitSha": "5c0187d",
