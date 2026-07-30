@@ -51,12 +51,22 @@ interface GitHubRun {
   failed_jobs?: string[];
 }
 
+interface PullRequestSummary {
+  number: number;
+  title: string;
+  author: string;
+  draft: boolean;
+  created_at: string;
+  html_url: string;
+}
+
 interface DashboardData {
   health: Record<string, HealthStatus>;
   metrics: Record<string, MetricRow[]>;
   errors: ErrorRow[];
   cost: { currency: string; month_to_date: number; by_service: CostRow[]; error?: string };
   github_actions?: Record<string, GitHubRun>;
+  open_prs?: Record<string, PullRequestSummary[]>;
   generated_at: string;
   note?: string;
 }
@@ -351,6 +361,7 @@ function Dashboard() {
                 const isJob = h.last_run !== undefined;
                 const isExpanded = expandedCard === svc;
                 const gh = data.github_actions?.[svc];
+                const prs = data.open_prs?.[svc] ?? [];
                 const svcMetrics = data.metrics[svc] ?? [];
                 const svcErrors = data.errors.filter(e => e.service === svc);
 
@@ -390,6 +401,9 @@ function Dashboard() {
                       {isJob && h.last_run && (
                         <span className="dash-hcard-meta-text">{h.last_run_status ?? 'Unknown'} · {relTime(h.last_run)}</span>
                       )}
+                      {prs.length > 0 && (
+                        <span className="dash-pr-badge">{prs.length} open PR{prs.length !== 1 ? 's' : ''}</span>
+                      )}
                     </div>
 
                     {isExpanded && (
@@ -411,6 +425,23 @@ function Dashboard() {
                             {gh.failed_jobs && gh.failed_jobs.length > 0 && (
                               <div className="dash-gh-failed-jobs">Failed: {gh.failed_jobs.join(', ')}</div>
                             )}
+                          </div>
+                        )}
+
+                        {prs.length > 0 && (
+                          <div className="dash-hcard-detail-section">
+                            <h4>Open Pull Requests</h4>
+                            <div className="dash-pr-list">
+                              {prs.map(pr => (
+                                <div key={pr.number} className="dash-pr-row">
+                                  <span className="dash-mono dash-pr-num">#{pr.number}</span>
+                                  <span className="dash-pr-title">{pr.title}</span>
+                                  {pr.draft && <span className="dash-pr-draft-tag">Draft</span>}
+                                  <span className="dash-pr-meta">{pr.author} · {relTime(pr.created_at)}</span>
+                                  <a href={pr.html_url} target="_blank" rel="noopener noreferrer" className="dash-gh-link">View PR →</a>
+                                </div>
+                              ))}
+                            </div>
                           </div>
                         )}
 
@@ -446,7 +477,7 @@ function Dashboard() {
                           </div>
                         )}
 
-                        {!gh && svcMetrics.length === 0 && svcErrors.length === 0 && (
+                        {!gh && prs.length === 0 && svcMetrics.length === 0 && svcErrors.length === 0 && (
                           <p className="dash-muted" style={{ fontSize: '0.8rem', margin: 0 }}>No additional data available.</p>
                         )}
                       </div>
