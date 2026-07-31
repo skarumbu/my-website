@@ -273,10 +273,11 @@ export default function ProjectPage() {
 
   const openDetail = (idea: Idea) => { setDetailIdea(idea); setDetailOpen(true); };
 
-  // architecture-pages.json keys match repo short names (e.g. "skarumbu/ideas-api" → "ideas-api").
+  // architecture-pages.json keys match repo short names, but use hyphens where some
+  // actual repo slugs use underscores (e.g. "skarumbu/dashboard_api" → "dashboard-api").
   const archPageKey = (() => {
     if (!project?.repo) return null;
-    const shortName = project.repo.split('/').pop() || '';
+    const shortName = (project.repo.split('/').pop() || '').replace(/_/g, '-');
     return (archPages as Record<string, unknown>)[shortName] ? shortName : null;
   })();
 
