@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import NavBar from './components/nav-bar.tsx';
 import './styling/architecture.css';
 import archPages from './architecture-pages.json';
@@ -15,7 +16,16 @@ const nonPackageKeys = Object.keys(pageSummaries).filter(k => !PACKAGE_TEMPLATES
 
 const Architecture: React.FC = () => {
   const today = new Date().toISOString().split('T')[0];
-  const [selection, setSelection] = useState<string | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialPage = searchParams.get('page');
+  const [selection, setSelection] = useState<string | null>(
+    initialPage && pageSummaries[initialPage] ? initialPage : null
+  );
+
+  const selectPage = (key: string | null) => {
+    setSelection(key);
+    setSearchParams(key ? { page: key } : {});
+  };
 
   if (selection) {
     return (
@@ -25,8 +35,8 @@ const Architecture: React.FC = () => {
           <PageDetail
             key={selection}
             pageKey={selection}
-            onBack={() => setSelection(null)}
-            onSelectPage={setSelection}
+            onBack={() => selectPage(null)}
+            onSelectPage={selectPage}
           />
         </div>
       </div>
@@ -71,7 +81,7 @@ const Architecture: React.FC = () => {
             </thead>
             <tbody>
               {packageKeys.map(key => (
-                <tr key={key} className="arch-table-row-clickable" onClick={() => setSelection(key)}>
+                <tr key={key} className="arch-table-row-clickable" onClick={() => selectPage(key)}>
                   <td>
                     <button className="arch-pkg-link">
                       <code className="arch-inline-code">{key}</code>
@@ -98,7 +108,7 @@ const Architecture: React.FC = () => {
           {packageKeys.map(key => (
             <React.Fragment key={key}>
               <h3>
-                <button className="arch-pkg-h3-link" onClick={() => setSelection(key)}>
+                <button className="arch-pkg-h3-link" onClick={() => selectPage(key)}>
                   {key} ↗
                 </button>
               </h3>
@@ -131,7 +141,7 @@ const Architecture: React.FC = () => {
                   <tr
                     key={key}
                     className="arch-table-row-clickable"
-                    onClick={() => setSelection(key)}
+                    onClick={() => selectPage(key)}
                   >
                     <td>
                       <button className="arch-pkg-link">
