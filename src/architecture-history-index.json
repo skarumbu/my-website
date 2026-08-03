@@ -1,5 +1,18 @@
 [
   {
+    "key": "ideas-bot",
+    "capturedAt": "2026-08-03",
+    "commitSha": "018e24e",
+    "commitMessage": "Merge 018e24ed2689fd19c5a6d96f4d04582d9f338468 into 08b9211e6358bd6caa26647b87ef41f7ab7976a6",
+    "triggeringPackage": "ideas-api"
+  },
+  {
+    "key": "ideas-api",
+    "capturedAt": "2026-08-03",
+    "commitSha": "018e24e",
+    "commitMessage": "Merge 018e24ed2689fd19c5a6d96f4d04582d9f338468 into 08b9211e6358bd6caa26647b87ef41f7ab7976a6"
+  },
+  {
     "key": "authentication",
     "capturedAt": "2026-07-30",
     "commitSha": "89e393a",
