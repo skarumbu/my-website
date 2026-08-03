@@ -4,6 +4,10 @@ Analyses a pull request's full diff and, when the changes are significant,
 proposes an architecture wiki update as a PR against my-website — rather than
 committing directly, so the proposed content gets real review before it lands.
 
+Skips immediately (no model call) if every changed file is already under
+docs/ — a docs-only PR (e.g. a design doc / ADR proposal) hasn't shipped any
+behavior yet, so there's nothing real to document.
+
 Re-run on every push to the PR (opened/synchronize/reopened): regenerates from
 the current PR diff and force-pushes the same branch, so there's only ever one
 wiki-update PR per code PR, always reflecting its latest state. Nothing here
@@ -32,6 +36,7 @@ commitMessage — degrades gracefully if either is empty/missing):
 
 import json
 import os
+import re
 import subprocess
 import sys
 import urllib.error
@@ -75,6 +80,18 @@ if head_commit_message_file and os.path.exists(head_commit_message_file):
 today = date.today().isoformat()
 short_sha = head_sha[:7]
 wiki_branch = f"wiki-update/{repo_name}-pr-{pr_number}"
+
+# A PR whose diff only touches docs/ (e.g. a design doc / ADR proposal) hasn't
+# changed any actual behavior yet — it's a proposal, not shipped architecture.
+# Generating a wiki update from its prose documents unimplemented behavior as
+# if it were live. Skip before the model ever sees the diff.
+changed_paths = re.findall(r"^diff --git a/\S+ b/(\S+)$", diff, re.MULTILINE)
+if changed_paths and all(p.startswith("docs/") for p in changed_paths):
+    print(
+        f"All {len(changed_paths)} changed file(s) are under docs/ — "
+        "no shipped behavior to document yet. Skipping wiki update."
+    )
+    sys.exit(0)
 
 # The PR title alone is often too terse to judge intent from — fold in the PR's own
 # description and the head commit's full message (subject + body) when available, so
