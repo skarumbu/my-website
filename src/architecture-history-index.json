@@ -1,5 +1,25 @@
 [
   {
+    "key": "ideas-bot",
+    "capturedAt": "2026-07-30",
+    "commitSha": "c8353f1",
+    "commitMessage": "Merge c8353f13c4e21ec2fe13442b0497337c56fe6a6b into f3103c9d7a059256208bfd32937423dbecf44f60",
+    "triggeringPackage": "ideas-api"
+  },
+  {
+    "key": "authentication",
+    "capturedAt": "2026-07-30",
+    "commitSha": "c8353f1",
+    "commitMessage": "Merge c8353f13c4e21ec2fe13442b0497337c56fe6a6b into f3103c9d7a059256208bfd32937423dbecf44f60",
+    "triggeringPackage": "ideas-api"
+  },
+  {
+    "key": "ideas-api",
+    "capturedAt": "2026-07-30",
+    "commitSha": "c8353f1",
+    "commitMessage": "Merge c8353f13c4e21ec2fe13442b0497337c56fe6a6b into f3103c9d7a059256208bfd32937423dbecf44f60"
+  },
+  {
     "key": "authentication",
     "capturedAt": "2026-07-30",
     "commitSha": "89e393a",
