@@ -1,5 +1,25 @@
 [
   {
+    "key": "azure-infrastructure",
+    "capturedAt": "2026-08-09",
+    "commitSha": "1b71645",
+    "commitMessage": "Merge 1b7164558f77830604d9596d4015cb5c1c4a3135 into 24397d7d61264a53868505e41a07fd0fdbc70338",
+    "triggeringPackage": "ideas-api"
+  },
+  {
+    "key": "ideas-bot",
+    "capturedAt": "2026-08-09",
+    "commitSha": "1b71645",
+    "commitMessage": "Merge 1b7164558f77830604d9596d4015cb5c1c4a3135 into 24397d7d61264a53868505e41a07fd0fdbc70338",
+    "triggeringPackage": "ideas-api"
+  },
+  {
+    "key": "ideas-api",
+    "capturedAt": "2026-08-09",
+    "commitSha": "1b71645",
+    "commitMessage": "Merge 1b7164558f77830604d9596d4015cb5c1c4a3135 into 24397d7d61264a53868505e41a07fd0fdbc70338"
+  },
+  {
     "key": "ideas-bot",
     "capturedAt": "2026-07-30",
     "commitSha": "c8353f1",
