@@ -54,7 +54,13 @@
 .ideas-content {
   max-width: 1180px;
   margin: 0 auto;
-  padding: 24px 40px 120px;
+  /* NavBar is position: fixed with z-index: 1000 (nav-bar.css) and stands
+     ~44px tall (.button padding 10px 20px + font-size large). 24px of
+     top padding here left it overlapping the top of this container, so
+     any interactive element placed right at the top (e.g. ProjectPage's
+     "← Ideas board" link) had clicks swallowed by the fixed nav bar
+     sitting on top of it instead of reaching the element underneath. */
+  padding: 64px 40px 120px;
   position: relative;
   z-index: 1;
 }
