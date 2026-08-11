@@ -348,7 +348,7 @@
     "updatedByPackage": "ideas-api"
   },
   "azure-infrastructure": {
-    "summary": "Defines and provisions all Azure resources at subscription scope using Bicep. Modules cover the Static Web App, Container Registry, Container App Environment (shared Log Analytics workspace), momentum-finder and trail-finder Container Apps, Digits and Dashboard Azure Functions apps, Azure Table Storage for ideas-api, and all RBAC role assignments.",
+    "summary": "Defines and provisions all Azure resources at subscription scope using Bicep. Modules now include history-api with a Flex Consumption plan, Go-based Azure Function, EasyAuth integration, and supporting storage resources. Other modules cover the Static Web App, Container Registry, Container App Environment, momentum-finder and trail-finder Container Apps, Digits and Dashboard Azure Functions apps, Azure Table Storage for ideas-api, and all RBAC role assignments.",
     "description": "Bicep infrastructure-as-code package that defines and provisions every Azure resource in the system at subscription scope. Modules cover each service, the shared networking layer, and all RBAC role assignments. The infrastructure also includes Azure Table Storage resources, which are used by ideas-api for project resolution and backfill operations.",
     "features": [
       "Azure Static Web App for the frontend (my-website)",
@@ -356,13 +356,16 @@
       "Container App Environment with shared Log Analytics workspace",
       "momentum-finder and trail-finder Container Apps (with scaling rules)",
       "digits, dashboard-api, and ideas-api Azure Functions apps",
+      "Azure Table Storage for ideas-api project resolution and backfill operations",
       "All Managed Identity RBAC role assignments (Log Analytics Reader, Cost Management Reader)",
       "Container App Job definition for ideas-bot",
       "arch-content-foundry OpenAI resource with GPT-4o deployment (GlobalStandard, 50K TPM)",
-      "Independent deployment of gpt-5.3-codex model for ideas-bot to handle quota constraints"
+      "Independent deployment of gpt-5.3-codex model for ideas-bot to handle quota constraints",
+      "history-api Go-based Azure Function app on Flex Consumption plan with EasyAuth integration",
+      "Dedicated storage account for history-api with versions table and history-attachments blob container"
     ],
     "architecture": {
-      "overview": "Modular Bicep files deployed at subscription scope. Each service has its own module. The Container App Environment module creates the shared Log Analytics workspace used for unified observability across all Container Apps. The arch-content-foundry module provisions an OpenAI resource with a GPT-4o deployment for the arch-content-update CI workflow. The gpt-5.3-codex model for ideas-bot is deployed independently to avoid quota-related deployment failures impacting the rest of the infrastructure.",
+      "overview": "Modular Bicep files deployed at subscription scope. Each service has its own module. The Container App Environment module creates the shared Log Analytics workspace used for unified observability across all Container Apps. The arch-content-foundry module provisions an OpenAI resource with a GPT-4o deployment for the arch-content-update CI workflow. The gpt-5.3-codex model for ideas-bot is deployed independently to avoid quota-related deployment failures impacting the rest of the infrastructure. The history-api module introduces a Go-based Azure Function app running on a Flex Consumption plan, with EasyAuth integration and dedicated storage resources for versions table and history-attachments blob container.",
       "keyPoints": [
         "Subscription-scope deployment — all resources land in a single resource group",
         "Managed Identity role assignments are defined alongside the resources that need them",
@@ -370,12 +373,16 @@
         "Log Analytics workspace is shared by momentum-finder, trail-finder, and dashboard-api",
         "Scaling rules on Container Apps: min 0 replicas (scale to zero), max 10",
         "arch-content-foundry OpenAI resource uses GlobalStandard SKU with 50K TPM capacity",
-        "gpt-5.3-codex model for ideas-bot is deployed separately to mitigate quota constraints"
+        "gpt-5.3-codex model for ideas-bot is deployed separately to mitigate quota constraints",
+        "Azure Table Storage is used by ideas-api for project resolution and backfill operations, supporting features like name-based project linkage and one-time data backfill scripts",
+        "history-api runs on a Flex Consumption plan, required for Go-based Azure Functions during public preview",
+        "history-api uses EasyAuth with an App Registration for secure authentication and authorization",
+        "Dedicated storage account for history-api includes versions table and history-attachments blob container"
       ]
     },
     "dataFlow": null,
-    "updatedAt": "2026-08-09",
-    "updatedBySha": "1b71645",
+    "updatedAt": "2026-08-11",
+    "updatedBySha": "91a1134",
     "title": "Azure Infrastructure",
     "sections": [
       {
@@ -481,8 +488,8 @@
   },
   "authentication": {
     "title": "Authentication",
-    "summary": "How user and machine identity is verified across the system: mostly server-side Google ID token validation, with one Azure EasyAuth exception and machine key support for ideas-api.",
-    "description": "Most backend services validate a Google ID token themselves, server-side, on every request — no session state, no cookies, just a Bearer token checked against Google's public keys. ideas-api is the one exception: it delegates token validation to Azure's EasyAuth layer instead of doing it in application code. Additionally, ideas-api supports machine authentication via an X-Ideas-Key header for specific bot-writable endpoints, aligning with its hybrid authentication approach.",
+    "summary": "How user and machine identity is verified across the system: mostly server-side Google ID token validation, with Azure EasyAuth exceptions and machine key support for specific APIs.",
+    "description": "Most backend services validate a Google ID token themselves, server-side, on every request — no session state, no cookies, just a Bearer token checked against Google's public keys. Some services, such as ideas-api and history-api, use Azure's EasyAuth for token validation at the platform level, which reduces application code but requires configuration in Azure. Machine authentication via custom headers is supported for specific bot-driven workflows in APIs like ideas-api and history-api, and should be implemented thoughtfully and documented clearly.",
     "sections": [
       {
         "heading": "Google ID token (application-level)",
@@ -490,11 +497,11 @@
       },
       {
         "heading": "Azure EasyAuth (platform-level)",
-        "content": "ideas-api instead relies on Azure Functions' built-in EasyAuth: Azure validates the Google ID token at the platform layer before the request ever reaches application code, then injects the validated identity as a request header. This means less code in ideas-api itself, but the auth behavior lives in Azure Function App configuration rather than in the repo — a real tradeoff worth knowing before assuming \"how auth works\" from reading the code alone. Additionally, ideas-api supports machine authentication via an X-Ideas-Key header for bot-writable endpoints, such as PATCH /ideas/{id}, allowing machine identities like [[ideas-bot|ideas-bot]] to interact with the service alongside user-based authentication."
+        "content": "ideas-api and history-api rely on Azure Functions' built-in EasyAuth: Azure validates the Google ID token at the platform layer before the request ever reaches application code, then injects the validated identity as a request header. This approach reduces the amount of authentication code in the application itself but requires configuration in Azure Function App settings, which can complicate future migrations or debugging. Additionally, both ideas-api and history-api support machine authentication via custom headers (e.g., X-Ideas-Key for ideas-api and HISTORY_WRITE_KEY for history-api) to enable bot-driven workflows alongside user-based authentication."
       },
       {
         "heading": "General philosophy",
-        "content": "Prefer application-level Google ID token validation for new services — it's portable, testable, and doesn't depend on Azure-specific platform configuration a future migration would need to reproduce. EasyAuth is not being actively adopted further; it's a historical choice on ideas-api, not the recommended pattern going forward. Machine authentication via custom headers, as seen in ideas-api, can be useful for specific bot-driven workflows but should be implemented thoughtfully and documented clearly."
+        "content": "Prefer application-level Google ID token validation for new services — it's portable, testable, and doesn't depend on Azure-specific platform configuration a future migration would need to reproduce. EasyAuth is not being actively adopted further; it's a historical choice on ideas-api and a requirement for history-api due to its Flex Consumption plan and Go runtime. Machine authentication via custom headers can be useful for specific bot-driven workflows but should be implemented thoughtfully and documented clearly."
       }
     ],
     "relatedPages": [
@@ -502,10 +509,11 @@
       "learning-plan-api",
       "ideas-api",
       "dashboard-api",
-      "ideas-bot"
+      "ideas-bot",
+      "azure-infrastructure"
     ],
-    "updatedAt": "2026-07-30",
-    "updatedBySha": "c8353f1",
-    "updatedByPackage": "ideas-api"
+    "updatedAt": "2026-08-11",
+    "updatedBySha": "91a1134",
+    "updatedByPackage": "azure-infrastructure"
   }
 }
