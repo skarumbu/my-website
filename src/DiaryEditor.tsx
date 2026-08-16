@@ -25,7 +25,6 @@ export default function DiaryEditor() {
   const [unsavedSinceApi, setUnsavedSinceApi] = useState(false);
 
   const localTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const apiTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const latestDraft = useRef({ title, blocks });
   const unsavedSinceApiRef = useRef(false);
   const loadedSlugRef = useRef<string | undefined>(undefined);
@@ -94,9 +93,7 @@ export default function DiaryEditor() {
     })();
   }, [slug, authState]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const getTokenSilent = useCallback((): string | null => googleToken, [googleToken]);
-
-  // Two-tier autosave — only when authenticated
+  // Local-storage autosave — only when authenticated
   useEffect(() => {
     if (authState !== 'authenticated') return;
     const lsKey = slug ? `diary-draft-${slug}` : 'diary-new-draft';
@@ -105,34 +102,10 @@ export default function DiaryEditor() {
       localStorage.setItem(lsKey, JSON.stringify({ ...latestDraft.current, savedAt: Date.now() }));
     }, 2000);
 
-    if (slug && BASE_URL) {
-      apiTimerRef.current = setInterval(async () => {
-        if (!unsavedSinceApiRef.current) return;
-        const token = getTokenSilent();
-        if (!token) return;
-        try {
-          setAutosaveStatus('Saving…');
-          const resp = await fetch(sectionUrl('diary', slug), {
-            method: 'PUT',
-            headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify(latestDraft.current),
-          });
-          if (resp.ok) {
-            setUnsavedSinceApi(false);
-            setAutosaveStatus('Saved');
-            setTimeout(() => setAutosaveStatus(''), 3000);
-          }
-        } catch {
-          setAutosaveStatus('Unsaved changes');
-        }
-      }, 45000);
-    }
-
     return () => {
       if (localTimerRef.current) clearInterval(localTimerRef.current);
-      if (apiTimerRef.current) clearInterval(apiTimerRef.current);
     };
-  }, [slug, authState, BASE_URL, getTokenSilent]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [slug, authState]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const blocker = useBlocker(unsavedSinceApi);
 
