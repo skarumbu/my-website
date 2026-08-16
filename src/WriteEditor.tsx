@@ -4,6 +4,7 @@ import NavBar from './components/nav-bar.tsx';
 import Spinner from './components/Spinner.tsx';
 import { sectionUrl } from './lib/postsApi.ts';
 import { useGoogleAuth } from './lib/useGoogleAuth.ts';
+import { VersionHistoryPanel } from './VersionHistoryPanel.tsx';
 import './styling/private-theme.css';
 import './styling/write-editor.css';
 
@@ -26,20 +27,13 @@ export default function WriteEditor() {
   const [unsavedSinceApi, setUnsavedSinceApi] = useState(false);
 
   const localTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const apiTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const latestDraft = useRef({ title, description, body, published });
-  const unsavedSinceApiRef = useRef(false);
   const loadedSlugRef = useRef<string | undefined>(undefined);
 
   // Sync latestDraft ref on every field change (no re-render cost)
   useEffect(() => {
     latestDraft.current = { title, description, body, published };
   }, [title, description, body, published]);
-
-  // Sync unsavedSinceApiRef so background timers can read it without stale closure
-  useEffect(() => {
-    unsavedSinceApiRef.current = unsavedSinceApi;
-  }, [unsavedSinceApi]);
 
   // localStorage restore effect — runs once on mount
   useEffect(() => {
@@ -97,50 +91,20 @@ export default function WriteEditor() {
     })();
   }, [slug, authState]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // getTokenSilent: background autosave — returns null if not signed in (never redirects)
-  const getTokenSilent = useCallback((): string | null => {
-    return googleToken;
-  }, [googleToken]);
-
-  // Two-tier autosave — only when authenticated
+  // Local-storage autosave — only when authenticated
   useEffect(() => {
     if (authState !== 'authenticated') return;
     const lsKey = slug ? `write-draft-${slug}` : 'write-new-draft';
 
-    // Tier 1: localStorage every 2s
+    // localStorage every 2s
     localTimerRef.current = setInterval(() => {
       localStorage.setItem(lsKey, JSON.stringify({ ...latestDraft.current, savedAt: Date.now() }));
     }, 2000);
 
-    // Tier 2: API save every 45s — silent, never redirects
-    if (slug && BASE_URL) {
-      apiTimerRef.current = setInterval(async () => {
-        if (!unsavedSinceApiRef.current) return;
-        const token = getTokenSilent();
-        if (!token) return;
-        try {
-          setAutosaveStatus('Saving…');
-          const resp = await fetch(sectionUrl('writing', slug), {
-            method: 'PUT',
-            headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify(latestDraft.current),
-          });
-          if (resp.ok) {
-            setUnsavedSinceApi(false);
-            setAutosaveStatus('Saved');
-            setTimeout(() => setAutosaveStatus(''), 3000);
-          }
-        } catch {
-          setAutosaveStatus('Unsaved changes');
-        }
-      }, 45000);
-    }
-
     return () => {
       if (localTimerRef.current) clearInterval(localTimerRef.current);
-      if (apiTimerRef.current) clearInterval(apiTimerRef.current);
     };
-  }, [slug, authState, BASE_URL, getTokenSilent]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [slug, authState]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const blocker = useBlocker(unsavedSinceApi);
 
@@ -342,6 +306,7 @@ export default function WriteEditor() {
                 setAutosaveStatus('Unsaved changes');
               }}
             />
+            {slug && <VersionHistoryPanel section="writing" slug={slug} token={googleToken} />}
           </>
         )}
       </div>
