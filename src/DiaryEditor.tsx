@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate, useBeforeUnload, useBlocker } from 'react-router-dom';
 import NavBar from './components/nav-bar.tsx';
-import Spinner from './components/Spinner.tsx';
+import WritingCursor from './components/WritingCursor.tsx';
 import BlockEditorRow from './components/BlockEditorRow.tsx';
 import { sectionUrl } from './lib/postsApi.ts';
 import { useGoogleAuth } from './lib/useGoogleAuth.ts';
@@ -219,7 +219,7 @@ export default function DiaryEditor() {
     return (
       <div className="diary-editor-page">
         <NavBar />
-        <div className="diary-editor-content"><Spinner /></div>
+        <div className="diary-editor-content"><WritingCursor /></div>
       </div>
     );
   }
@@ -242,7 +242,7 @@ export default function DiaryEditor() {
       <NavBar />
       <div className="diary-editor-content">
         {error && <p className="diary-editor-error">{error}</p>}
-        {loading && <Spinner />}
+        {loading && <WritingCursor />}
         {!loading && (
           <>
             {blocker.state === 'blocked' && (

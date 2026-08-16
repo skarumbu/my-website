@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import NavBar from './components/nav-bar.tsx';
-import Spinner from './components/Spinner.tsx';
+import WritingCursor from './components/WritingCursor.tsx';
 import StudioSummary from './components/StudioSummary.tsx';
 import { sectionUrl, isApiConfigured } from './lib/postsApi.ts';
 import { useGoogleAuth } from './lib/useGoogleAuth.ts';
@@ -101,7 +101,7 @@ function Write() {
     return (
       <div className="write-page">
         <NavBar />
-        <div className="write-content"><Spinner /></div>
+        <div className="write-content"><WritingCursor /></div>
       </div>
     );
   }
@@ -137,7 +137,7 @@ function Write() {
             + New Post
           </button>
         </div>
-        {loading && <Spinner />}
+        {loading && <WritingCursor />}
         {error && <p className="write-error">{error}</p>}
         {!loading && !error && posts.length === 0 && (
           <div className="write-empty">
