@@ -6,6 +6,7 @@ import BlockEditorRow from './components/BlockEditorRow.tsx';
 import { sectionUrl } from './lib/postsApi.ts';
 import { useGoogleAuth } from './lib/useGoogleAuth.ts';
 import { Block } from './lib/diaryTypes.ts';
+import { VersionHistoryPanel } from './VersionHistoryPanel.tsx';
 import './styling/private-theme.css';
 import './styling/diary-editor.css';
 
@@ -301,6 +302,7 @@ export default function DiaryEditor() {
               <button type="button" onClick={addTextBlock}>+ Text</button>
               <button type="button" onClick={addStickerBlock}>+ Sticker</button>
             </div>
+            {slug && <VersionHistoryPanel section="diary" slug={slug} token={googleToken} />}
           </>
         )}
       </div>

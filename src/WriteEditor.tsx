@@ -4,6 +4,7 @@ import NavBar from './components/nav-bar.tsx';
 import Spinner from './components/Spinner.tsx';
 import { sectionUrl } from './lib/postsApi.ts';
 import { useGoogleAuth } from './lib/useGoogleAuth.ts';
+import { VersionHistoryPanel } from './VersionHistoryPanel.tsx';
 import './styling/private-theme.css';
 import './styling/write-editor.css';
 
@@ -311,6 +312,7 @@ export default function WriteEditor() {
                 setAutosaveStatus('Unsaved changes');
               }}
             />
+            {slug && <VersionHistoryPanel section="writing" slug={slug} token={googleToken} />}
           </>
         )}
       </div>
