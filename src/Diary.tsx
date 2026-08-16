@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import NavBar from './components/nav-bar.tsx';
-import Spinner from './components/Spinner.tsx';
+import WritingCursor from './components/WritingCursor.tsx';
 import { sectionUrl, isApiConfigured } from './lib/postsApi.ts';
 import { useGoogleAuth } from './lib/useGoogleAuth.ts';
 import { DiaryEntry } from './lib/diaryTypes.ts';
@@ -79,7 +79,7 @@ function Diary() {
     return (
       <div className="diary-page">
         <NavBar />
-        <div className="diary-content"><Spinner /></div>
+        <div className="diary-content"><WritingCursor /></div>
       </div>
     );
   }
@@ -111,7 +111,7 @@ function Diary() {
             + New Entry
           </button>
         </div>
-        {loading && <Spinner />}
+        {loading && <WritingCursor />}
         {error && <p className="diary-error">{error}</p>}
         {!loading && !error && entries.length === 0 && (
           <div className="diary-empty">
