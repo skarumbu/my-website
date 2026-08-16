@@ -26,11 +26,13 @@ export function VersionHistoryPanel({ section, slug, token }: Props) {
 
   useEffect(() => {
     if (!selected || !BASE_URL) return;
+    setDiff(null);
     const [v1, v2] = selected;
     const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
     fetch(`${BASE_URL}/api/sections/${section}/items/${slug}/versions/${v1}/diff/${v2}`, { headers })
       .then((r) => (r.ok ? r.json() : null))
-      .then(setDiff);
+      .then(setDiff)
+      .catch(() => setDiff(null));
   }, [BASE_URL, selected, section, slug, token]);
 
   if (loading) return null;
@@ -42,7 +44,7 @@ export function VersionHistoryPanel({ section, slug, token }: Props) {
       <ul className="version-history-list">
         {versions.map((v, i) => (
           <li key={v.version_id} className="version-history-entry">
-            <span className="version-history-date">{v.created_at}</span>
+            <span className="version-history-date">{new Date(v.created_at).toLocaleString()}</span>
             {v.author && <span className="version-history-author">{v.author}</span>}
             <span className="version-history-message">{v.message}</span>
             {i < versions.length - 1 && (

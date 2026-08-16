@@ -28,18 +28,12 @@ export default function WriteEditor() {
 
   const localTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const latestDraft = useRef({ title, description, body, published });
-  const unsavedSinceApiRef = useRef(false);
   const loadedSlugRef = useRef<string | undefined>(undefined);
 
   // Sync latestDraft ref on every field change (no re-render cost)
   useEffect(() => {
     latestDraft.current = { title, description, body, published };
   }, [title, description, body, published]);
-
-  // Sync unsavedSinceApiRef so background timers can read it without stale closure
-  useEffect(() => {
-    unsavedSinceApiRef.current = unsavedSinceApi;
-  }, [unsavedSinceApi]);
 
   // localStorage restore effect — runs once on mount
   useEffect(() => {

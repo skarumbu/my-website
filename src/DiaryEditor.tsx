@@ -27,16 +27,11 @@ export default function DiaryEditor() {
 
   const localTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const latestDraft = useRef({ title, blocks });
-  const unsavedSinceApiRef = useRef(false);
   const loadedSlugRef = useRef<string | undefined>(undefined);
 
   useEffect(() => {
     latestDraft.current = { title, blocks };
   }, [title, blocks]);
-
-  useEffect(() => {
-    unsavedSinceApiRef.current = unsavedSinceApi;
-  }, [unsavedSinceApi]);
 
   const markDirty = () => {
     setUnsavedSinceApi(true);
