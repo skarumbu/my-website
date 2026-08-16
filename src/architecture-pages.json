@@ -348,8 +348,8 @@
     "updatedByPackage": "ideas-api"
   },
   "azure-infrastructure": {
-    "summary": "Defines and provisions all Azure resources at subscription scope using Bicep. Modules now include history-api with a Flex Consumption plan, Go-based Azure Function, EasyAuth integration, and supporting storage resources. Other modules cover the Static Web App, Container Registry, Container App Environment, momentum-finder and trail-finder Container Apps, Digits and Dashboard Azure Functions apps, Azure Table Storage for ideas-api, and all RBAC role assignments.",
-    "description": "Bicep infrastructure-as-code package that defines and provisions every Azure resource in the system at subscription scope. Modules cover each service, the shared networking layer, and all RBAC role assignments. The infrastructure also includes Azure Table Storage resources, which are used by ideas-api for project resolution and backfill operations.",
+    "summary": "Defines and provisions all Azure resources at subscription scope using Bicep. Modules now include history-api with a Flex Consumption plan, Go-based Azure Function, EasyAuth integration, and supporting storage resources. Other modules cover the Static Web App, Container Registry, Container App Environment, momentum-finder and trail-finder Container Apps, Digits and Dashboard Azure Functions apps, Azure Table Storage for ideas-api, posts-api integration with history-api, and all RBAC role assignments.",
+    "description": "Bicep infrastructure-as-code package that defines and provisions every Azure resource in the system at subscription scope. Modules cover each service, the shared networking layer, and all RBAC role assignments. The infrastructure also includes Azure Table Storage resources, which are used by ideas-api for project resolution and backfill operations, and supports external integrations like posts-api's use of history-api for storage.",
     "features": [
       "Azure Static Web App for the frontend (my-website)",
       "Container Registry for Docker images (momentum-finder, trail-finder, ideas-bot)",
@@ -381,27 +381,28 @@
       ]
     },
     "dataFlow": null,
-    "updatedAt": "2026-08-11",
-    "updatedBySha": "91a1134",
+    "updatedAt": "2026-08-16",
+    "updatedBySha": "19253a5",
     "title": "Azure Infrastructure",
     "sections": [
       {
         "heading": "Features",
-        "content": "- Azure Static Web App for the frontend (my-website)\n- Container Registry for Docker images (momentum-finder, trail-finder, ideas-bot)\n- Container App Environment with shared Log Analytics workspace\n- momentum-finder and trail-finder Container Apps (with scaling rules)\n- digits, dashboard-api, and ideas-api Azure Functions apps\n- Azure Table Storage for ideas-api project resolution and backfill operations\n- All Managed Identity RBAC role assignments (Log Analytics Reader, Cost Management Reader)\n- Container App Job definition for ideas-bot\n- arch-content-foundry OpenAI resource with GPT-4o deployment (GlobalStandard, 50K TPM)\n- Independent deployment of gpt-5.3-codex model for ideas-bot to handle quota constraints"
+        "content": "- Azure Static Web App for the frontend (my-website)\n- Container Registry for Docker images (momentum-finder, trail-finder, ideas-bot)\n- Container App Environment with shared Log Analytics workspace\n- momentum-finder and trail-finder Container Apps (with scaling rules)\n- digits, dashboard-api, and ideas-api Azure Functions apps\n- Azure Table Storage for ideas-api project resolution and backfill operations\n- All Managed Identity RBAC role assignments (Log Analytics Reader, Cost Management Reader)\n- Container App Job definition for ideas-bot\n- arch-content-foundry OpenAI resource with GPT-4o deployment (GlobalStandard, 50K TPM)\n- Independent deployment of gpt-5.3-codex model for ideas-bot to handle quota constraints\n- history-api Go-based Azure Function app on Flex Consumption plan with EasyAuth integration\n- Dedicated storage account for history-api with versions table and history-attachments blob container\n- posts-api integration with history-api for storage (HISTORY_API_URL and HISTORY_API_KEY provisioned)"
       },
       {
         "heading": "Architecture",
-        "content": "The Azure infrastructure is defined using modular Bicep files deployed at subscription scope. Each service has its own module. The Container App Environment module creates the shared Log Analytics workspace used for unified observability across all Container Apps. The arch-content-foundry module provisions an OpenAI resource with a GPT-4o deployment for the arch-content-update CI workflow. The gpt-5.3-codex model for ideas-bot is deployed independently to avoid quota-related deployment failures impacting the rest of the infrastructure. Additionally, Azure Table Storage is provisioned and utilized by ideas-api for project resolution and backfill operations, ensuring robust data consistency and integrity for project and idea management workflows."
+        "content": "The Azure infrastructure is defined using modular Bicep files deployed at subscription scope. Each service has its own module. The Container App Environment module creates the shared Log Analytics workspace used for unified observability across all Container Apps. The arch-content-foundry module provisions an OpenAI resource with a GPT-4o deployment for the arch-content-update CI workflow. The gpt-5.3-codex model for ideas-bot is deployed independently to avoid quota-related deployment failures impacting the rest of the infrastructure. Additionally, Azure Table Storage is provisioned and utilized by ideas-api for project resolution and backfill operations, ensuring robust data consistency and integrity for project and idea management workflows. The history-api module introduces a Go-based Azure Function app running on a Flex Consumption plan, with EasyAuth integration and dedicated storage resources for versions table and history-attachments blob container. posts-api integrates with history-api for storage, relying on provisioned HISTORY_API_URL and HISTORY_API_KEY environment variables."
       },
       {
         "heading": "Key Points",
-        "content": "- Subscription-scope deployment — all resources land in a single resource group\n- Managed Identity role assignments are defined alongside the resources that need them\n- Container Registry uses admin credentials (not Managed Identity) for simplicity\n- Log Analytics workspace is shared by momentum-finder, trail-finder, and dashboard-api\n- Scaling rules on Container Apps: min 0 replicas (scale to zero), max 10\n- arch-content-foundry OpenAI resource uses GlobalStandard SKU with 50K TPM capacity\n- gpt-5.3-codex model for ideas-bot is deployed separately to mitigate quota constraints\n- Azure Table Storage is used by ideas-api for project resolution and backfill operations, supporting features like name-based project linkage and one-time data backfill scripts"
+        "content": "- Subscription-scope deployment — all resources land in a single resource group\n- Managed Identity role assignments are defined alongside the resources that need them\n- Container Registry uses admin credentials (not Managed Identity) for simplicity\n- Log Analytics workspace is shared by momentum-finder, trail-finder, and dashboard-api\n- Scaling rules on Container Apps: min 0 replicas (scale to zero), max 10\n- arch-content-foundry OpenAI resource uses GlobalStandard SKU with 50K TPM capacity\n- gpt-5.3-codex model for ideas-bot is deployed separately to mitigate quota constraints\n- Azure Table Storage is used by ideas-api for project resolution and backfill operations, supporting features like name-based project linkage and one-time data backfill scripts\n- history-api runs on a Flex Consumption plan, required for Go-based Azure Functions during public preview\n- history-api uses EasyAuth with an App Registration for secure authentication and authorization\n- Dedicated storage account for history-api includes versions table and history-attachments blob container\n- posts-api relies on history-api for storage, with HISTORY_API_URL and HISTORY_API_KEY provisioned in Azure infrastructure"
       }
     ],
     "relatedPages": [
-      "ideas-api"
+      "ideas-api",
+      "posts-api"
     ],
-    "updatedByPackage": "ideas-api"
+    "updatedByPackage": "posts-api"
   },
   "learning-plan-api": {
     "summary": "Generates structured learning plans via the Claude API and stores them per user in Azure Table Storage. Google ID tokens are verified server-side on every request, with user isolation enforced by partition key at the storage level.",
@@ -457,18 +458,20 @@
     ]
   },
   "posts-api": {
-    "summary": "Azure Functions (Python) API that manages content sections, such as markdown blog posts, stored as files in a GitHub repository. Authentication is handled via Google ID tokens; content ownership is enforced per-creator, with an allowlist controlling who can write.",
+    "summary": "Azure Functions (Python) API that manages content sections, such as markdown blog posts, stored via the History API. Authentication is handled via Google ID tokens; content ownership is enforced per-creator, with an allowlist controlling who can write.",
     "description": "A serverless write API for quixotry.me's content sections. Items are stored as files with YAML frontmatter committed directly to GitHub; the API provides a unified interface for managing these sections.",
     "features": [
       "Restrict private-section reads to the item's own author; other authors' entries are excluded",
       "Private sections return 404 for wrong-owner requests, avoiding confirmation of item existence",
-      "Legacy item support: items without author_email remain visible to any allowlisted writer"
+      "Legacy item support: items without author_email remain visible to any allowlisted writer",
+      "Writing and diary sections now use [[history-api|History API]] for storage, enabling version history and improved scalability"
     ],
     "architecture": {
-      "overview": "Azure Functions v2 app (Python) deployed to a Consumption plan. Each HTTP trigger handles one REST operation. Content is organized into named sections, each with its own schema, visibility rules, and storage backend. The default storage backend is GitHub, where items are stored as files. Auth uses google-auth to validate Google ID tokens server-side; no session state is maintained.",
+      "overview": "Azure Functions v2 app (Python) deployed to a Consumption plan. Each HTTP trigger handles one REST operation. Content is organized into named sections, each with its own schema, visibility rules, and storage backend. The default storage backend is now the [[history-api|History API]], where items are stored as documents with versioning support. Auth uses google-auth to validate Google ID tokens server-side; no session state is maintained.",
       "keyPoints": [
         "Private sections enforce per-item read access: only the item's author can view it; wrong-owner requests return 404 instead of 403",
-        "Legacy items without stamped author_email remain accessible to any allowlisted writer, ensuring backward compatibility"
+        "Legacy items without stamped author_email remain accessible to any allowlisted writer, ensuring backward compatibility",
+        "Storage for writing and diary sections transitioned to [[history-api|History API]], replacing GitHub and Azure Blob Storage"
       ]
     },
     "dataFlow": [
@@ -481,10 +484,18 @@
           "Private sections require allowlist membership for all operations, including reads",
           "Private-section reads: requester must match author_email; wrong-owner requests return 404"
         ]
+      },
+      {
+        "label": "Storage interaction",
+        "color": "blue",
+        "sublines": [
+          "Writing and diary sections interact with [[history-api|History API]] for all CRUD operations",
+          "Versioning is supported for all stored items, enabling retrieval of historical content"
+        ]
       }
     ],
-    "updatedAt": "2026-07-27",
-    "updatedBySha": "5c0187d"
+    "updatedAt": "2026-08-16",
+    "updatedBySha": "19253a5"
   },
   "authentication": {
     "title": "Authentication",
@@ -493,7 +504,7 @@
     "sections": [
       {
         "heading": "Google ID token (application-level)",
-        "content": "posts-api, learning-plan-api, and dashboard-api all validate the caller's Google ID token themselves, in application code, via the google-auth library — checking the token's signature and audience against one or more configured Google OAuth client IDs. This is the default pattern for any new backend service: no Azure-specific auth wiring, works identically whether the caller is the web app or a CLI tool, and keeps auth logic visible and testable in the service's own codebase rather than delegated to platform configuration."
+        "content": "posts-api, learning-plan-api, and dashboard-api all validate the caller's Google ID token themselves, in application code, via the google-auth library — checking the token's signature and audience against one or more configured Google OAuth client IDs. This is the default pattern for any new backend service: no Azure-specific auth wiring, works identically whether the caller is the web app or a CLI tool, and keeps auth logic visible and testable in the service's own codebase rather than delegated to platform configuration. posts-api also integrates machine authentication via custom headers (e.g., HISTORY_API_KEY) for bot-driven workflows when interacting with history-api."
       },
       {
         "heading": "Azure EasyAuth (platform-level)",
@@ -512,8 +523,8 @@
       "ideas-bot",
       "azure-infrastructure"
     ],
-    "updatedAt": "2026-08-11",
-    "updatedBySha": "91a1134",
-    "updatedByPackage": "azure-infrastructure"
+    "updatedAt": "2026-08-16",
+    "updatedBySha": "19253a5",
+    "updatedByPackage": "posts-api"
   }
 }
