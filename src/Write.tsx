@@ -10,6 +10,13 @@ import { DiaryEntry } from './lib/diaryTypes.ts';
 import './styling/private-theme.css';
 import './styling/write.css';
 
+function fmtDate(iso: string): string {
+  const [year, month, day] = iso.slice(0, 10).split('-').map(Number);
+  return new Date(year, month - 1, day).toLocaleDateString('en-US', {
+    year: 'numeric', month: 'long', day: 'numeric'
+  });
+}
+
 function Write() {
   const navigate = useNavigate();
   const { authState, googleToken, googleBtnRef, signOut } = useGoogleAuth();
@@ -162,7 +169,7 @@ function Write() {
                     {post.published ? 'Published' : 'Draft'}
                   </span>
                 </div>
-                <span className="write-row-date">{post.date}</span>
+                <span className="write-row-date">{fmtDate(post.date)}</span>
                 <p className="write-row-desc">{post.description}</p>
                 <button
                   className="write-row-delete"
