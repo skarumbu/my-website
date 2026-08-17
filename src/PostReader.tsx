@@ -5,6 +5,7 @@ import remarkGfm from 'remark-gfm';
 import NavBar from './components/nav-bar.tsx';
 import Spinner from './components/Spinner.tsx';
 import { sectionUrl, isApiConfigured } from './lib/postsApi.ts';
+import { fmtDate } from './lib/formatDate.ts';
 import './styling/post-reader.css';
 
 interface Post {
@@ -14,13 +15,6 @@ interface Post {
   description: string;
   updatedAt: string;
   body: string;
-}
-
-function fmtDate(iso: string): string {
-  const [year, month, day] = iso.slice(0, 10).split('-').map(Number);
-  return new Date(year, month - 1, day).toLocaleDateString('en-US', {
-    year: 'numeric', month: 'long', day: 'numeric'
-  });
 }
 
 function PostReader() {

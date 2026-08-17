@@ -7,15 +7,9 @@ import { sectionUrl, isApiConfigured } from './lib/postsApi.ts';
 import { useGoogleAuth } from './lib/useGoogleAuth.ts';
 import { Post } from './lib/writeTypes.ts';
 import { DiaryEntry } from './lib/diaryTypes.ts';
+import { fmtDate } from './lib/formatDate.ts';
 import './styling/private-theme.css';
 import './styling/write.css';
-
-function fmtDate(iso: string): string {
-  const [year, month, day] = iso.slice(0, 10).split('-').map(Number);
-  return new Date(year, month - 1, day).toLocaleDateString('en-US', {
-    year: 'numeric', month: 'long', day: 'numeric'
-  });
-}
 
 function Write() {
   const navigate = useNavigate();
