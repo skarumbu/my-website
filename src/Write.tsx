@@ -7,6 +7,7 @@ import { sectionUrl, isApiConfigured } from './lib/postsApi.ts';
 import { useGoogleAuth } from './lib/useGoogleAuth.ts';
 import { Post } from './lib/writeTypes.ts';
 import { DiaryEntry } from './lib/diaryTypes.ts';
+import { fmtDate } from './lib/formatDate.ts';
 import './styling/private-theme.css';
 import './styling/write.css';
 
@@ -162,7 +163,7 @@ function Write() {
                     {post.published ? 'Published' : 'Draft'}
                   </span>
                 </div>
-                <span className="write-row-date">{post.date}</span>
+                <span className="write-row-date">{fmtDate(post.date)}</span>
                 <p className="write-row-desc">{post.description}</p>
                 <button
                   className="write-row-delete"
