@@ -1,0 +1,30 @@
+.writing-cursor-container {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 2px;
+  min-height: 110px;
+  width: 100%;
+  font-family: 'Fraunces', serif;
+  font-size: 1.15rem;
+  font-style: italic;
+  color: var(--ink-2, currentColor);
+}
+
+.writing-cursor-label {
+  opacity: 0.55;
+}
+
+.writing-cursor-caret {
+  display: inline-block;
+  width: 2px;
+  height: 1.1em;
+  background: currentColor;
+  transform: translateY(0.14em);
+  animation: writing-cursor-blink 1s step-end infinite;
+}
+
+@keyframes writing-cursor-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}

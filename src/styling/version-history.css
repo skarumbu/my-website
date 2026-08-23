@@ -1,0 +1,68 @@
+.version-history-panel {
+  margin-top: 32px;
+  border-top: 1px solid var(--line);
+  padding-top: 16px;
+  font-family: 'DM Sans', sans-serif;
+  color: var(--ink-2);
+}
+
+.version-history-panel summary {
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-3);
+}
+
+.version-history-list {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+}
+
+.version-history-entry {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 13px;
+}
+
+.version-history-date {
+  color: var(--ink-3);
+}
+
+.version-history-author {
+  color: var(--ink-2);
+  font-weight: 600;
+}
+
+.version-history-message {
+  flex: 1;
+  color: var(--ink);
+}
+
+.version-history-diff-btn {
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 4px 10px;
+  font-size: 12px;
+  color: var(--ink-2);
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.version-history-diff-btn:hover {
+  background: rgba(58, 36, 24, 0.06);
+}
+
+.version-history-diff {
+  margin-top: 16px;
+  padding: 12px;
+  background: var(--bg-2, #f5f0e8);
+  border-radius: 8px;
+  font-size: 12px;
+  white-space: pre-wrap;
+  overflow-x: auto;
+}

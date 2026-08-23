@@ -1,10 +1,14 @@
 import React from 'react';
-import PulseLoader from 'react-spinners/PulseLoader';
+import '../styling/spinner.css';
 
 const Spinner: React.FC = () => {
   return (
     <div className="spinner-container">
-      <PulseLoader color="#000" size={25} speedMultiplier={0.5} />
+      <div className="spinner-dots">
+        <span className="spinner-dot" />
+        <span className="spinner-dot" />
+        <span className="spinner-dot" />
+      </div>
     </div>
   );
 };

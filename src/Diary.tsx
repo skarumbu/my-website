@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import NavBar from './components/nav-bar.tsx';
-import Spinner from './components/Spinner.tsx';
+import WritingCursor from './components/WritingCursor.tsx';
 import { sectionUrl, isApiConfigured } from './lib/postsApi.ts';
 import { useGoogleAuth } from './lib/useGoogleAuth.ts';
 import { DiaryEntry } from './lib/diaryTypes.ts';
+import { fmtDate } from './lib/formatDate.ts';
 import './styling/private-theme.css';
 import './styling/diary.css';
 
@@ -14,13 +15,6 @@ function cardColor(slug: string): string {
   let hash = 0;
   for (let i = 0; i < slug.length; i++) hash = (hash * 31 + slug.charCodeAt(i)) >>> 0;
   return CARD_COLORS[hash % CARD_COLORS.length];
-}
-
-function fmtDate(iso: string): string {
-  const [year, month, day] = iso.slice(0, 10).split('-').map(Number);
-  return new Date(year, month - 1, day).toLocaleDateString('en-US', {
-    year: 'numeric', month: 'long', day: 'numeric'
-  });
 }
 
 function Diary() {
@@ -79,7 +73,7 @@ function Diary() {
     return (
       <div className="diary-page">
         <NavBar />
-        <div className="diary-content"><Spinner /></div>
+        <div className="diary-content"><WritingCursor /></div>
       </div>
     );
   }
@@ -111,7 +105,7 @@ function Diary() {
             + New Entry
           </button>
         </div>
-        {loading && <Spinner />}
+        {loading && <WritingCursor />}
         {error && <p className="diary-error">{error}</p>}
         {!loading && !error && entries.length === 0 && (
           <div className="diary-empty">

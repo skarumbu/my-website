@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import NavBar from './components/nav-bar.tsx';
-import Spinner from './components/Spinner.tsx';
+import WritingCursor from './components/WritingCursor.tsx';
 import StudioSummary from './components/StudioSummary.tsx';
 import { sectionUrl, isApiConfigured } from './lib/postsApi.ts';
 import { useGoogleAuth } from './lib/useGoogleAuth.ts';
 import { Post } from './lib/writeTypes.ts';
 import { DiaryEntry } from './lib/diaryTypes.ts';
+import { fmtDate } from './lib/formatDate.ts';
 import './styling/private-theme.css';
 import './styling/write.css';
 
@@ -101,7 +102,7 @@ function Write() {
     return (
       <div className="write-page">
         <NavBar />
-        <div className="write-content"><Spinner /></div>
+        <div className="write-content"><WritingCursor /></div>
       </div>
     );
   }
@@ -137,7 +138,7 @@ function Write() {
             + New Post
           </button>
         </div>
-        {loading && <Spinner />}
+        {loading && <WritingCursor />}
         {error && <p className="write-error">{error}</p>}
         {!loading && !error && posts.length === 0 && (
           <div className="write-empty">
@@ -162,7 +163,7 @@ function Write() {
                     {post.published ? 'Published' : 'Draft'}
                   </span>
                 </div>
-                <span className="write-row-date">{post.date}</span>
+                <span className="write-row-date">{fmtDate(post.date)}</span>
                 <p className="write-row-desc">{post.description}</p>
                 <button
                   className="write-row-delete"
