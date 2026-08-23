@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import MicrosoftLogo from './components/MicrosoftLogo.tsx';
 import NavBar from './components/nav-bar.tsx';
 import './styling/dashboard.css';
+import './styling/button.css';
 import { useMsal, useIsAuthenticated } from "@azure/msal-react";
 import { dashboardApiRequest } from "./authConfig.js";
 

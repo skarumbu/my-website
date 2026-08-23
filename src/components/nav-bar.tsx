@@ -1,28 +1,32 @@
 import React from "react";
 import "../styling/nav-bar.css";
-import "../styling/button.css";
+
+const NAV_LINKS = [
+  { href: "/", label: "Home" },
+  { href: "/digits", label: "Digits" },
+  { href: "/momentum-finder", label: "NBA Games" },
+  { href: "/trail-finder", label: "Trail Finder" },
+  { href: "/ideas", label: "Ideas" },
+  { href: "/learning-plan", label: "Learning Plan" },
+  { href: "/write", label: "Write" },
+];
 
 const NavBar: React.FC = () => {
+  const current = window.location.pathname;
+
   return (
-    <nav className="nav-bar">
-      <a href="/digits" className="button">
-        Digits
-      </a>
-      <a href="/momentum-finder" className="button">
-        NBA Games
-      </a>
-      <a href="/trail-finder" className="button">
-        Trail Finder
-      </a>
-      <a href="/ideas" className="button">
-        Ideas
-      </a>
-      <a href="/learning-plan" className="button">
-        Learning Plan
-      </a>
-      <a href="/write" className="button">
-        Write
-      </a>
+    <nav className="site-nav">
+      <div className="site-nav-links">
+        {NAV_LINKS.map(({ href, label }) => (
+          <a
+            key={href}
+            href={href}
+            className={current === href ? "active" : ""}
+          >
+            {label}
+          </a>
+        ))}
+      </div>
     </nav>
   );
 };
