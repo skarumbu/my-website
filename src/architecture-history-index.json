@@ -14,6 +14,26 @@
   },
   {
     "key": "authentication",
+    "capturedAt": "2026-08-16",
+    "commitSha": "e0c05a3",
+    "commitMessage": "Merge e0c05a3a09489d613d9f6829bc73c441db87b0aa into 765bdabb07fa521e676bc1508146895bf38617af",
+    "triggeringPackage": "azure-infrastructure"
+  },
+  {
+    "key": "posts-api",
+    "capturedAt": "2026-08-16",
+    "commitSha": "e0c05a3",
+    "commitMessage": "Merge e0c05a3a09489d613d9f6829bc73c441db87b0aa into 765bdabb07fa521e676bc1508146895bf38617af",
+    "triggeringPackage": "azure-infrastructure"
+  },
+  {
+    "key": "azure-infrastructure",
+    "capturedAt": "2026-08-16",
+    "commitSha": "e0c05a3",
+    "commitMessage": "Merge e0c05a3a09489d613d9f6829bc73c441db87b0aa into 765bdabb07fa521e676bc1508146895bf38617af"
+  },
+  {
+    "key": "authentication",
     "capturedAt": "2026-08-13",
     "commitSha": "5756cba",
     "commitMessage": "Merge 5756cba49d8aecaa6a2dfd529e642790666e484c into e80b2071b5dd132addc66735ba88449eac321760",
