@@ -457,18 +457,20 @@
     ]
   },
   "posts-api": {
-    "summary": "Azure Functions (Python) API that manages content sections, such as markdown blog posts, stored as files in a GitHub repository. Authentication is handled via Google ID tokens; content ownership is enforced per-creator, with an allowlist controlling who can write.",
+    "summary": "Azure Functions (Python) API that manages content sections, such as markdown blog posts, stored as files in a GitHub repository. Authentication is handled via Google ID tokens; content ownership is enforced per-creator, with an allowlist controlling who can write. Private sections now require authentication for all operations, including reads.",
     "description": "A serverless write API for quixotry.me's content sections. Items are stored as files with YAML frontmatter committed directly to GitHub; the API provides a unified interface for managing these sections.",
     "features": [
       "Restrict private-section reads to the item's own author; other authors' entries are excluded",
       "Private sections return 404 for wrong-owner requests, avoiding confirmation of item existence",
+      "Private sections require authentication for all operations, including reads",
       "Legacy item support: items without author_email remain visible to any allowlisted writer",
-      "Version-history support: list, retrieve, and diff versions of content items via history-api"
+      "Version-history support: list, retrieve, and diff versions of content items via [[posts-api|history-api]]"
     ],
     "architecture": {
-      "overview": "Azure Functions v2 app (Python) deployed to a Consumption plan. Each HTTP trigger handles one REST operation. Content is organized into named sections, each with its own schema, visibility rules, and storage backend. The default storage backends are GitHub and Azure Blob Storage, with optional integration to [[posts-api|history-api]] for version-history functionality. Auth uses google-auth to validate Google ID tokens server-side; no session state is maintained.",
+      "overview": "Azure Functions v2 app (Python) deployed to a Consumption plan. Each HTTP trigger handles one REST operation. Content is organized into named sections, each with its own schema, visibility rules, and storage backend. The default storage backends are GitHub and Azure Blob Storage, with optional integration to [[posts-api|history-api]] for version-history functionality. Auth uses google-auth to validate Google ID tokens server-side; no session state is maintained. Private sections now enforce authentication and ownership checks for all operations, including reads.",
       "keyPoints": [
         "Private sections enforce per-item read access: only the item's author can view it; wrong-owner requests return 404 instead of 403",
+        "Private sections require authentication for all operations, including reads, aligning with ownership-based visibility rules",
         "Legacy items without stamped author_email remain accessible to any allowlisted writer, ensuring backward compatibility",
         "HistoryApiStorage backend enables version-history operations, including optimistic concurrency checks for create, update, and delete"
       ]
@@ -488,14 +490,14 @@
         "label": "Version-history operations",
         "color": "blue",
         "sublines": [
-          "GET /versions: mirrors get_item visibility rules (public sections require published, private sections require auth + allowlist + author match)",
+          "GET /versions: mirrors get_item visibility rules (private sections require auth + allowlist + author match)",
           "GET /versions/{version_id}: retrieves a specific version of an item",
           "GET /versions/{v1}/diff/{v2}: computes a diff between two versions of an item"
         ]
       }
     ],
-    "updatedAt": "2026-08-13",
-    "updatedBySha": "5756cba"
+    "updatedAt": "2026-08-23",
+    "updatedBySha": "9719cd0"
   },
   "authentication": {
     "title": "Authentication",
@@ -504,7 +506,7 @@
     "sections": [
       {
         "heading": "Google ID token (application-level)",
-        "content": "[[posts-api|posts-api]], [[learning-plan-api|learning-plan-api]], and [[dashboard-api|dashboard-api]] all validate the caller's Google ID token themselves, in application code, via the google-auth library — checking the token's signature and audience against one or more configured Google OAuth client IDs. This is the default pattern for any new backend service: no Azure-specific auth wiring, works identically whether the caller is the web app or a CLI tool, and keeps auth logic visible and testable in the service's own codebase rather than delegated to platform configuration."
+        "content": "[[posts-api|posts-api]], [[learning-plan-api|learning-plan-api]], and [[dashboard-api|dashboard-api]] all validate the caller's Google ID token themselves, in application code, via the google-auth library — checking the token's signature and audience against one or more configured Google OAuth client IDs. This is the default pattern for any new backend service: no Azure-specific auth wiring, works identically whether the caller is the web app or a CLI tool, and keeps auth logic visible and testable in the service's own codebase rather than delegated to platform configuration. In [[posts-api|posts-api]], this pattern is used to enforce ownership-based filtering for private sections like 'writing' and 'diary', requiring a valid Google ID token for any access."
       },
       {
         "heading": "Azure EasyAuth (platform-level)",
@@ -516,7 +518,7 @@
       },
       {
         "heading": "Version-history routes (posts-api)",
-        "content": "The version-history routes in [[posts-api|posts-api]] (e.g., GET /sections/{section}/items/{slug}/versions) mirror the same authentication and visibility rules as the existing item routes. Public sections require the item to exist and be published for anonymous access, while private sections require authentication, allowlist checks, and author matching. These rules ensure consistent access control across item and version-history endpoints, with upstream failures from history-api degrading gracefully to 502 errors."
+        "content": "The version-history routes in [[posts-api|posts-api]] (e.g., GET /sections/{section}/items/{slug}/versions) mirror the same authentication and visibility rules as the existing item routes. Public sections require the item to exist and be published for anonymous access, while private sections require authentication, allowlist checks, and author matching. These rules ensure consistent access control across item and version-history endpoints, with upstream failures from [[history-api|history-api]] degrading gracefully to 502 errors. Recent updates to the 'writing' section in [[posts-api|posts-api]] now align its authentication model with the ownership-based filtering used for private sections like 'diary', requiring a Google ID token for any access."
       }
     ],
     "relatedPages": [
@@ -526,8 +528,8 @@
       "learning-plan-api",
       "azure-infrastructure"
     ],
-    "updatedAt": "2026-08-13",
-    "updatedBySha": "5756cba",
+    "updatedAt": "2026-08-23",
+    "updatedBySha": "9719cd0",
     "updatedByPackage": "posts-api"
   }
 }
