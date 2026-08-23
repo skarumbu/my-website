@@ -10,8 +10,6 @@ import Dashboard from './Dashboard.tsx';
 import Ideas from './Ideas.tsx';
 import ProjectPage from './ProjectPage.tsx';
 import LearningPlan from './LearningPlan.tsx';
-import Posts from './Posts.tsx';
-import PostReader from './PostReader.tsx';
 import Write from './Write.tsx';
 import WriteEditor from './WriteEditor.tsx';
 import Diary from './Diary.tsx';
@@ -61,14 +59,6 @@ const router = createBrowserRouter([
   {
     path: "/learning-plan",
     element: <LearningPlan />
-  },
-  {
-    path: "/posts",
-    element: <Posts />
-  },
-  {
-    path: "/posts/:slug",
-    element: <PostReader />
   },
   {
     path: "/write",
