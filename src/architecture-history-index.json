@@ -1,6 +1,19 @@
 [
   {
     "key": "authentication",
+    "capturedAt": "2026-08-24",
+    "commitSha": "1a4ea65",
+    "commitMessage": "Merge 1a4ea65978e4c8e17111d98357bff433950c05f5 into b5c11a628d6faa16b05e5f0d30b31eac05aeea99",
+    "triggeringPackage": "azure-infrastructure"
+  },
+  {
+    "key": "azure-infrastructure",
+    "capturedAt": "2026-08-24",
+    "commitSha": "1a4ea65",
+    "commitMessage": "Merge 1a4ea65978e4c8e17111d98357bff433950c05f5 into b5c11a628d6faa16b05e5f0d30b31eac05aeea99"
+  },
+  {
+    "key": "authentication",
     "capturedAt": "2026-08-23",
     "commitSha": "9719cd0",
     "commitMessage": "Merge 9719cd0a40f5fd38854b82e81fe5d8e19116e9e8 into f88756b78f84a11c7691d31351c0a09df7a9cce7",

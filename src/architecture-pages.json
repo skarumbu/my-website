@@ -348,13 +348,14 @@
     "updatedByPackage": "ideas-api"
   },
   "azure-infrastructure": {
-    "summary": "Defines and provisions all Azure resources at subscription scope using Bicep. Modules now include history-api with a Flex Consumption plan, Go-based Azure Function, EasyAuth integration, and supporting storage resources. Recent updates include integration of HISTORY_API_URL and HISTORY_API_KEY into posts-api for history-api-backed storage and version history support.",
+    "summary": "Defines and provisions all Azure resources at subscription scope using Bicep. Modules now include history-api with a Flex Consumption plan, Go-based Azure Function, EasyAuth integration, and supporting storage resources. Recent updates include integration of HISTORY_API_URL and HISTORY_API_KEY into posts-api for history-api-backed storage and version history support. Adds Application Insights for running-app client telemetry, leveraging a workspace-based Log Analytics setup.",
     "description": "Bicep infrastructure-as-code package that defines and provisions every Azure resource in the system at subscription scope. Modules cover each service, the shared networking layer, and all RBAC role assignments. Recent updates include wiring history-api configuration into posts-api for version history and storage integration.",
     "features": [
-      "Integration of HISTORY_API_URL and HISTORY_API_KEY into posts-api for history-api-backed storage and version history support"
+      "Integration of HISTORY_API_URL and HISTORY_API_KEY into posts-api for history-api-backed storage and version history support",
+      "Provisioning of Application Insights for running-app client telemetry with workspace-based Log Analytics integration"
     ],
     "architecture": {
-      "overview": "Modular Bicep files deployed at subscription scope. Each service has its own module. The Container App Environment module creates the shared Log Analytics workspace used for unified observability across all Container Apps. The arch-content-foundry module provisions an OpenAI resource with a GPT-4o deployment for the arch-content-update CI workflow. The gpt-5.3-codex model for ideas-bot is deployed independently to avoid quota-related deployment failures impacting the rest of the infrastructure. The history-api module introduces a Go-based Azure Function app running on a Flex Consumption plan, with EasyAuth integration and dedicated storage resources for versions table and history-attachments blob container. The posts-api module now integrates with history-api via HISTORY_API_URL and HISTORY_API_KEY app settings, enabling version history and storage functionality.",
+      "overview": "Modular Bicep files deployed at subscription scope. Each service has its own module. The Container App Environment module creates the shared Log Analytics workspace used for unified observability across all Container Apps. The arch-content-foundry module provisions an OpenAI resource with a GPT-4o deployment for the arch-content-update CI workflow. The gpt-5.3-codex model for ideas-bot is deployed independently to avoid quota-related deployment failures impacting the rest of the infrastructure. The history-api module introduces a Go-based Azure Function app running on a Flex Consumption plan, with EasyAuth integration and dedicated storage resources for versions table and history-attachments blob container. The posts-api module now integrates with history-api via HISTORY_API_URL and HISTORY_API_KEY app settings, enabling version history and storage functionality. Additionally, running-app now includes a workspace-based Application Insights component for frontend client telemetry, backed by a dedicated Log Analytics workspace.",
       "keyPoints": [
         "Subscription-scope deployment — all resources land in a single resource group",
         "Managed Identity role assignments are defined alongside the resources that need them",
@@ -367,7 +368,8 @@
         "history-api runs on a Flex Consumption plan, required for Go-based Azure Functions during public preview",
         "history-api uses EasyAuth with an App Registration for secure authentication and authorization",
         "Dedicated storage account for history-api includes versions table and history-attachments blob container",
-        "posts-api integrates with history-api using HISTORY_API_URL and HISTORY_API_KEY for version history and storage functionality"
+        "posts-api integrates with history-api using HISTORY_API_URL and HISTORY_API_KEY for version history and storage functionality",
+        "running-app provisions Application Insights for frontend client telemetry, leveraging a workspace-based Log Analytics setup"
       ]
     },
     "dataFlow": [
@@ -386,10 +388,18 @@
           "Provides version history and storage services to posts-api",
           "Secured with EasyAuth and a shared write key"
         ]
+      },
+      {
+        "label": "running-app",
+        "color": "orange",
+        "sublines": [
+          "Sends frontend client telemetry to Application Insights",
+          "Application Insights integrates with a workspace-based Log Analytics setup"
+        ]
       }
     ],
-    "updatedAt": "2026-08-16",
-    "updatedBySha": "e0c05a3",
+    "updatedAt": "2026-08-24",
+    "updatedBySha": "1a4ea65",
     "title": "Azure Infrastructure",
     "sections": [
       {
@@ -525,7 +535,7 @@
       },
       {
         "heading": "General philosophy",
-        "content": "Prefer application-level Google ID token validation for new services — it's portable, testable, and doesn't depend on Azure-specific platform configuration a future migration would need to reproduce. EasyAuth is not being actively adopted further; it's a historical choice on [[ideas-api|ideas-api]] and a requirement for [[history-api|history-api]] due to its Flex Consumption plan and Go runtime. Machine authentication via custom headers can be useful for specific bot-driven workflows but should be implemented thoughtfully and documented clearly."
+        "content": "Prefer application-level Google ID token validation for new services — it's portable, testable, and doesn't depend on Azure-specific platform configuration a future migration would need to reproduce. EasyAuth is not being actively adopted further; it's a historical choice on [[ideas-api|ideas-api]] and a requirement for [[history-api|history-api]] due to its Flex Consumption plan and Go runtime. Machine authentication via custom headers can be useful for specific bot-driven workflows but should be implemented thoughtfully and documented clearly. Secure handling of authentication-related secrets, such as connection strings for telemetry integrations like Application Insights, is critical and should follow established best practices."
       },
       {
         "heading": "Version-history routes (posts-api)",
@@ -539,8 +549,8 @@
       "learning-plan-api",
       "azure-infrastructure"
     ],
-    "updatedAt": "2026-08-23",
-    "updatedBySha": "9719cd0",
-    "updatedByPackage": "posts-api"
+    "updatedAt": "2026-08-24",
+    "updatedBySha": "1a4ea65",
+    "updatedByPackage": "azure-infrastructure"
   }
 }
