@@ -1,6 +1,19 @@
 [
   {
     "key": "authentication",
+    "capturedAt": "2026-08-29",
+    "commitSha": "d61e3d5",
+    "commitMessage": "Merge d61e3d5d233ab0c84ba54527b11c6e0be8e965c6 into f961531f1c1bcd73f4d8b9f729abb1adc83f47ea",
+    "triggeringPackage": "ideas-api"
+  },
+  {
+    "key": "ideas-api",
+    "capturedAt": "2026-08-29",
+    "commitSha": "d61e3d5",
+    "commitMessage": "Merge d61e3d5d233ab0c84ba54527b11c6e0be8e965c6 into f961531f1c1bcd73f4d8b9f729abb1adc83f47ea"
+  },
+  {
+    "key": "authentication",
     "capturedAt": "2026-08-23",
     "commitSha": "9719cd0",
     "commitMessage": "Merge 9719cd0a40f5fd38854b82e81fe5d8e19116e9e8 into f88756b78f84a11c7691d31351c0a09df7a9cce7",

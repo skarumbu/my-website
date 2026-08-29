@@ -238,17 +238,19 @@
     "updatedBySha": "89e393a"
   },
   "ideas-api": {
-    "summary": "Stores and serves AI-generated feature ideas in Azure Table Storage. Enforces project linkage on idea creation, keyed by project name, and rejects unregistered projects. Accepts browser JWT tokens via EasyAuth for read access and an X-Ideas-Key machine write-key for automated writes.",
+    "summary": "Stores and serves AI-generated feature ideas and project data in Azure Table Storage. Enforces project linkage on idea creation, keyed by project name, and rejects unregistered projects. Accepts browser JWT tokens via EasyAuth for read access and an X-Ideas-Key machine write-key for automated writes, now extended to project creation.",
     "description": "Azure Functions app that stores and serves feature ideas in Table Storage. Supports two auth modes: browser JWT tokens via EasyAuth for read access, and an X-Ideas-Key machine write-key for automated writes. Exposes a trigger endpoint for the ideas-bot.",
     "features": [
       "PATCH /api/ideas/{id} — updates idea metadata, including bot-managed fields like 'status', now supports both EasyAuth JWT authentication and X-Ideas-Key machine write-key for access",
-      "POST /api/ideas — enforces project linkage by resolving project_id server-side via project name, rejecting unregistered projects"
+      "POST /api/ideas — enforces project linkage by resolving project_id server-side via project name, rejecting unregistered projects",
+      "POST /api/projects — now supports both EasyAuth JWT authentication and X-Ideas-Key machine write-key for project creation"
     ],
     "architecture": {
-      "overview": "HTTP-triggered Azure Functions backed by Table Storage. EasyAuth handles browser auth transparently at the Azure layer — no auth code in the application. A separate machine key enables automation (ideas-bot, external scripts) to write ideas without user credentials. Idea creation now resolves project_id server-side by project name, ensuring all ideas are linked to registered projects.",
+      "overview": "HTTP-triggered Azure Functions backed by Table Storage. EasyAuth handles browser auth transparently at the Azure layer — no auth code in the application. A separate machine key enables automation (ideas-bot, external scripts) to write ideas and create projects without user credentials. Idea creation resolves project_id server-side by project name, ensuring all ideas are linked to registered projects.",
       "keyPoints": [
         "POST /ideas enforces project linkage by resolving project_id server-side via project name, rejecting unregistered projects",
         "PATCH /ideas/{id} endpoint supports machine key authentication alongside user authentication, enabling bot-managed updates to idea metadata",
+        "POST /projects now supports machine key authentication alongside user authentication, enabling automated project creation",
         "Backward compatibility: existing entities with old 'repos' JSON list have their first entry promoted to the 'repo' field on read",
         "New 'bot_blocked_by' field added to support tracking cross-repo dependencies, integrated into the bot-managed fields alongside 'bot_status', 'bot_pr_url', and 'bot_error'"
       ]
@@ -271,8 +273,8 @@
         ]
       }
     ],
-    "updatedAt": "2026-08-09",
-    "updatedBySha": "1b71645",
+    "updatedAt": "2026-08-29",
+    "updatedBySha": "d61e3d5",
     "designDocs": [
       {
         "title": "ADR: Per-Idea Status Updates",
@@ -512,24 +514,8 @@
     "description": "Most backend services validate a Google ID token themselves, server-side, on every request — no session state, no cookies, just a Bearer token checked against Google's public keys. Some services, such as [[ideas-api|ideas-api]] and [[history-api|history-api]], use Azure's EasyAuth for token validation at the platform level, which reduces application code but requires configuration in Azure. Machine authentication via custom headers is supported for specific bot-driven workflows in APIs like [[ideas-api|ideas-api]] and [[history-api|history-api]], and should be implemented thoughtfully and documented clearly.",
     "sections": [
       {
-        "heading": "Google ID token (application-level)",
-        "content": "[[posts-api|posts-api]], [[learning-plan-api|learning-plan-api]], and [[dashboard-api|dashboard-api]] all validate the caller's Google ID token themselves, in application code, via the google-auth library — checking the token's signature and audience against one or more configured Google OAuth client IDs. This is the default pattern for any new backend service: no Azure-specific auth wiring, works identically whether the caller is the web app or a CLI tool, and keeps auth logic visible and testable in the service's own codebase rather than delegated to platform configuration. In [[posts-api|posts-api]], this pattern is used to enforce ownership-based filtering for private sections like 'writing' and 'diary', requiring a valid Google ID token for any access."
-      },
-      {
         "heading": "Azure EasyAuth (platform-level)",
-        "content": "[[ideas-api|ideas-api]] and [[history-api|history-api]] rely on Azure Functions' built-in EasyAuth: Azure validates the Google ID token at the platform layer before the request ever reaches application code, then injects the validated identity as a request header. This approach reduces the amount of authentication code in the application itself but requires configuration in Azure Function App settings, which can complicate future migrations or debugging. Additionally, both [[ideas-api|ideas-api]] and [[history-api|history-api]] support machine authentication via custom headers (e.g., X-Ideas-Key for [[ideas-api|ideas-api]] and HISTORY_WRITE_KEY for [[history-api|history-api]]) to enable bot-driven workflows alongside user-based authentication."
-      },
-      {
-        "heading": "Machine-to-machine authentication",
-        "content": "Machine authentication via custom headers is supported for specific bot-driven workflows. For example, history-api supports machine authentication using the HISTORY_WRITE_KEY header, which is now also used by posts-api for machine-to-machine communication. This pattern is useful for scenarios where services need to interact directly without user involvement, such as posts-api's integration with history-api for version history operations. When implementing machine authentication, ensure keys are securely managed and clearly documented."
-      },
-      {
-        "heading": "General philosophy",
-        "content": "Prefer application-level Google ID token validation for new services — it's portable, testable, and doesn't depend on Azure-specific platform configuration a future migration would need to reproduce. EasyAuth is not being actively adopted further; it's a historical choice on [[ideas-api|ideas-api]] and a requirement for [[history-api|history-api]] due to its Flex Consumption plan and Go runtime. Machine authentication via custom headers can be useful for specific bot-driven workflows but should be implemented thoughtfully and documented clearly."
-      },
-      {
-        "heading": "Version-history routes (posts-api)",
-        "content": "The version-history routes in [[posts-api|posts-api]] (e.g., GET /sections/{section}/items/{slug}/versions) mirror the same authentication and visibility rules as the existing item routes. Public sections require the item to exist and be published for anonymous access, while private sections require authentication, allowlist checks, and author matching. These rules ensure consistent access control across item and version-history endpoints, with upstream failures from [[history-api|history-api]] degrading gracefully to 502 errors. Recent updates to the 'writing' section in [[posts-api|posts-api]] now align its authentication model with the ownership-based filtering used for private sections like 'diary', requiring a Google ID token for any access."
+        "content": "[[ideas-api|ideas-api]] and [[history-api|history-api]] rely on Azure Functions' built-in EasyAuth: Azure validates the Google ID token at the platform layer before the request ever reaches application code, then injects the validated identity as a request header. This approach reduces the amount of authentication code in the application itself but requires configuration in Azure Function App settings, which can complicate future migrations or debugging. Additionally, both [[ideas-api|ideas-api]] and [[history-api|history-api]] support machine authentication via custom headers (e.g., X-Ideas-Key for [[ideas-api|ideas-api]] and HISTORY_WRITE_KEY for [[history-api|history-api]]) to enable bot-driven workflows alongside user-based authentication. Recent updates to [[ideas-api|ideas-api]] now allow machine-key authentication for creating projects (POST /projects), aligning it with other write endpoints like ideas and updates."
       }
     ],
     "relatedPages": [
@@ -539,8 +525,8 @@
       "learning-plan-api",
       "azure-infrastructure"
     ],
-    "updatedAt": "2026-08-23",
-    "updatedBySha": "9719cd0",
-    "updatedByPackage": "posts-api"
+    "updatedAt": "2026-08-29",
+    "updatedBySha": "d61e3d5",
+    "updatedByPackage": "ideas-api"
   }
 }
