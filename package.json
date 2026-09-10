@@ -27,7 +27,11 @@
     "start": "WATCHPACK_POLLING=true react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "arch:templates": "node scripts/export-arch-templates.mjs",
+    "arch:templates:check": "node scripts/export-arch-templates.mjs --check",
+    "arch:fixtures": "node scripts/gen-arch-fixtures.mjs",
+    "arch:fixtures:check": "node scripts/gen-arch-fixtures.mjs --check"
   },
   "eslintConfig": {
     "extends": [

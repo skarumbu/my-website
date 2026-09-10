@@ -1,0 +1,22 @@
+{
+  "description": "Most backend services validate a Google ID token themselves, server-side, on every request — no session state, no cookies, just a Bearer token checked against Google's public keys. Some services, such as [[ideas-api|ideas-api]] and [[history-api|history-api]], use Azure's EasyAuth for token validation at the platform level, which reduces application code but requires configuration in Azure. Machine authentication via custom headers is supported for specific bot-driven workflows in APIs like [[ideas-api|ideas-api]] and [[history-api|history-api]], and should be implemented thoughtfully and documented clearly.",
+  "key": "authentication",
+  "relatedPages": [
+    "posts-api",
+    "ideas-api",
+    "dashboard-api",
+    "learning-plan-api",
+    "azure-infrastructure"
+  ],
+  "sections": [
+    {
+      "content": "[[ideas-api|ideas-api]] and [[history-api|history-api]] rely on Azure Functions' built-in EasyAuth: Azure validates the Google ID token at the platform layer before the request ever reaches application code, then injects the validated identity as a request header. This approach reduces the amount of authentication code in the application itself but requires configuration in Azure Function App settings, which can complicate future migrations or debugging. Additionally, both [[ideas-api|ideas-api]] and [[history-api|history-api]] support machine authentication via custom headers (e.g., X-Ideas-Key for [[ideas-api|ideas-api]] and HISTORY_WRITE_KEY for [[history-api|history-api]]) to enable bot-driven workflows alongside user-based authentication. Recent updates to [[ideas-api|ideas-api]] now allow machine-key authentication for creating projects (POST /projects), aligning it with other write endpoints like ideas and updates.",
+      "heading": "Azure EasyAuth (platform-level)"
+    }
+  ],
+  "summary": "How user and machine identity is verified across the system: mostly server-side Google ID token validation, with Azure EasyAuth exceptions and machine key support for specific APIs.",
+  "title": "Authentication",
+  "updatedAt": "2026-08-29",
+  "updatedByPackage": "ideas-api",
+  "updatedBySha": "d61e3d5"
+}
