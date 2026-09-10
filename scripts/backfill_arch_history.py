@@ -8,8 +8,9 @@ serializes it canonically, and POSTs it as version 1 of
 ``architecture::<key>``.
 
 Idempotent — safe to re-run after a partial failure: a page that already exists
-in history-api is skipped unless ``--force``. ``--dry-run`` builds and
-size-checks every page and prints what it would POST, without contacting
+in history-api is skipped unless ``--force``, which POSTs another version for it
+(history-api is append-only; ``--force`` never overwrites). ``--dry-run`` builds
+and size-checks every page and prints what it would POST, without contacting
 history-api.
 
 The size guard runs as a pre-pass over *all* pages: if any effective page
@@ -136,7 +137,11 @@ def main(argv=None):
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
-    parser.add_argument("--force", action="store_true", help="re-import keys that already exist")
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="skip the exists check and append a new version even for keys already in history-api",
+    )
     parser.add_argument(
         "--dry-run",
         action="store_true",

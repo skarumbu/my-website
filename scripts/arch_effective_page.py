@@ -7,27 +7,31 @@ package template and repo URL exported to
 ``scripts/export-arch-templates.mjs``, and resolves reverse ``relatedPages``
 links across the whole page set.
 
-Both ``.github/scripts/wiki_update_pr.py`` (pipeline) and
-``scripts/backfill_arch_history.py`` import this module so the effective-page
-JSON stored in history-api is byte-identical to what the TS produced. The
-cross-language contract is pinned by ``scripts/tests/test_arch_effective_page.py``
-against fixtures generated from the TS side by ``scripts/gen-arch-fixtures.mjs``.
+``scripts/backfill_arch_history.py`` imports this module so the effective-page
+JSON stored in history-api is byte-identical to what the TS produced;
+``.github/scripts/wiki_update_pr.py`` (the pipeline) will import it too once
+step 4 of the migration lands. The cross-language contract is pinned by
+``scripts/tests/test_arch_effective_page.py`` against fixtures generated from
+the TS side by ``scripts/gen-arch-fixtures.mjs``.
 
-Field-merge rules reproduced from resolvePage() (TS ``??`` = nullish, i.e. a
-JSON key that is absent or explicitly ``null``):
+Field-merge rules reproduced from resolvePage(). TS ``??`` is nullish
+coalescing (falls through on a key that is absent *or* explicitly ``null``).
+The overlay-only passthrough fields use plain assignment (``gen?.x``), which
+``JSON.stringify`` drops only when ``undefined`` (key absent) and keeps when
+``null`` -- so those use a presence check, not a null check.
 
   key            always ``<page-key>``
   title          overlay.title ?? template.title ?? page-key      (always present)
   role           overlay.role ?? template.role                    (omitted if nullish)
-  summary        overlay.summary                                  (omitted if nullish)
+  summary        overlay.summary        present-in-overlay -> value (kept even if null)
   description    overlay.description ?? template.description ?? "" (always present)
   features       overlay.features ?? template.features            (omitted if nullish)
   architecture   overlay.architecture non-null -> {**template.architecture, **overlay.architecture};
                  else template.architecture                       (omitted if nullish)
-  sections       overlay.sections                                 (omitted if nullish)
+  sections       overlay.sections       present-in-overlay -> value (kept even if null)
   relatedPages   unique(forward ++ reverse) minus self            (always present, may be [])
   updatedAt / updatedBySha / updatedByPackage
-                 overlay.<field>                                  (omitted if nullish)
+                 overlay.<field>        present-in-overlay -> value (kept even if null)
 
   # only when a template exists for the key (i.e. it is a PackagePage):
   runsOn         template.runsOn
@@ -37,8 +41,9 @@ JSON key that is absent or explicitly ``null``):
   dataFlow       "dataFlow" present in overlay -> overlay.dataFlow ?? template.dataFlow
                  else template.dataFlow                           (omitted if nullish)
 
-Keys whose merged value is nullish are omitted entirely, matching
-``JSON.stringify``'s treatment of ``undefined`` object values in the TS.
+Keys resolved via ``??`` are omitted when their value is nullish; the
+passthrough fields above are omitted only when absent from the overlay
+(an explicit ``null`` is preserved), matching ``JSON.stringify``.
 """
 
 from __future__ import annotations
@@ -111,15 +116,17 @@ def build_effective_page(
     """Reproduce ``resolvePage(key)``.
 
     ``overlay`` is ``all_overlays.get(key)`` (may be ``None``). Returns ``None``
-    when neither a template nor an overlay exists for ``key`` (TS returns
-    ``null``); every key fed from ``architecture-pages.json`` has an overlay.
+    only when neither a template nor an overlay exists for ``key`` -- mirroring
+    TS ``if (!template && !gen)``, where an empty-object overlay (``{}``) is
+    truthy and therefore still yields a page. Every key fed from
+    ``architecture-pages.json`` has an overlay.
     """
     package_templates = templates["packageTemplates"]
     repo_urls = templates["repoUrlByPackage"]
 
     template = package_templates.get(key)
     gen = overlay or {}
-    if template is None and not overlay:
+    if template is None and overlay is None:
         return None
 
     reverse = build_reverse_related(all_overlays)
@@ -138,7 +145,7 @@ def build_effective_page(
     if role is not None:
         page["role"] = role
 
-    if gen.get("summary") is not None:
+    if "summary" in gen:
         page["summary"] = gen["summary"]
 
     page["description"] = _nn(gen.get("description"), _nn(tmpl.get("description"), ""))
@@ -155,13 +162,13 @@ def build_effective_page(
     elif tmpl.get("architecture") is not None:
         page["architecture"] = tmpl["architecture"]
 
-    if gen.get("sections") is not None:
+    if "sections" in gen:
         page["sections"] = gen["sections"]
 
     page["relatedPages"] = related_pages
 
     for field in ("updatedAt", "updatedBySha", "updatedByPackage"):
-        if gen.get(field) is not None:
+        if field in gen:
             page[field] = gen[field]
 
     if template is None:

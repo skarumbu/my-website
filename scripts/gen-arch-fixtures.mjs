@@ -4,9 +4,13 @@
 //
 // scripts/tests/test_arch_effective_page.py asserts that the Python
 // build_effective_page() reproduces these byte-for-byte. Regenerate whenever
-// resolvePage(), PACKAGE_TEMPLATES, repoUrlByPackage, or the overlays for the
-// pinned keys change — and eyeball the diff, since these fixtures are the
-// cross-language contract.
+// resolvePage(), PACKAGE_TEMPLATES, repoUrlByPackage, or the overlays change —
+// and eyeball the diff, since these fixtures are the cross-language contract.
+//
+// One fixture per key in src/architecture-pages.json (all 11), so the pin
+// covers every shape currently in production: service pages, the cross-cutting
+// `authentication` page (no template), reverse relatedPages links, and the
+// `my-website` null-dataFlow overlay edge case.
 //
 // Usage:  node scripts/gen-arch-fixtures.mjs [--check]
 
@@ -18,13 +22,11 @@ import { canonicalize } from './lib/canonical-json.mjs';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const FIXTURE_DIR = path.join(repoRoot, 'scripts', 'fixtures');
+const OVERLAYS_PATH = path.join(repoRoot, 'src', 'architecture-pages.json');
 
-// One service page carrying reverse relatedPages links (posts-api gets
-// azure-infrastructure + authentication back), the cross-cutting page with no
-// template (authentication), and the null-dataFlow overlay edge case
-// (my-website overlay sets "dataFlow": null and its template has no dataFlow,
-// so the key must be omitted).
-const PINNED_KEYS = ['posts-api', 'authentication', 'my-website'];
+const PINNED_KEYS = Object.keys(
+  JSON.parse(fs.readFileSync(OVERLAYS_PATH, 'utf8')),
+);
 
 function main() {
   const check = process.argv.includes('--check');

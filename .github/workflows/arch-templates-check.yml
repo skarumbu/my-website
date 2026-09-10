@@ -43,7 +43,7 @@ jobs:
         with:
           python-version: '3.11'
       - name: Install Python deps
-        run: pip install -r scripts/requirements.txt pytest
+        run: pip install -r scripts/requirements.txt
 
       - name: Python template-merge + backfill tests
         run: python -m pytest scripts/tests -q

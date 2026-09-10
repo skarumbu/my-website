@@ -23,17 +23,18 @@ _REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__f
 _OVERLAYS_PATH = os.path.join(_REPO_ROOT, "src", "architecture-pages.json")
 _FIXTURE_DIR = os.path.join(_REPO_ROOT, "scripts", "fixtures")
 
-# Keep in sync with PINNED_KEYS in scripts/gen-arch-fixtures.mjs:
-#   posts-api      service page with reverse relatedPages links
-#   authentication cross-cutting page, no template
-#   my-website     overlay sets "dataFlow": null and template has none -> key omitted
-PINNED_KEYS = ["posts-api", "authentication", "my-website"]
+with open(_OVERLAYS_PATH, "r", encoding="utf-8") as _f:
+    _OVERLAYS = json.load(_f)
+
+# Every key in architecture-pages.json is pinned to a TS-generated fixture
+# (scripts/gen-arch-fixtures.mjs writes one per key). Regenerate + eyeball the
+# diff whenever resolvePage(), the templates, or the overlays change.
+PINNED_KEYS = list(_OVERLAYS)
 
 
 @pytest.fixture(scope="module")
 def overlays():
-    with open(_OVERLAYS_PATH, "r", encoding="utf-8") as f:
-        return json.load(f)
+    return _OVERLAYS
 
 
 @pytest.fixture(scope="module")
@@ -98,6 +99,70 @@ def test_null_overlay_datastream_drops_key(overlays, templates):
 
 def test_missing_key_returns_none(overlays, templates):
     assert build_effective_page("no-such-page", None, overlays, templates) is None
+
+
+def test_empty_overlay_still_yields_a_page(templates):
+    # TS: `if (!template && !gen) return null` — {} is truthy in JS, so an
+    # empty-object overlay with no template still resolves to a page.
+    overlays = {"bare": {}}
+    page = build_effective_page("bare", {}, overlays, templates)
+    assert page is not None
+    assert page["key"] == "bare"
+    assert page["title"] == "bare"          # falls back to the key
+    assert page["description"] == ""        # falls back to ""
+    assert page["relatedPages"] == []
+    assert "runsOn" not in page             # no template -> no package fields
+
+
+def test_explicit_null_passthrough_field_is_kept():
+    # Passthrough fields (summary/sections/updatedAt/updatedBySha/updatedByPackage)
+    # use gen?.x in the TS: JSON.stringify keeps an explicit null, drops only
+    # undefined. So an overlay "summary": null must survive as "summary": null.
+    templates = {"packageTemplates": {}, "repoUrlByPackage": {}}
+    overlays = {
+        "p": {
+            "summary": None,
+            "sections": None,
+            "updatedAt": None,
+            "updatedBySha": None,
+            "updatedByPackage": None,
+            "description": "d",
+        }
+    }
+    page = build_effective_page("p", overlays["p"], overlays, templates)
+    for field in ("summary", "sections", "updatedAt", "updatedBySha", "updatedByPackage"):
+        assert field in page and page[field] is None
+    assert '"summary": null' in to_canonical_json(page)
+
+
+def test_absent_passthrough_field_is_omitted():
+    templates = {"packageTemplates": {}, "repoUrlByPackage": {}}
+    overlays = {"p": {"description": "d"}}
+    page = build_effective_page("p", overlays["p"], overlays, templates)
+    for field in ("summary", "sections", "updatedAt", "updatedBySha", "updatedByPackage"):
+        assert field not in page
+
+
+def test_null_role_and_features_fall_through_to_template():
+    # role / features use ?? in the TS (not passthrough): explicit null -> template.
+    templates = {
+        "packageTemplates": {
+            "svc": {
+                "title": "t",
+                "role": "template-role",
+                "runsOn": "Azure Functions",
+                "description": "td",
+                "features": ["tf"],
+                "techStack": ["Python"],
+                "pipeline": [{"label": "x"}],
+            }
+        },
+        "repoUrlByPackage": {},
+    }
+    overlays = {"svc": {"role": None, "features": None}}
+    page = build_effective_page("svc", overlays["svc"], overlays, templates)
+    assert page["role"] == "template-role"
+    assert page["features"] == ["tf"]
 
 
 def test_synthetic_merge_precedence():
