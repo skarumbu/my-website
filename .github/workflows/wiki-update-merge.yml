@@ -1,0 +1,36 @@
+name: Apply wiki update to history-api
+
+# Step 4 of the architecture-wiki -> history-api migration (see
+# docs/design/2026-09-01-architecture-wiki-history-migration-design.md in the
+# history-api repo). Fires when a wiki-update/<repo>-pr-<n> PR (opened by
+# wiki_update_pr.py) merges into main, and posts the as-merged
+# docs/wiki-preview/<key>.json content to history-api as a new version per
+# scripts/apply_wiki_manifest.py.
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+
+jobs:
+  apply-wiki-manifest:
+    if: github.event.pull_request.merged && startsWith(github.event.pull_request.head.ref, 'wiki-update/')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout merged commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -r scripts/requirements.txt
+
+      - name: Apply wiki-preview manifest to history-api
+        env:
+          HISTORY_API_URL: ${{ secrets.HISTORY_API_URL }}
+          HISTORY_WRITE_KEY: ${{ secrets.HISTORY_WRITE_KEY }}
+        run: python scripts/apply_wiki_manifest.py

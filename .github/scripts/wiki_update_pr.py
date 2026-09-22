@@ -14,6 +14,17 @@ wiki-update PR per code PR, always reflecting its latest state. Nothing here
 closes or merges that PR automatically — that's a deliberate choice: review and
 merge it yourself, on your own schedule, independent of the code PR.
 
+The wiki-update PR carries a *preview*, not a direct edit: for each affected
+page it writes the proposed effective (template-merged) page JSON to
+docs/wiki-preview/<key>.json, plus one entry in docs/wiki-preview/manifest.json
+recording the history-api version it was generated against. It does not touch
+src/architecture-pages.json or src/architecture-history-index.json — those
+stay in the repo as an inert pre-migration backup. On merge, a separate
+workflow (wiki-update-merge.yml) reads the manifest and posts the as-merged
+preview content to history-api as a new version. See
+docs/design/2026-09-01-architecture-wiki-history-migration-design.md (in the
+history-api repo) for the full design.
+
 Required env vars:
   ARCH_CONTENT_FOUNDRY_KEY  - API key for arch-content-foundry.services.ai.azure.com
   WIKI_UPDATE_GH_TOKEN      - Fine-grained PAT with contents+PRs write access to skarumbu/my-website
@@ -51,8 +62,12 @@ DEPLOYMENT = "gpt-4o"
 API_VERSION = "2024-02-01"
 MY_WEBSITE_REPO = "skarumbu/my-website"
 PAGES_FILE = "src/architecture-pages.json"
-HISTORY_INDEX_FILE = "src/architecture-history-index.json"
 MAX_RELATED_PAGES = 2
+
+# The architecture wiki's history-api section. Public read (see the
+# document-visibility model), so fetch_latest_version_id() below needs no key.
+SECTION = "architecture"
+HISTORY_API_URL = "https://history-api-prod.azurewebsites.net/api"
 
 client = AzureOpenAI(
     azure_endpoint=ENDPOINT,
@@ -403,7 +418,15 @@ Return valid JSON only (no markdown fences, no commentary)."""
         print(f"Skipping related page '{key}': failed to generate/parse ({e})", file=sys.stderr)
         continue
 
-# ── Phase 3: clone my-website, apply changes on a dedicated branch ───────────
+# ── Phase 3: clone my-website, build preview files + manifest on a dedicated
+#    branch. Per the architecture-wiki -> history-api migration (step 4), this
+#    no longer mutates PAGES_FILE / HISTORY_INDEX_FILE in place — those stay as
+#    an inert pre-migration backup. Instead it writes the proposed *effective*
+#    page (template-merged) for each affected page under docs/wiki-preview/,
+#    plus a manifest recording the history-api version each preview was
+#    generated against. A merge-triggered workflow (wiki-update-merge.yml)
+#    reads that manifest and posts the as-merged content as a new history-api
+#    version — see docs/design/2026-09-01-architecture-wiki-history-migration-design.md.
 
 clone_url = f"https://x-access-token:{wiki_gh_token}@github.com/{MY_WEBSITE_REPO}.git"
 run(["git", "clone", "--depth=1", clone_url, "my-website-clone"])
@@ -412,65 +435,86 @@ run(["git", "config", "user.email", "github-actions[bot]@users.noreply.github.co
 run(["git", "config", "user.name", "github-actions[bot]"], cwd=cwd)
 run(["git", "checkout", "-B", wiki_branch], cwd=cwd)
 
+# arch_effective_page.py is only available after the clone above (it lives in
+# my-website's own scripts/ dir, not fetched by the reusable workflow).
+sys.path.insert(0, os.path.join(cwd, "scripts"))
+from arch_effective_page import build_effective_page, load_templates, to_canonical_json  # noqa: E402
+
 pages_path = os.path.join(cwd, PAGES_FILE)
 with open(pages_path, "r", encoding="utf-8") as f:
-    full_pages = json.load(f)
+    all_overlays = json.load(f)
 
-history_index_path = os.path.join(cwd, HISTORY_INDEX_FILE)
-try:
-    with open(history_index_path, "r", encoding="utf-8") as f:
-        history_index = json.load(f)
-except (FileNotFoundError, json.JSONDecodeError):
-    history_index = []
+templates = load_templates(os.path.join(cwd, "src", "architecture", "arch-templates.generated.json"))
 
-# The package's own history entry — no triggeringPackage needed, its own repoUrl
-# (derived elsewhere from arch-graph-data.ts) resolves the commit link.
-history_index.insert(0, {
-    "key": repo_name,
-    "capturedAt": today,
-    "commitSha": short_sha,
-    "commitMessage": history_commit_message,
-})
 
-# Merge the package's own patch
-pkg_page = full_pages.get(repo_name, {})
+def fetch_latest_version_id(key: str) -> str:
+    """The history-api version_id a preview for `key` was generated against, or
+    "" if the page has no version yet (first-ever write for it). The
+    `architecture` section is public, so this needs no auth; a 401 here means
+    "no document" (get_document.go returns 401, not 404, for an anonymous
+    caller on a missing document, to avoid leaking existence of private docs)."""
+    url = f"{HISTORY_API_URL}/sections/{SECTION}/documents/{key}"
+    req = urllib.request.Request(url, headers={"Accept": "application/json"})
+    try:
+        with urllib.request.urlopen(req) as resp:
+            body = json.loads(resp.read().decode("utf-8"))
+            return body.get("version_id", "")
+    except urllib.error.HTTPError as e:
+        if e.code in (401, 404):
+            return ""
+        raise
+
+
+# Merge the package's own patch into its overlay (in-memory only — the overlay
+# file on disk is no longer written back).
+pkg_overlay = dict(all_overlays.get(repo_name, {}))
 for key, value in page_updates.items():
     if key == "architecture" and isinstance(value, dict):
-        pkg_page["architecture"] = {**pkg_page.get("architecture", {}), **value}
+        pkg_overlay["architecture"] = {**pkg_overlay.get("architecture", {}), **value}
     else:
-        pkg_page[key] = value
-pkg_page["updatedAt"] = today
-pkg_page["updatedBySha"] = short_sha
-full_pages[repo_name] = pkg_page
+        pkg_overlay[key] = value
+pkg_overlay["updatedAt"] = today
+pkg_overlay["updatedBySha"] = short_sha
+all_overlays[repo_name] = pkg_overlay
 
-# Merge each related page (full replace of the generated fields) + its history entry
+# Merge each related page's generated content into its overlay (full replace
+# of the generated fields, same as before).
 for key, content in generated_related_pages.items():
-    existing = full_pages.get(key, {})
+    existing = all_overlays.get(key, {})
     merged = {**existing, **content}
     merged["updatedAt"] = today
     merged["updatedBySha"] = short_sha
     merged["updatedByPackage"] = repo_name
-    full_pages[key] = merged
+    all_overlays[key] = merged
 
-    # A related page has no repo of its own — its commit link resolves via
-    # whichever package triggered the update.
-    history_index.insert(0, {
+affected_keys = [repo_name, *generated_related_pages.keys()]
+
+preview_dir = os.path.join(cwd, "docs", "wiki-preview")
+os.makedirs(preview_dir, exist_ok=True)
+manifest = []
+for key in affected_keys:
+    page = build_effective_page(key, all_overlays.get(key), all_overlays, templates)
+    if page is None:
+        print(f"Warning: no template or overlay for '{key}' — skipping preview.", file=sys.stderr)
+        continue
+    with open(os.path.join(preview_dir, f"{key}.json"), "w", encoding="utf-8", newline="\n") as f:
+        f.write(to_canonical_json(page))
+    manifest.append({
         "key": key,
-        "capturedAt": today,
-        "commitSha": short_sha,
-        "commitMessage": history_commit_message,
-        "triggeringPackage": repo_name,
+        "base_version_id": fetch_latest_version_id(key),
+        "triggering_repo": repo_full,
+        "message": history_commit_message,
     })
 
-with open(pages_path, "w", encoding="utf-8") as f:
-    json.dump(full_pages, f, indent=2, ensure_ascii=False)
+if not manifest:
+    print("No pages produced a preview — nothing to propose. Exiting.", file=sys.stderr)
+    sys.exit(0)
+
+with open(os.path.join(preview_dir, "manifest.json"), "w", encoding="utf-8", newline="\n") as f:
+    json.dump(manifest, f, indent=2, ensure_ascii=False, sort_keys=True)
     f.write("\n")
 
-with open(history_index_path, "w", encoding="utf-8") as f:
-    json.dump(history_index, f, indent=2, ensure_ascii=False)
-    f.write("\n")
-
-run(["git", "add", PAGES_FILE, HISTORY_INDEX_FILE], cwd=cwd)
+run(["git", "add", "docs/wiki-preview"], cwd=cwd)
 commit_msg = f"chore: propose {repo_name} wiki update ({repo_name}#{pr_number})"
 run(["git", "commit", "-m", commit_msg], cwd=cwd)
 run(["git", "push", "--force", "origin", wiki_branch], cwd=cwd)
