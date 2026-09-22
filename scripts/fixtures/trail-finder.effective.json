@@ -1,0 +1,87 @@
+{
+  "architecture": {
+    "keyPoints": [
+      "Autocomplete is browser-side (Google Maps JS SDK) — 300ms debounce, no backend request until search is submitted",
+      "24h cache TTL balances freshness with API cost; weather is the most volatile component",
+      "Identical structured JSON logging middleware to momentum-finder — same KQL queries work for both",
+      "Scales to zero when idle — same cold start caveat as momentum-finder",
+      "Google Places and Custom Search quotas are the primary cost driver; OpenAI is secondary"
+    ],
+    "overview": "FastAPI app with a sequential pipeline of external API calls fanned out where possible. Azure OpenAI synthesizes the final output from all gathered context. The in-memory cache is a Python dict — cleared on container restart."
+  },
+  "dataFlow": [
+    {
+      "color": "blue",
+      "label": "User types city → Google Maps JS SDK autocomplete (browser)"
+    },
+    {
+      "color": "orange",
+      "label": "User submits → trail-finder API (Container App)"
+    },
+    {
+      "label": "Geocode city → lat/lon",
+      "sublines": [
+        "Google Places text search for nearby trails",
+        "Open-Meteo weekend weather forecast",
+        "Google Custom Search for AllTrails snippets"
+      ]
+    },
+    {
+      "color": "orange",
+      "label": "Azure OpenAI synthesizes condition summary + gear list"
+    },
+    {
+      "color": "blue",
+      "label": "Result cached 24h · trail cards rendered"
+    }
+  ],
+  "description": "FastAPI Container App that generates personalised trail recommendations for a given city. Fans out across Google Places, weather, and search APIs, then synthesizes a condition summary and gear list with Azure OpenAI. Results are cached 24h per location.",
+  "features": [
+    "City search with Google Maps JS SDK autocomplete — runs entirely in the browser, zero backend cost",
+    "Geocodes the city and searches Google Places for nearby hiking trails",
+    "Fetches weekend weather forecast from Open-Meteo (free, no API key)",
+    "Pulls AllTrails snippets via Google Custom Search for additional trail context",
+    "Azure OpenAI synthesizes a condition summary and gear list from all sources",
+    "In-memory result cache keyed by normalised city name — 24h TTL",
+    "/health endpoint for dashboard monitoring"
+  ],
+  "key": "trail-finder",
+  "pipeline": [
+    {
+      "label": "git push\nmain/master"
+    },
+    {
+      "color": "blue",
+      "label": "GitHub Actions"
+    },
+    {
+      "label": "docker build\n& push to ACR"
+    },
+    {
+      "color": "orange",
+      "label": "az containerapp\nupdate"
+    },
+    {
+      "color": "green",
+      "label": "Live on\nContainer Apps"
+    }
+  ],
+  "relatedPages": [],
+  "repoUrl": "https://github.com/skarumbu/trail_finder",
+  "role": "Trail recommendations + conditions via Google Places & AI",
+  "runsOn": "Azure Container Apps",
+  "summary": "Given a city, geocodes it, searches Google Places for nearby trails, fetches weather from Open-Meteo, pulls AllTrails snippets via Google Custom Search, then synthesizes a condition summary and gear list with Azure OpenAI. Results are cached in memory for 24 hours. Runs as a Container App with the same logging middleware as momentum-finder.",
+  "techStack": [
+    "FastAPI",
+    "Python 3.11",
+    "Uvicorn",
+    "Azure Container Apps",
+    "Google Places API",
+    "Google Custom Search",
+    "Open-Meteo",
+    "Azure OpenAI",
+    "Log Analytics",
+    "Docker"
+  ],
+  "title": "trail-finder"
+}

@@ -1,0 +1,49 @@
+name: Arch templates + effective-page checks
+
+# Guards the architecture-wiki -> history-api migration's cross-language contract:
+#  - src/architecture/arch-templates.generated.json is not stale vs the .ts sources
+#  - the committed TS-derived effective-page fixtures still match resolvePage()
+#  - the Python template merge (scripts/arch_effective_page.py) reproduces those
+#    fixtures byte-for-byte, and the backfill script's guards hold
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/architecture/**'
+      - 'src/architecture-pages.json'
+      - 'scripts/**'
+      - '.github/workflows/arch-templates-check.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/architecture/**'
+      - 'src/architecture-pages.json'
+      - 'scripts/**'
+      - '.github/workflows/arch-templates-check.yml'
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm ci
+
+      - name: arch-templates.generated.json is up to date
+        run: npm run arch:templates:check
+
+      - name: effective-page fixtures match resolvePage()
+        run: npm run arch:fixtures:check
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install Python deps
+        run: pip install -r scripts/requirements.txt
+
+      - name: Python template-merge + backfill tests
+        run: python -m pytest scripts/tests -q

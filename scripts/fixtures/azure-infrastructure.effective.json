@@ -1,0 +1,92 @@
+{
+  "architecture": {
+    "keyPoints": [
+      "Subscription-scope deployment — all resources land in a single resource group",
+      "Managed Identity role assignments are defined alongside the resources that need them",
+      "Container Registry uses admin credentials (not Managed Identity) for simplicity",
+      "Log Analytics workspace is shared by momentum-finder, trail-finder, and dashboard-api",
+      "Scaling rules on Container Apps: min 0 replicas (scale to zero), max 10",
+      "arch-content-foundry OpenAI resource uses GlobalStandard SKU with 50K TPM capacity",
+      "gpt-5.3-codex model for ideas-bot is deployed separately to mitigate quota constraints",
+      "Azure Table Storage is used by ideas-api for project resolution and backfill operations, supporting features like name-based project linkage and one-time data backfill scripts",
+      "history-api runs on a Flex Consumption plan, required for Go-based Azure Functions during public preview",
+      "history-api uses EasyAuth with an App Registration for secure authentication and authorization",
+      "Dedicated storage account for history-api includes versions table and history-attachments blob container",
+      "posts-api integrates with history-api using HISTORY_API_URL and HISTORY_API_KEY for version history and storage functionality"
+    ],
+    "overview": "Modular Bicep files deployed at subscription scope. Each service has its own module. The Container App Environment module creates the shared Log Analytics workspace used for unified observability across all Container Apps. The arch-content-foundry module provisions an OpenAI resource with a GPT-4o deployment for the arch-content-update CI workflow. The gpt-5.3-codex model for ideas-bot is deployed independently to avoid quota-related deployment failures impacting the rest of the infrastructure. The history-api module introduces a Go-based Azure Function app running on a Flex Consumption plan, with EasyAuth integration and dedicated storage resources for versions table and history-attachments blob container. The posts-api module now integrates with history-api via HISTORY_API_URL and HISTORY_API_KEY app settings, enabling version history and storage functionality."
+  },
+  "dataFlow": [
+    {
+      "color": "blue",
+      "label": "posts-api",
+      "sublines": [
+        "Receives HISTORY_API_URL and HISTORY_API_KEY as app settings",
+        "Uses history-api for version history and storage operations"
+      ]
+    },
+    {
+      "color": "green",
+      "label": "history-api",
+      "sublines": [
+        "Provides version history and storage services to posts-api",
+        "Secured with EasyAuth and a shared write key"
+      ]
+    }
+  ],
+  "description": "Bicep infrastructure-as-code package that defines and provisions every Azure resource in the system at subscription scope. Modules cover each service, the shared networking layer, and all RBAC role assignments. Recent updates include wiring history-api configuration into posts-api for version history and storage integration.",
+  "features": [
+    "Integration of HISTORY_API_URL and HISTORY_API_KEY into posts-api for history-api-backed storage and version history support"
+  ],
+  "key": "azure-infrastructure",
+  "pipeline": [
+    {
+      "label": "Manual trigger\nor PR merge"
+    },
+    {
+      "color": "blue",
+      "label": "GitHub Actions"
+    },
+    {
+      "color": "orange",
+      "label": "az deployment\nsub create"
+    },
+    {
+      "color": "green",
+      "label": "Resources\nprovisioned"
+    }
+  ],
+  "relatedPages": [
+    "posts-api",
+    "authentication"
+  ],
+  "repoUrl": "https://github.com/skarumbu/azure-infrastructure",
+  "role": "Defines all Azure cloud resources (infra-as-code)",
+  "runsOn": "Provisioning only",
+  "sections": [
+    {
+      "content": "- Azure Static Web App for the frontend (my-website)\n- Container Registry for Docker images (momentum-finder, trail-finder, ideas-bot)\n- Container App Environment with shared Log Analytics workspace\n- momentum-finder and trail-finder Container Apps (with scaling rules)\n- digits, dashboard-api, and ideas-api Azure Functions apps\n- Azure Table Storage for ideas-api project resolution and backfill operations\n- All Managed Identity RBAC role assignments (Log Analytics Reader, Cost Management Reader)\n- Container App Job definition for ideas-bot\n- arch-content-foundry OpenAI resource with GPT-4o deployment (GlobalStandard, 50K TPM)\n- Independent deployment of gpt-5.3-codex model for ideas-bot to handle quota constraints\n- history-api Go-based Azure Function app on Flex Consumption plan with EasyAuth integration\n- Dedicated storage account for history-api with versions table and history-attachments blob container\n- posts-api integration with history-api for version-history storage, requiring HISTORY_API_URL and HISTORY_API_KEY environment variables",
+      "heading": "Features"
+    },
+    {
+      "content": "The Azure infrastructure is defined using modular Bicep files deployed at subscription scope. Each service has its own module. The Container App Environment module creates the shared Log Analytics workspace used for unified observability across all Container Apps. The arch-content-foundry module provisions an OpenAI resource with a GPT-4o deployment for the arch-content-update CI workflow. The gpt-5.3-codex model for ideas-bot is deployed independently to avoid quota-related deployment failures impacting the rest of the infrastructure. Additionally, Azure Table Storage is provisioned and utilized by ideas-api for project resolution and backfill operations, ensuring robust data consistency and integrity for project and idea management workflows. Posts-api integrates with history-api for version-history storage, requiring HISTORY_API_URL and HISTORY_API_KEY environment variables to enable secure communication.",
+      "heading": "Architecture"
+    },
+    {
+      "content": "- Subscription-scope deployment — all resources land in a single resource group\n- Managed Identity role assignments are defined alongside the resources that need them\n- Container Registry uses admin credentials (not Managed Identity) for simplicity\n- Log Analytics workspace is shared by momentum-finder, trail-finder, and dashboard-api\n- Scaling rules on Container Apps: min 0 replicas (scale to zero), max 10\n- arch-content-foundry OpenAI resource uses GlobalStandard SKU with 50K TPM capacity\n- gpt-5.3-codex model for ideas-bot is deployed separately to mitigate quota constraints\n- Azure Table Storage is used by ideas-api for project resolution and backfill operations, supporting features like name-based project linkage and one-time data backfill scripts\n- history-api runs on a Flex Consumption plan, required for Go-based Azure Functions during public preview\n- history-api uses EasyAuth with an App Registration for secure authentication and authorization\n- Dedicated storage account for history-api includes versions table and history-attachments blob container\n- posts-api integrates with history-api for version-history storage, requiring HISTORY_API_URL and HISTORY_API_KEY environment variables",
+      "heading": "Key Points"
+    }
+  ],
+  "summary": "Defines and provisions all Azure resources at subscription scope using Bicep. Modules now include history-api with a Flex Consumption plan, Go-based Azure Function, EasyAuth integration, and supporting storage resources. Recent updates include integration of HISTORY_API_URL and HISTORY_API_KEY into posts-api for history-api-backed storage and version history support.",
+  "techStack": [
+    "Azure Bicep",
+    "Azure RBAC",
+    "Managed Identity",
+    "Container Registry",
+    "Azure CLI"
+  ],
+  "title": "Azure Infrastructure",
+  "updatedAt": "2026-08-16",
+  "updatedByPackage": "posts-api",
+  "updatedBySha": "e0c05a3"
+}

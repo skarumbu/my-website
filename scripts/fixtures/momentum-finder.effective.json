@@ -1,0 +1,76 @@
+{
+  "architecture": {
+    "keyPoints": [
+      "Scales 0–10 replicas — expect a cold start (~5–10s) on first request after idle",
+      "Shared Log Analytics workspace with trail-finder; KQL queries in dashboard-api span both services",
+      "REACT_APP_API_BASE_URL must be set in the frontend build for this feature to work",
+      "Structured logging middleware attaches request_id, duration_ms, and status_code to every log line"
+    ],
+    "overview": "FastAPI on Uvicorn (port 80), containerised and deployed as an Azure Container App. Shares a Log Analytics workspace with trail-finder for unified observability. The app scales to zero replicas when idle."
+  },
+  "dataFlow": [
+    {
+      "color": "blue",
+      "label": "User opens /momentum-finder"
+    },
+    {
+      "color": "orange",
+      "label": "GET {REACT_APP_API_BASE_URL}/get-current-games"
+    },
+    {
+      "color": "orange",
+      "label": "momentum-finder Container App",
+      "sublines": [
+        "fetches live NBA data",
+        "analyses scoring runs and momentum"
+      ]
+    },
+    {
+      "color": "blue",
+      "label": "Live game cards rendered — teams, score, momentum indicators"
+    }
+  ],
+  "description": "FastAPI Container App that analyses live NBA game data to detect and surface momentum shifts. Scales automatically between 0 and 10 replicas and emits structured JSON logs for dashboard monitoring.",
+  "features": [
+    "Fetches live NBA game scores and play-by-play data",
+    "Detects scoring runs and momentum shifts within a game",
+    "Returns structured game cards with team info, score, period, and momentum indicators",
+    "/health endpoint consumed by dashboard-api for uptime monitoring",
+    "Structured JSON request logs flow into shared Log Analytics workspace"
+  ],
+  "key": "momentum-finder",
+  "pipeline": [
+    {
+      "label": "git push\nmain/master"
+    },
+    {
+      "color": "blue",
+      "label": "GitHub Actions"
+    },
+    {
+      "label": "docker build\n& push to ACR"
+    },
+    {
+      "color": "orange",
+      "label": "az containerapp\nupdate"
+    },
+    {
+      "color": "green",
+      "label": "Live on\nContainer Apps"
+    }
+  ],
+  "relatedPages": [],
+  "repoUrl": "https://github.com/skarumbu/momentum_finder",
+  "role": "Identifies momentum shifts in live NBA games",
+  "runsOn": "Azure Container Apps",
+  "summary": "Analyses live NBA game data to surface momentum shifts. Runs as a Container App (FastAPI + Uvicorn on port 80, scales 0–10 replicas). Emits structured JSON logs on every request that flow into Log Analytics for the dashboard to query.",
+  "techStack": [
+    "FastAPI",
+    "Python 3.11",
+    "Uvicorn",
+    "Azure Container Apps",
+    "Log Analytics",
+    "Docker"
+  ],
+  "title": "momentum-finder"
+}

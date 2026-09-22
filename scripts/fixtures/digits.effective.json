@@ -1,0 +1,72 @@
+{
+  "architecture": {
+    "keyPoints": [
+      "Frontend skips this API in development — NODE_ENV=development activates hardcoded stub data",
+      "Metrics rows are picked up by dashboard-api via Azure Table Storage queries",
+      "Timer trigger uses a cron expression: \"0 0 * * *\" (midnight UTC daily)",
+      "Puzzles are keyed by ISO date string — no cleanup needed, old rows simply age out"
+    ],
+    "overview": "Two Azure Function triggers: a timer trigger that generates the day's puzzles at midnight UTC and writes them to Table Storage, and an HTTP trigger that reads and returns them. Table Storage acts as both puzzle store and metrics sink."
+  },
+  "dataFlow": [
+    {
+      "color": "blue",
+      "label": "User opens /digits"
+    },
+    {
+      "label": "Frontend checks NODE_ENV",
+      "sublines": [
+        "development → hardcoded stub data (no API call)",
+        "production → call Digits API"
+      ]
+    },
+    {
+      "color": "green",
+      "label": "Digits API (Azure Functions)",
+      "sublines": [
+        "returns puzzles sorted by difficulty",
+        "writes metrics row to Table Storage"
+      ]
+    },
+    {
+      "color": "blue",
+      "label": "Puzzles rendered — easy → medium → hard"
+    }
+  ],
+  "description": "Azure Functions app that generates, stores, and serves daily number puzzles. Each request is instrumented with metrics rows written to Table Storage so the dashboard can track volume and latency.",
+  "features": [
+    "Generates number puzzles with configurable difficulty (easy, medium, hard)",
+    "Stores puzzles in Azure Table Storage partitioned by date",
+    "Serves the current day's puzzles via a single HTTP GET endpoint",
+    "Writes per-request metrics rows (duration, status, puzzle count) to a metrics table",
+    "Three difficulty tiers returned in a single response — frontend sorts easy → medium → hard"
+  ],
+  "key": "digits",
+  "pipeline": [
+    {
+      "label": "git push\nmain/master"
+    },
+    {
+      "color": "blue",
+      "label": "GitHub Actions"
+    },
+    {
+      "label": "func publish\n--python"
+    },
+    {
+      "color": "green",
+      "label": "Live on\nAzure Functions"
+    }
+  ],
+  "relatedPages": [],
+  "repoUrl": "https://github.com/skarumbu/digits",
+  "role": "Generates and serves daily Digits puzzles",
+  "runsOn": "Azure Functions",
+  "summary": "Generates, stores, and serves daily Digits puzzles via Azure Table Storage. Each invocation writes a metrics row (duration, status) to a metrics table so the dashboard can track request volume. In local development the frontend bypasses this API and uses hardcoded stub data instead.",
+  "techStack": [
+    "Azure Functions v2",
+    "Python 3.11",
+    "Azure Table Storage"
+  ],
+  "title": "digits"
+}

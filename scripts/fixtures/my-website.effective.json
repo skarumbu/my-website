@@ -1,0 +1,56 @@
+{
+  "architecture": {
+    "keyPoints": [
+      "public/staticwebapp.config.json rewrites all routes to index.html — required for deep-link navigation on Azure SWA",
+      "Digits uses process.env.NODE_ENV === \"development\" to skip the API and use hardcoded stub data locally",
+      "Trail Finder autocomplete uses the Google Maps JS SDK entirely in the browser — no backend round-trip, 300ms debounce",
+      "Every PR to main gets an isolated SWA preview environment, torn down automatically when the PR closes",
+      "Cross-repo deploy: after each backend service deploys, it commits updated metadata to this repo, triggering a frontend rebuild so the Architecture page stays current"
+    ],
+    "overview": "Create React App with TypeScript and client-side routing via react-router-dom. Each route maps to a top-level TSX + CSS pair. A shared NavBar component appears on every view. REACT_APP_* environment variables are injected at build time by GitHub Actions."
+  },
+  "description": "A React (TypeScript) single-page application that hosts all user-facing features. Deployed to Azure Static Web Apps with a rewrite rule that sends all navigation to index.html so client-side routing works on deep links.",
+  "features": [
+    "Digits — daily number puzzle game. Uses hardcoded stub data in development (no API call needed)",
+    "Momentum Finder — live NBA game cards with momentum shift indicators",
+    "Trail Finder — city search with Google Maps autocomplete (browser-side), trail recommendations, weather, and AI-generated gear list",
+    "Ideas Board — EasyAuth sign-in, feature idea list and project management, one-click bot trigger",
+    "Learning Plan — Google OAuth sign-in, AI-generated personalised study plans, save and review history",
+    "Architecture reference — internal system documentation (not linked from the main nav)"
+  ],
+  "key": "my-website",
+  "pipeline": [
+    {
+      "label": "git push\nmain"
+    },
+    {
+      "color": "blue",
+      "label": "GitHub Actions\ntrigger"
+    },
+    {
+      "label": "npm run build"
+    },
+    {
+      "color": "orange",
+      "label": "Azure SWA\ndeploy action"
+    },
+    {
+      "color": "green",
+      "label": "Live on\nAzure SWA"
+    }
+  ],
+  "relatedPages": [],
+  "repoUrl": "https://github.com/skarumbu/my-website",
+  "role": "React SPA — user-facing frontend",
+  "runsOn": "Azure Static Web Apps",
+  "summary": "A React (TypeScript) single-page application that handles all user interaction. Deployed to Azure Static Web Apps, which serves the static build and rewrites all navigation to index.html so client-side routing works on deep links. Autocomplete on the Trail Finder search bar is powered by the Google Maps JS SDK running entirely in the browser.",
+  "techStack": [
+    "React 18",
+    "TypeScript",
+    "React Router v6",
+    "Create React App",
+    "Azure Static Web Apps",
+    "Google Maps JS SDK"
+  ],
+  "title": "my-website"
+}

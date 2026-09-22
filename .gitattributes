@@ -1,0 +1,7 @@
+# Byte-exact artifacts for the architecture-wiki -> history-api migration.
+# These are compared byte-for-byte by the staleness checks
+# (scripts/export-arch-templates.mjs --check, scripts/gen-arch-fixtures.mjs
+# --check) and by scripts/tests/test_arch_effective_page.py, so they must stay
+# LF regardless of core.autocrlf on the checkout.
+scripts/fixtures/*.json                          text eol=lf
+src/architecture/arch-templates.generated.json   text eol=lf

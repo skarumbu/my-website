@@ -1,0 +1,6 @@
+# Deps for the architecture-wiki -> history-api migration scripts.
+# arch_effective_page.py is stdlib-only; backfill_arch_history.py needs requests.
+requests>=2.28.0
+
+# Test-only, pinned so CI is reproducible (scripts/tests/, run via pytest).
+pytest==9.1.1
