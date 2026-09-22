@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useParams, useNavigate, useBeforeUnload, useBlocker } from 'react-router-dom';
 import NavBar from './components/nav-bar.tsx';
 import WritingCursor from './components/WritingCursor.tsx';
 import { sectionUrl } from './lib/postsApi.ts';
+import { createPostsApiVersionClient } from './lib/postsApiVersionClient.ts';
 import { useGoogleAuth } from './lib/useGoogleAuth.ts';
 import { VersionHistoryPanel } from './VersionHistoryPanel.tsx';
 import './styling/private-theme.css';
@@ -15,6 +16,10 @@ export default function WriteEditor() {
   const navigate = useNavigate();
 
   const { authState, googleToken, googleBtnRef, signOut } = useGoogleAuth();
+  const writeVersionClient = useMemo(
+    () => createPostsApiVersionClient('writing', slug ?? '', googleToken),
+    [slug, googleToken],
+  );
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -306,7 +311,7 @@ export default function WriteEditor() {
                 setAutosaveStatus('Unsaved changes');
               }}
             />
-            {slug && <VersionHistoryPanel section="writing" slug={slug} token={googleToken} />}
+            {slug && <VersionHistoryPanel client={writeVersionClient} />}
           </>
         )}
       </div>

@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useParams, useNavigate, useBeforeUnload, useBlocker } from 'react-router-dom';
 import NavBar from './components/nav-bar.tsx';
 import WritingCursor from './components/WritingCursor.tsx';
 import BlockEditorRow from './components/BlockEditorRow.tsx';
 import { sectionUrl } from './lib/postsApi.ts';
+import { createPostsApiVersionClient } from './lib/postsApiVersionClient.ts';
 import { useGoogleAuth } from './lib/useGoogleAuth.ts';
 import { Block } from './lib/diaryTypes.ts';
 import { VersionHistoryPanel } from './VersionHistoryPanel.tsx';
@@ -16,6 +17,10 @@ export default function DiaryEditor() {
   const navigate = useNavigate();
 
   const { authState, googleToken, googleBtnRef, signOut } = useGoogleAuth();
+  const diaryVersionClient = useMemo(
+    () => createPostsApiVersionClient('diary', slug ?? '', googleToken),
+    [slug, googleToken],
+  );
 
   const [title, setTitle] = useState('');
   const [blocks, setBlocks] = useState<Block[]>([]);
@@ -297,7 +302,7 @@ export default function DiaryEditor() {
               <button type="button" onClick={addTextBlock}>+ Text</button>
               <button type="button" onClick={addStickerBlock}>+ Sticker</button>
             </div>
-            {slug && <VersionHistoryPanel section="diary" slug={slug} token={googleToken} />}
+            {slug && <VersionHistoryPanel client={diaryVersionClient} />}
           </>
         )}
       </div>
