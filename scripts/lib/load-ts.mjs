@@ -51,6 +51,16 @@ export function loadTsModule(entryFile) {
       return moduleObj.exports;
     }
 
+    // Stylesheets are side-effect-only imports in the webpack/CRA build
+    // (handled by css-loader); this loader only cares about JS/TS export
+    // values reachable from an entry point like PageDetail.tsx, so a
+    // stylesheet import resolves to an empty, inert module.
+    if (absFile.endsWith('.css')) {
+      const moduleObj = { exports: {} };
+      cache.set(absFile, moduleObj);
+      return moduleObj.exports;
+    }
+
     const src = fs.readFileSync(absFile, 'utf8');
     const { code } = babel.transformSync(src, {
       filename: absFile,
