@@ -2,7 +2,8 @@
   "architecture": {
     "keyPoints": [
       "POST /ideas enforces project linkage by resolving project_id server-side via project name, rejecting unregistered projects",
-      "PATCH /ideas/{id} endpoint supports machine key authentication alongside user authentication, enabling bot-managed updates to idea metadata",
+      "PATCH /ideas/{id} and PATCH /ideas/{id}/bot are two distinct routes with different privilege scopes: the former accepts either auth mode but only ever writes with machine_write=False (bot fields stay locked even with a valid machine key on this route); the latter is machine-key-only and is the sole path that writes with machine_write=True",
+      "POST /ideas/{id}/run-bot's optional model field is validated against an allowlist (gpt-4o, gpt-5-mini, gpt-4.1) before being injected as an env var into the job execution",
       "POST /projects now supports machine key authentication alongside user authentication, enabling automated project creation",
       "Backward compatibility: existing entities with old 'repos' JSON list have their first entry promoted to the 'repo' field on read",
       "New 'bot_blocked_by' field added to support tracking cross-repo dependencies, integrated into the bot-managed fields alongside 'bot_status', 'bot_pr_url', and 'bot_error'"
@@ -29,7 +30,9 @@
   ],
   "description": "Azure Functions app that stores and serves feature ideas in Table Storage. Supports two auth modes: browser JWT tokens via EasyAuth for read access, and an X-Ideas-Key machine write-key for automated writes. Exposes a trigger endpoint for the ideas-bot.",
   "features": [
-    "PATCH /api/ideas/{id} — updates idea metadata, including bot-managed fields like 'status', now supports both EasyAuth JWT authentication and X-Ideas-Key machine write-key for access",
+    "PATCH /api/ideas/{id} — updates ordinary idea fields (EasyAuth JWT or X-Ideas-Key); does NOT unlock bot-managed fields",
+    "PATCH /api/ideas/{id}/bot — a separate, machine-key-ONLY route that writes bot_status, bot_pr_url, bot_error, and bot_blocked_by",
+    "POST /api/ideas/{id}/run-bot — accepts an optional model override (gpt-4o, gpt-5-mini, or gpt-4.1) that's passed through to the triggered Container App Job as AZURE_OPENAI_DEPLOYMENT",
     "POST /api/ideas — enforces project linkage by resolving project_id server-side via project name, rejecting unregistered projects",
     "POST /api/projects — now supports both EasyAuth JWT authentication and X-Ideas-Key machine write-key for project creation"
   ],

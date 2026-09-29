@@ -1,17 +1,20 @@
 {
   "architecture": {
     "keyPoints": [
-      "Managed Identity holds Log Analytics Reader (scoped to the shared workspace) and Cost Management Reader (scoped to subscription)",
-      "No API keys in environment variables — all Azure SDK auth flows through Managed Identity",
+      "The registry (registry.py) is generic — any app type in {ContainerApp, FunctionApp, APIM, StaticWebApp, ContainerAppJob, custom} can be added via POST /apps, not just the two originally hardcoded services",
+      "Container App Job health has no /health endpoint to poll — instead it checks the job's latest execution status via the ARM API and tails its console logs on failure",
+      "GET /discover uses OnBehalfOfCredential (discovery.py) so the Resource Graph query runs as the calling user, not the function's own Managed Identity — it can only see what that user can see",
+      "Managed Identity (for the function's own queries) holds Log Analytics Reader (scoped to the shared workspace) and Cost Management Reader (scoped to subscription)",
+      "No API keys in environment variables for the function's own Azure SDK auth — that flows through Managed Identity; GITHUB_TOKEN is the one exception, used for the optional GitHub integrations",
       "Cost Management responses cached for 1h in memory; all other queries are live",
       "GitHub Actions API requires GITHUB_TOKEN env var; gracefully degrades if unset; skips empty results when no token or runs are available; prefers push/dispatch/release events over scheduled runs",
       "GitHub Pull Requests API requires GITHUB_TOKEN env var; gracefully degrades if unset; skips empty results when no token or open PRs are available",
       "Frontend dashboard polls /api/dashboard every 60 seconds",
       "Parallel fan-out keeps response time under 3s even with 5+ downstream calls",
       "CORS OPTIONS handler added to support browser preflight requests (Access-Control-Allow-Origin: *, Allow-Headers: Authorization Content-Type)",
-      "ErrorRow objects now include error_type and status fields, ensuring richer error context across health checks, metrics queries, and GitHub Actions logs"
+      "ErrorRow objects include error_type and status fields, ensuring richer error context across health checks, metrics queries, and GitHub Actions logs"
     ],
-    "overview": "Single HTTP-triggered function that executes all sub-queries in parallel via asyncio.gather and ThreadPoolExecutor. Uses a system-assigned Managed Identity — no credentials stored in app settings. RBAC roles are assigned by the azure-infrastructure package."
+    "overview": "Single HTTP-triggered function that executes all sub-queries in parallel via asyncio.gather and ThreadPoolExecutor, dispatching a different health-check strategy per registered app's type (HTTP ping, Function-App KQL, Container-App log query, or Container-App-Job ARM execution check). A separate GET /discover route runs an on-behalf-of Azure Resource Graph query so a signed-in user can find apps that haven't been registered yet. Uses a system-assigned Managed Identity for its own queries — no credentials stored in app settings. RBAC roles are assigned by the azure-infrastructure package."
   },
   "dataFlow": [
     {
@@ -20,9 +23,9 @@
     },
     {
       "color": "purple",
-      "label": "dashboard-api (Azure Functions) — parallel fan-out",
+      "label": "dashboard-api (Azure Functions) — parallel fan-out over the app registry",
       "sublines": [
-        "Health: GET momentum-finder /health, trail-finder /health",
+        "Health: per-type dispatch — HTTP /health, Function-App KQL, Container-App logs, or Container-App-Job ARM execution status",
         "Log Analytics KQL: request counts, latency, errors (24h)",
         "Table Storage: digits metrics rows (24h)",
         "Cost Management: MTD spend by service (1h cache)",
@@ -39,16 +42,18 @@
       "label": "Dashboard renders health pills, metrics tables, cost breakdown, GitHub Actions status, open PRs"
     }
   ],
-  "description": "Azure Functions app that fans out in parallel to health-check all services, query Log Analytics for request metrics, pull Digits Table Storage metrics, and fetch Azure Cost Management spend — returning everything in a single aggregated response.",
+  "description": "Azure Functions app that is both a generic registry of every other app in the system and an aggregator over them: it health-checks, metrics-queries, and cost-queries whatever's registered, and can discover un-registered Azure resources on demand — returning everything in a single aggregated dashboard response.",
   "features": [
-    "Health checks for momentum-finder and trail-finder (HTTP /health)",
-    "Log Analytics KQL queries for request counts, average latency, and errors per service (24h window)",
-    "Digits metrics from Table Storage (request volume, error rate)",
+    "App registry: GET/POST /apps, PATCH/DELETE /apps/{name} — CRUD over an Azure Table of registered apps, each typed as ContainerApp, FunctionApp, APIM, StaticWebApp, ContainerAppJob, or custom",
+    "Per-type health check dispatch: HTTP GET /health for Container/Function apps, a Log-Analytics KQL query (AppRequests/AppExceptions) for Function Apps, ContainerAppConsoleLogs_CL for Container Apps, and an ARM execution-status check (tailing console logs on failure) for Container App Jobs",
+    "GET /discover — on-behalf-of Azure Resource Graph query using the calling user's own token, to find un-registered Function Apps, Container Apps, Container App Jobs, APIM instances, and Static Web Apps",
+    "Log Analytics KQL queries for request counts, average latency, and errors per registered service (24h window)",
+    "Digits metrics from Table Storage (request volume, error rate) — a special-cased data source alongside the generic registry",
     "Azure Cost Management MTD spend breakdown — cached 1h due to API rate limits",
     "GitHub Actions API integration for latest workflow run status and failed jobs (optional per app); prefers push/dispatch/release events over scheduled runs; skips empty results when GITHUB_TOKEN is unset or API returns nothing",
     "GitHub Pull Requests API integration for open PRs per app (optional per app); skips empty results when GITHUB_TOKEN is unset or API returns nothing",
     "CORS OPTIONS handler added for preflight requests (Access-Control-Allow-Origin: *, Allow-Headers: Authorization Content-Type)",
-    "ErrorRow objects now include error_type and status fields for enhanced debugging and analytics",
+    "ErrorRow objects include error_type and status fields for enhanced debugging and analytics",
     "All data returned in a single response — frontend polls every 60 seconds"
   ],
   "key": "dashboard-api",
@@ -74,12 +79,14 @@
   "repoUrl": "https://github.com/skarumbu/dashboard_api",
   "role": "Aggregates health, metrics, and cost across all services",
   "runsOn": "Azure Functions",
-  "summary": "Single aggregator endpoint that fans out in parallel to health-check momentum-finder and trail-finder, query Log Analytics (KQL) for request counts, latency, and recent errors, query the Digits metrics Table Storage table, and fetch Azure Cost Management MTD spend. Uses a system-assigned managed identity — no stored credentials.",
+  "summary": "Aggregator + registry for every other app in the system: a Table-Storage-backed registry (GET/POST /apps, PATCH/DELETE /apps/{name}) lets apps be added by type (ContainerApp, FunctionApp, APIM, StaticWebApp, ContainerAppJob, custom); a single dashboard endpoint fans out in parallel to health-check every registered app (per-type dispatch — HTTP /health, Log Analytics KQL for Function Apps, Container App console logs, or a Container App Job's latest execution status via ARM), query Digits' metrics table, and fetch Azure Cost Management MTD spend. An on-behalf-of GET /discover endpoint queries Azure Resource Graph with the calling user's own token to surface un-registered resources. Uses a system-assigned managed identity — no stored credentials.",
   "techStack": [
     "Azure Functions v2",
     "Python 3.11",
     "azure-monitor-query",
     "azure-identity",
+    "azure-data-tables",
+    "azure-mgmt-resourcegraph",
     "Azure Cost Management",
     "Managed Identity"
   ],

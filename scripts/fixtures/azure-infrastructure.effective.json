@@ -12,7 +12,8 @@
       "history-api runs on a Flex Consumption plan, required for Go-based Azure Functions during public preview",
       "history-api uses EasyAuth with an App Registration for secure authentication and authorization",
       "Dedicated storage account for history-api includes versions table and history-attachments blob container",
-      "posts-api integrates with history-api using HISTORY_API_URL and HISTORY_API_KEY for version history and storage functionality"
+      "posts-api integrates with history-api using HISTORY_API_URL and HISTORY_API_KEY for version history and storage functionality",
+      "running-app is NOT provisioned by main.bicep — it deploys via a separate subscription-scope template in this same repo with its own resource group and region; treat it as an independent deployment pipeline sharing only the repo, not the resource group"
     ],
     "overview": "Modular Bicep files deployed at subscription scope. Each service has its own module. The Container App Environment module creates the shared Log Analytics workspace used for unified observability across all Container Apps. The arch-content-foundry module provisions an OpenAI resource with a GPT-4o deployment for the arch-content-update CI workflow. The gpt-5.3-codex model for ideas-bot is deployed independently to avoid quota-related deployment failures impacting the rest of the infrastructure. The history-api module introduces a Go-based Azure Function app running on a Flex Consumption plan, with EasyAuth integration and dedicated storage resources for versions table and history-attachments blob container. The posts-api module now integrates with history-api via HISTORY_API_URL and HISTORY_API_KEY app settings, enabling version history and storage functionality."
   },
@@ -36,7 +37,8 @@
   ],
   "description": "Bicep infrastructure-as-code package that defines and provisions every Azure resource in the system at subscription scope. Modules cover each service, the shared networking layer, and all RBAC role assignments. Recent updates include wiring history-api configuration into posts-api for version history and storage integration.",
   "features": [
-    "Integration of HISTORY_API_URL and HISTORY_API_KEY into posts-api for history-api-backed storage and version history support"
+    "Integration of HISTORY_API_URL and HISTORY_API_KEY into posts-api for history-api-backed storage and version history support",
+    "running-app has its own, wholly separate top-level template (running-app.bicep + modules/runningapp.bicep) — its own resource group, its own region (centralus, vs eastus for everything else), and its own Postgres Flexible Server. main.bicep (this package's primary subscription-scope deployment) never invokes it."
   ],
   "key": "azure-infrastructure",
   "pipeline": [
