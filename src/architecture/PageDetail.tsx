@@ -1,68 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import archPages from '../architecture-pages.json';
-import { PACKAGE_TEMPLATES } from './packageTemplates.ts';
-import { repoUrlByPackage } from './arch-graph-data.ts';
-import { allHistory } from './historyUtils.ts';
 import { Page, PackagePage, isPackagePage } from './pageTypes.ts';
 import { getPage, getCachedPage, listVersions, diff as diffVersions } from './historyApi.ts';
 import LinkedText from './LinkedText.tsx';
 import { VersionHistoryPanel, VersionHistoryClient } from '../VersionHistoryPanel.tsx';
-
-type GeneratedPage = Partial<Page> & Partial<Pick<PackagePage, 'dataFlow'>>;
-const generated = archPages as Record<string, GeneratedPage>;
-
-// Every page that lists another page in its own relatedPages[] implies the reverse link too —
-// authors only need to declare a relationship in one direction.
-const reverseRelated: Record<string, Set<string>> = {};
-for (const [key, p] of Object.entries(generated)) {
-  for (const other of p.relatedPages ?? []) {
-    (reverseRelated[other] ??= new Set()).add(key);
-  }
-}
-
-// Pre-migration, build-time template merge. No longer called by the render
-// path below (which fetches the already-merged effective page from
-// history-api at runtime) — kept only as the input to
-// scripts/gen-arch-fixtures.mjs, which pins the Python reimplementation
-// (arch_effective_page.py) against this function's output byte-for-byte. Do
-// not delete without also retiring that fixture check.
-export function resolvePage(pageKey: string): Page | PackagePage | null {
-  const template = PACKAGE_TEMPLATES[pageKey];
-  const gen = generated[pageKey];
-  if (!template && !gen) return null;
-
-  const forwardRelated = gen?.relatedPages ?? [];
-  const reverseSet = reverseRelated[pageKey] ?? new Set<string>();
-  const relatedPages = Array.from(new Set([...forwardRelated, ...reverseSet])).filter(k => k !== pageKey);
-
-  const base: Page = {
-    key: pageKey,
-    title: gen?.title ?? template?.title ?? pageKey,
-    role: gen?.role ?? template?.role,
-    summary: gen?.summary,
-    description: gen?.description ?? template?.description ?? '',
-    features: gen?.features ?? template?.features,
-    architecture: gen?.architecture
-      ? { ...template?.architecture, ...gen.architecture }
-      : template?.architecture,
-    sections: gen?.sections,
-    relatedPages,
-    updatedAt: gen?.updatedAt,
-    updatedBySha: gen?.updatedBySha,
-    updatedByPackage: gen?.updatedByPackage,
-  };
-
-  if (!template) return base;
-
-  return {
-    ...base,
-    runsOn: template.runsOn,
-    repoUrl: repoUrlByPackage[pageKey] ?? '',
-    techStack: template.techStack,
-    pipeline: template.pipeline,
-    dataFlow: gen?.dataFlow !== undefined ? (gen.dataFlow ?? template.dataFlow) : template.dataFlow,
-  } as PackagePage;
-}
 
 interface Props {
   pageKey: string;
@@ -140,9 +80,6 @@ const PageDetail: React.FC<Props> = ({ pageKey, onBack, onSelectPage }) => {
   }
 
   const pkg = isPackagePage(page) ? page : null;
-  // Pre-migration commit-metadata entries — kept as a no-diff group below the
-  // real history-api versions. See the "Legacy history" section further down.
-  const legacyHistory = allHistory.filter(e => e.key === pageKey);
 
   return (
     <div>
@@ -257,48 +194,12 @@ const PageDetail: React.FC<Props> = ({ pageKey, onBack, onSelectPage }) => {
           </section>
         )}
 
-        {/* ── Version History (real, from history-api) ── */}
+        {/* ── Version History (from history-api) ── */}
         <section className="arch-section">
           <div className="arch-version-history">
             <VersionHistoryPanel client={versionClient} showAuthor={false} />
           </div>
         </section>
-
-        {/* ── Legacy history (pre-migration commit metadata — no diff available) ── */}
-        {legacyHistory.length > 0 && (
-          <section className="arch-section">
-            <details className="arch-history">
-              <summary className="arch-history-summary">
-                Earlier history (no diff available) <span className="arch-history-count">({legacyHistory.length})</span>
-              </summary>
-              <ul className="arch-history-list">
-                {legacyHistory.map((e, i) => {
-                  // A package's own repoUrl always wins; a plain page (no repo of its own) falls
-                  // back to whichever package's PR triggered this update.
-                  const repoUrl = pkg?.repoUrl || (e.triggeringPackage ? repoUrlByPackage[e.triggeringPackage] : undefined);
-                  return (
-                    <li key={i} className="arch-history-entry">
-                      <span className="arch-history-date">{e.capturedAt}</span>
-                      {repoUrl ? (
-                        <a
-                          className="arch-history-sha"
-                          href={`${repoUrl}/commit/${e.commitSha}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          <code>{e.commitSha}</code>
-                        </a>
-                      ) : (
-                        <code className="arch-history-sha">{e.commitSha}</code>
-                      )}
-                      <span className="arch-history-msg">{e.commitMessage.split('\n')[0]}</span>
-                    </li>
-                  );
-                })}
-              </ul>
-            </details>
-          </section>
-        )}
 
       </div>
     </div>

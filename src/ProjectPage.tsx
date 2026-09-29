@@ -7,7 +7,7 @@ import { useMsal, useIsAuthenticated } from '@azure/msal-react';
 import { InteractionStatus } from '@azure/msal-browser';
 import { ideasApiRequest } from './authConfig.js';
 import { acquireToken } from './auth.ts';
-import archPages from './architecture-pages.json';
+import { listPages as listArchPages } from './architecture/historyApi.ts';
 
 const BASE_URL = process.env.REACT_APP_IDEAS_API_BASE_URL;
 
@@ -231,6 +231,13 @@ export default function ProjectPage() {
   const [error, setError] = useState<string | null>(null);
   const [detailIdea, setDetailIdea] = useState<Idea | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
+  const [archPageKeys, setArchPageKeys] = useState<Set<string> | null>(null);
+
+  useEffect(() => {
+    listArchPages()
+      .then(docs => setArchPageKeys(new Set(docs.map(d => d.slug))))
+      .catch(() => setArchPageKeys(new Set()));
+  }, []);
 
   const redirectUri = `${window.location.origin}/ideas/projects/${projectId}`;
 
@@ -273,12 +280,14 @@ export default function ProjectPage() {
 
   const openDetail = (idea: Idea) => { setDetailIdea(idea); setDetailOpen(true); };
 
-  // architecture-pages.json keys match repo short names, but use hyphens where some
-  // actual repo slugs use underscores (e.g. "skarumbu/dashboard_api" → "dashboard-api").
+  // Architecture wiki page keys match repo short names, but use hyphens where
+  // some actual repo slugs use underscores (e.g. "skarumbu/dashboard_api" ->
+  // "dashboard-api"). archPageKeys is null until the live page list loads —
+  // the link below simply doesn't render yet rather than guessing.
   const archPageKey = (() => {
-    if (!project?.repo) return null;
+    if (!project?.repo || !archPageKeys) return null;
     const shortName = (project.repo.split('/').pop() || '').replace(/_/g, '-');
-    return (archPages as Record<string, unknown>)[shortName] ? shortName : null;
+    return archPageKeys.has(shortName) ? shortName : null;
   })();
 
   if (!isAuthenticated) {
