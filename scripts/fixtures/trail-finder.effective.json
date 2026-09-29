@@ -1,13 +1,15 @@
 {
   "architecture": {
     "keyPoints": [
-      "Autocomplete is browser-side (Google Maps JS SDK) — 300ms debounce, no backend request until search is submitted",
-      "24h cache TTL balances freshness with API cost; weather is the most volatile component",
+      "Autocomplete is browser-side (Google Maps JS SDK) — 300ms debounce, no backend request until search is submitted; the API's own GET /autocomplete route is currently unused by the frontend",
+      "Cache key includes the calendar date, so entries reset at UTC midnight rather than N hours after being written — \"24h TTL\" understates this",
+      "Weather fetch spans today through the coming Saturday/Sunday, not just the weekend",
+      "Result filtering uses fixed thresholds: quality score ≥ 7, and the response is trimmed to 5-15 trails",
       "Identical structured JSON logging middleware to momentum-finder — same KQL queries work for both",
       "Scales to zero when idle — same cold start caveat as momentum-finder",
       "Google Places and Custom Search quotas are the primary cost driver; OpenAI is secondary"
     ],
-    "overview": "FastAPI app with a sequential pipeline of external API calls fanned out where possible. Azure OpenAI synthesizes the final output from all gathered context. The in-memory cache is a Python dict — cleared on container restart."
+    "overview": "FastAPI app with a sequential pipeline of external API calls fanned out where possible. Azure OpenAI synthesizes the final output from all gathered context. The in-memory cache is a Python dict keyed by f\"{city}:{date}\" — cleared on container restart, and its date component means an entry effectively expires at UTC midnight rather than N hours after it was written."
   },
   "dataFlow": [
     {
@@ -22,7 +24,7 @@
       "label": "Geocode city → lat/lon",
       "sublines": [
         "Google Places text search for nearby trails",
-        "Open-Meteo weekend weather forecast",
+        "Open-Meteo forecast for today through the coming weekend",
         "Google Custom Search for AllTrails snippets"
       ]
     },
@@ -32,17 +34,18 @@
     },
     {
       "color": "blue",
-      "label": "Result cached 24h · trail cards rendered"
+      "label": "Result cached per city+date (resets at UTC midnight) · trail cards rendered"
     }
   ],
-  "description": "FastAPI Container App that generates personalised trail recommendations for a given city. Fans out across Google Places, weather, and search APIs, then synthesizes a condition summary and gear list with Azure OpenAI. Results are cached 24h per location.",
+  "description": "FastAPI Container App that generates personalised trail recommendations for a given city. Fans out across Google Places, weather, and search APIs, then synthesizes a condition summary and gear list with Azure OpenAI. Results are cached per city+date until the next UTC day.",
   "features": [
-    "City search with Google Maps JS SDK autocomplete — runs entirely in the browser, zero backend cost",
+    "City search with Google Maps JS SDK autocomplete — runs entirely in the browser, zero backend cost (a server-side GET /autocomplete route also exists in the API but is not called by the current frontend)",
     "Geocodes the city and searches Google Places for nearby hiking trails",
-    "Fetches weekend weather forecast from Open-Meteo (free, no API key)",
+    "Fetches weather from Open-Meteo for today through the coming weekend (free, no API key)",
     "Pulls AllTrails snippets via Google Custom Search for additional trail context",
     "Azure OpenAI synthesizes a condition summary and gear list from all sources",
-    "In-memory result cache keyed by normalised city name — 24h TTL",
+    "Filters/ranks results using fixed thresholds (quality score ≥ 7, 5-15 results returned)",
+    "In-memory result cache keyed by normalised city name + date — resets at UTC midnight, not a rolling 24h window",
     "/health endpoint for dashboard monitoring"
   ],
   "key": "trail-finder",
@@ -70,7 +73,7 @@
   "repoUrl": "https://github.com/skarumbu/trail_finder",
   "role": "Trail recommendations + conditions via Google Places & AI",
   "runsOn": "Azure Container Apps",
-  "summary": "Given a city, geocodes it, searches Google Places for nearby trails, fetches weather from Open-Meteo, pulls AllTrails snippets via Google Custom Search, then synthesizes a condition summary and gear list with Azure OpenAI. Results are cached in memory for 24 hours. Runs as a Container App with the same logging middleware as momentum-finder.",
+  "summary": "Given a city, geocodes it, searches Google Places for nearby trails, fetches weather from Open-Meteo for today through the coming weekend, pulls AllTrails snippets via Google Custom Search, then synthesizes a condition summary and gear list with Azure OpenAI. Results are cached in memory, keyed by city + date, until the next UTC day. Runs as a Container App with the same logging middleware as momentum-finder.",
   "techStack": [
     "FastAPI",
     "Python 3.11",

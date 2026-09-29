@@ -51,7 +51,8 @@
       "keyPoints": [
         "Frontend skips this API in development — NODE_ENV=development activates hardcoded stub data",
         "Metrics rows are picked up by dashboard-api via Azure Table Storage queries",
-        "Timer trigger uses a cron expression: \"0 0 * * *\" (midnight UTC daily)",
+        "Timer trigger fires on a 6-field NCRONTAB cron expression, \"0 0 0 * * *\" (includes a leading seconds field, per Azure Functions' timer-trigger format) — midnight UTC daily",
+        "If Table Storage has no entry for today (e.g. the timer hasn't fired yet), the HTTP handler generates and caches that day's puzzles on demand instead of returning empty",
         "Puzzles are keyed by ISO date string — no cleanup needed, old rows simply age out"
       ]
     },
@@ -82,21 +83,25 @@
     ]
   },
   "momentum-finder": {
-    "summary": "Analyses live NBA game data to surface momentum shifts. Runs as a Container App (FastAPI + Uvicorn on port 80, scales 0–10 replicas). Emits structured JSON logs on every request that flow into Log Analytics for the dashboard to query.",
-    "description": "FastAPI Container App that analyses live NBA game data to detect and surface momentum shifts. Scales automatically between 0 and 10 replicas and emits structured JSON logs for dashboard monitoring.",
+    "summary": "Analyses live NBA game data to surface momentum shifts, scored by three scikit-learn models (home-run, away-run, and win-probability) downloaded from Azure Blob Storage at startup. Runs as a Container App (FastAPI + Uvicorn on port 80, scales 0-10 replicas). Emits structured JSON logs on every request that flow into Log Analytics for the dashboard to query.",
+    "description": "FastAPI Container App that analyses live NBA game data to detect and surface momentum shifts, using pre-trained scikit-learn models loaded from Azure Blob Storage. Scales automatically between 0 and 10 replicas and emits structured JSON logs for dashboard monitoring.",
     "features": [
-      "Fetches live NBA game scores and play-by-play data",
-      "Detects scoring runs and momentum shifts within a game",
-      "Returns structured game cards with team info, score, period, and momentum indicators",
+      "Fetches live NBA game scores and play-by-play data via nba_api",
+      "Scores scoring runs and momentum shifts with three pre-trained scikit-learn models (home-run, away-run, win-probability)",
+      "GET /get-current-games — structured game cards with team info, score, period, and momentum indicators",
+      "POST /get-momentum — momentum shifts for a specific team pair + date",
+      "30-second in-memory cache per game_id to absorb repeated polling",
       "/health endpoint consumed by dashboard-api for uptime monitoring",
       "Structured JSON request logs flow into shared Log Analytics workspace"
     ],
     "architecture": {
-      "overview": "FastAPI on Uvicorn (port 80), containerised and deployed as an Azure Container App. Shares a Log Analytics workspace with trail-finder for unified observability. The app scales to zero replicas when idle.",
+      "overview": "FastAPI on Uvicorn (port 80), containerised and deployed as an Azure Container App. At startup it downloads three joblib-serialized scikit-learn models (home_run_model.pkl, away_run_model.pkl, win_prob_model.pkl) from the \"models\" container in Azure Blob Storage. Shares a Log Analytics workspace with trail-finder for unified observability. The app scales to zero replicas when idle.",
       "keyPoints": [
-        "Scales 0–10 replicas — expect a cold start (~5–10s) on first request after idle",
+        "Scales 0-10 replicas — expect a cold start (~5-10s) on first request after idle, plus model download time",
+        "Models are pulled from Blob Storage at process startup via MODEL_STORAGE_CONNECTION_STRING, not bundled in the image — a separate model_trainer.py exists for retraining but has no CI workflow wiring it up",
+        "In-memory momentum cache per game_id with a 30-second TTL to reduce repeated model inference under polling",
+        "CORS is locked to two specific origins (https://www.quixotry.me and http://localhost:3000), not a wildcard",
         "Shared Log Analytics workspace with trail-finder; KQL queries in dashboard-api span both services",
-        "REACT_APP_API_BASE_URL must be set in the frontend build for this feature to work",
         "Structured logging middleware attaches request_id, duration_ms, and status_code to every log line"
       ]
     },
@@ -124,22 +129,25 @@
     ]
   },
   "trail-finder": {
-    "summary": "Given a city, geocodes it, searches Google Places for nearby trails, fetches weather from Open-Meteo, pulls AllTrails snippets via Google Custom Search, then synthesizes a condition summary and gear list with Azure OpenAI. Results are cached in memory for 24 hours. Runs as a Container App with the same logging middleware as momentum-finder.",
-    "description": "FastAPI Container App that generates personalised trail recommendations for a given city. Fans out across Google Places, weather, and search APIs, then synthesizes a condition summary and gear list with Azure OpenAI. Results are cached 24h per location.",
+    "summary": "Given a city, geocodes it, searches Google Places for nearby trails, fetches weather from Open-Meteo for today through the coming weekend, pulls AllTrails snippets via Google Custom Search, then synthesizes a condition summary and gear list with Azure OpenAI. Results are cached in memory, keyed by city + date, until the next UTC day. Runs as a Container App with the same logging middleware as momentum-finder.",
+    "description": "FastAPI Container App that generates personalised trail recommendations for a given city. Fans out across Google Places, weather, and search APIs, then synthesizes a condition summary and gear list with Azure OpenAI. Results are cached per city+date until the next UTC day.",
     "features": [
-      "City search with Google Maps JS SDK autocomplete — runs entirely in the browser, zero backend cost",
+      "City search with Google Maps JS SDK autocomplete — runs entirely in the browser, zero backend cost (a server-side GET /autocomplete route also exists in the API but is not called by the current frontend)",
       "Geocodes the city and searches Google Places for nearby hiking trails",
-      "Fetches weekend weather forecast from Open-Meteo (free, no API key)",
+      "Fetches weather from Open-Meteo for today through the coming weekend (free, no API key)",
       "Pulls AllTrails snippets via Google Custom Search for additional trail context",
       "Azure OpenAI synthesizes a condition summary and gear list from all sources",
-      "In-memory result cache keyed by normalised city name — 24h TTL",
+      "Filters/ranks results using fixed thresholds (quality score ≥ 7, 5-15 results returned)",
+      "In-memory result cache keyed by normalised city name + date — resets at UTC midnight, not a rolling 24h window",
       "/health endpoint for dashboard monitoring"
     ],
     "architecture": {
-      "overview": "FastAPI app with a sequential pipeline of external API calls fanned out where possible. Azure OpenAI synthesizes the final output from all gathered context. The in-memory cache is a Python dict — cleared on container restart.",
+      "overview": "FastAPI app with a sequential pipeline of external API calls fanned out where possible. Azure OpenAI synthesizes the final output from all gathered context. The in-memory cache is a Python dict keyed by f\"{city}:{date}\" — cleared on container restart, and its date component means an entry effectively expires at UTC midnight rather than N hours after it was written.",
       "keyPoints": [
-        "Autocomplete is browser-side (Google Maps JS SDK) — 300ms debounce, no backend request until search is submitted",
-        "24h cache TTL balances freshness with API cost; weather is the most volatile component",
+        "Autocomplete is browser-side (Google Maps JS SDK) — 300ms debounce, no backend request until search is submitted; the API's own GET /autocomplete route is currently unused by the frontend",
+        "Cache key includes the calendar date, so entries reset at UTC midnight rather than N hours after being written — \"24h TTL\" understates this",
+        "Weather fetch spans today through the coming Saturday/Sunday, not just the weekend",
+        "Result filtering uses fixed thresholds: quality score ≥ 7, and the response is trimmed to 5-15 trails",
         "Identical structured JSON logging middleware to momentum-finder — same KQL queries work for both",
         "Scales to zero when idle — same cold start caveat as momentum-finder",
         "Google Places and Custom Search quotas are the primary cost driver; OpenAI is secondary"
@@ -158,7 +166,7 @@
         "label": "Geocode city → lat/lon",
         "sublines": [
           "Google Places text search for nearby trails",
-          "Open-Meteo weekend weather forecast",
+          "Open-Meteo forecast for today through the coming weekend",
           "Google Custom Search for AllTrails snippets"
         ]
       },
@@ -167,37 +175,42 @@
         "color": "orange"
       },
       {
-        "label": "Result cached 24h · trail cards rendered",
+        "label": "Result cached per city+date (resets at UTC midnight) · trail cards rendered",
         "color": "blue"
       }
     ]
   },
   "dashboard-api": {
-    "summary": "Single aggregator endpoint that fans out in parallel to health-check momentum-finder and trail-finder, query Log Analytics (KQL) for request counts, latency, and recent errors, query the Digits metrics Table Storage table, and fetch Azure Cost Management MTD spend. Uses a system-assigned managed identity — no stored credentials.",
-    "description": "Azure Functions app that fans out in parallel to health-check all services, query Log Analytics for request metrics, pull Digits Table Storage metrics, and fetch Azure Cost Management spend — returning everything in a single aggregated response.",
+    "summary": "Aggregator + registry for every other app in the system: a Table-Storage-backed registry (GET/POST /apps, PATCH/DELETE /apps/{name}) lets apps be added by type (ContainerApp, FunctionApp, APIM, StaticWebApp, ContainerAppJob, custom); a single dashboard endpoint fans out in parallel to health-check every registered app (per-type dispatch — HTTP /health, Log Analytics KQL for Function Apps, Container App console logs, or a Container App Job's latest execution status via ARM), query Digits' metrics table, and fetch Azure Cost Management MTD spend. An on-behalf-of GET /discover endpoint queries Azure Resource Graph with the calling user's own token to surface un-registered resources. Uses a system-assigned managed identity — no stored credentials.",
+    "description": "Azure Functions app that is both a generic registry of every other app in the system and an aggregator over them: it health-checks, metrics-queries, and cost-queries whatever's registered, and can discover un-registered Azure resources on demand — returning everything in a single aggregated dashboard response.",
     "features": [
-      "Health checks for momentum-finder and trail-finder (HTTP /health)",
-      "Log Analytics KQL queries for request counts, average latency, and errors per service (24h window)",
-      "Digits metrics from Table Storage (request volume, error rate)",
+      "App registry: GET/POST /apps, PATCH/DELETE /apps/{name} — CRUD over an Azure Table of registered apps, each typed as ContainerApp, FunctionApp, APIM, StaticWebApp, ContainerAppJob, or custom",
+      "Per-type health check dispatch: HTTP GET /health for Container/Function apps, a Log-Analytics KQL query (AppRequests/AppExceptions) for Function Apps, ContainerAppConsoleLogs_CL for Container Apps, and an ARM execution-status check (tailing console logs on failure) for Container App Jobs",
+      "GET /discover — on-behalf-of Azure Resource Graph query using the calling user's own token, to find un-registered Function Apps, Container Apps, Container App Jobs, APIM instances, and Static Web Apps",
+      "Log Analytics KQL queries for request counts, average latency, and errors per registered service (24h window)",
+      "Digits metrics from Table Storage (request volume, error rate) — a special-cased data source alongside the generic registry",
       "Azure Cost Management MTD spend breakdown — cached 1h due to API rate limits",
       "GitHub Actions API integration for latest workflow run status and failed jobs (optional per app); prefers push/dispatch/release events over scheduled runs; skips empty results when GITHUB_TOKEN is unset or API returns nothing",
       "GitHub Pull Requests API integration for open PRs per app (optional per app); skips empty results when GITHUB_TOKEN is unset or API returns nothing",
       "CORS OPTIONS handler added for preflight requests (Access-Control-Allow-Origin: *, Allow-Headers: Authorization Content-Type)",
-      "ErrorRow objects now include error_type and status fields for enhanced debugging and analytics",
+      "ErrorRow objects include error_type and status fields for enhanced debugging and analytics",
       "All data returned in a single response — frontend polls every 60 seconds"
     ],
     "architecture": {
-      "overview": "Single HTTP-triggered function that executes all sub-queries in parallel via asyncio.gather and ThreadPoolExecutor. Uses a system-assigned Managed Identity — no credentials stored in app settings. RBAC roles are assigned by the azure-infrastructure package.",
+      "overview": "Single HTTP-triggered function that executes all sub-queries in parallel via asyncio.gather and ThreadPoolExecutor, dispatching a different health-check strategy per registered app's type (HTTP ping, Function-App KQL, Container-App log query, or Container-App-Job ARM execution check). A separate GET /discover route runs an on-behalf-of Azure Resource Graph query so a signed-in user can find apps that haven't been registered yet. Uses a system-assigned Managed Identity for its own queries — no credentials stored in app settings. RBAC roles are assigned by the azure-infrastructure package.",
       "keyPoints": [
-        "Managed Identity holds Log Analytics Reader (scoped to the shared workspace) and Cost Management Reader (scoped to subscription)",
-        "No API keys in environment variables — all Azure SDK auth flows through Managed Identity",
+        "The registry (registry.py) is generic — any app type in {ContainerApp, FunctionApp, APIM, StaticWebApp, ContainerAppJob, custom} can be added via POST /apps, not just the two originally hardcoded services",
+        "Container App Job health has no /health endpoint to poll — instead it checks the job's latest execution status via the ARM API and tails its console logs on failure",
+        "GET /discover uses OnBehalfOfCredential (discovery.py) so the Resource Graph query runs as the calling user, not the function's own Managed Identity — it can only see what that user can see",
+        "Managed Identity (for the function's own queries) holds Log Analytics Reader (scoped to the shared workspace) and Cost Management Reader (scoped to subscription)",
+        "No API keys in environment variables for the function's own Azure SDK auth — that flows through Managed Identity; GITHUB_TOKEN is the one exception, used for the optional GitHub integrations",
         "Cost Management responses cached for 1h in memory; all other queries are live",
         "GitHub Actions API requires GITHUB_TOKEN env var; gracefully degrades if unset; skips empty results when no token or runs are available; prefers push/dispatch/release events over scheduled runs",
         "GitHub Pull Requests API requires GITHUB_TOKEN env var; gracefully degrades if unset; skips empty results when no token or open PRs are available",
         "Frontend dashboard polls /api/dashboard every 60 seconds",
         "Parallel fan-out keeps response time under 3s even with 5+ downstream calls",
         "CORS OPTIONS handler added to support browser preflight requests (Access-Control-Allow-Origin: *, Allow-Headers: Authorization Content-Type)",
-        "ErrorRow objects now include error_type and status fields, ensuring richer error context across health checks, metrics queries, and GitHub Actions logs"
+        "ErrorRow objects include error_type and status fields, ensuring richer error context across health checks, metrics queries, and GitHub Actions logs"
       ]
     },
     "dataFlow": [
@@ -206,10 +219,10 @@
         "color": "blue"
       },
       {
-        "label": "dashboard-api (Azure Functions) — parallel fan-out",
+        "label": "dashboard-api (Azure Functions) — parallel fan-out over the app registry",
         "color": "purple",
         "sublines": [
-          "Health: GET momentum-finder /health, trail-finder /health",
+          "Health: per-type dispatch — HTTP /health, Function-App KQL, Container-App logs, or Container-App-Job ARM execution status",
           "Log Analytics KQL: request counts, latency, errors (24h)",
           "Table Storage: digits metrics rows (24h)",
           "Cost Management: MTD spend by service (1h cache)",
@@ -241,7 +254,9 @@
     "summary": "Stores and serves AI-generated feature ideas and project data in Azure Table Storage. Enforces project linkage on idea creation, keyed by project name, and rejects unregistered projects. Accepts browser JWT tokens via EasyAuth for read access and an X-Ideas-Key machine write-key for automated writes, now extended to project creation.",
     "description": "Azure Functions app that stores and serves feature ideas in Table Storage. Supports two auth modes: browser JWT tokens via EasyAuth for read access, and an X-Ideas-Key machine write-key for automated writes. Exposes a trigger endpoint for the ideas-bot.",
     "features": [
-      "PATCH /api/ideas/{id} — updates idea metadata, including bot-managed fields like 'status', now supports both EasyAuth JWT authentication and X-Ideas-Key machine write-key for access",
+      "PATCH /api/ideas/{id} — updates ordinary idea fields (EasyAuth JWT or X-Ideas-Key); does NOT unlock bot-managed fields",
+      "PATCH /api/ideas/{id}/bot — a separate, machine-key-ONLY route that writes bot_status, bot_pr_url, bot_error, and bot_blocked_by",
+      "POST /api/ideas/{id}/run-bot — accepts an optional model override (gpt-4o, gpt-5-mini, or gpt-4.1) that's passed through to the triggered Container App Job as AZURE_OPENAI_DEPLOYMENT",
       "POST /api/ideas — enforces project linkage by resolving project_id server-side via project name, rejecting unregistered projects",
       "POST /api/projects — now supports both EasyAuth JWT authentication and X-Ideas-Key machine write-key for project creation"
     ],
@@ -249,7 +264,8 @@
       "overview": "HTTP-triggered Azure Functions backed by Table Storage. EasyAuth handles browser auth transparently at the Azure layer — no auth code in the application. A separate machine key enables automation (ideas-bot, external scripts) to write ideas and create projects without user credentials. Idea creation resolves project_id server-side by project name, ensuring all ideas are linked to registered projects.",
       "keyPoints": [
         "POST /ideas enforces project linkage by resolving project_id server-side via project name, rejecting unregistered projects",
-        "PATCH /ideas/{id} endpoint supports machine key authentication alongside user authentication, enabling bot-managed updates to idea metadata",
+        "PATCH /ideas/{id} and PATCH /ideas/{id}/bot are two distinct routes with different privilege scopes: the former accepts either auth mode but only ever writes with machine_write=False (bot fields stay locked even with a valid machine key on this route); the latter is machine-key-only and is the sole path that writes with machine_write=True",
+        "POST /ideas/{id}/run-bot's optional model field is validated against an allowlist (gpt-4o, gpt-5-mini, gpt-4.1) before being injected as an env var into the job execution",
         "POST /projects now supports machine key authentication alongside user authentication, enabling automated project creation",
         "Backward compatibility: existing entities with old 'repos' JSON list have their first entry promoted to the 'repo' field on read",
         "New 'bot_blocked_by' field added to support tracking cross-repo dependencies, integrated into the bot-managed fields alongside 'bot_status', 'bot_pr_url', and 'bot_error'"
@@ -286,10 +302,10 @@
   },
   "ideas-bot": {
     "summary": "Container App Job triggered by ideas-api. Clones the target repository, runs an AI-driven tool-use loop to implement the requested feature, commits the result, and opens a draft pull request on GitHub. The job scales to zero between invocations.",
-    "description": "A containerised Python agent that autonomously implements feature ideas. Triggered on demand by [[ideas-api|ideas-api]], it clones the target repo, runs a GPT-4o tool-use loop to read/write files and execute shell commands, commits the result, and opens a draft pull request. The bot also interacts with ideas-api to manage idea statuses and updates, ensuring smooth coordination across projects. Recent updates enforce stricter project resolution, requiring all ideas to link to a registered project, improving consistency and traceability.",
+    "description": "A containerised Python agent that autonomously implements feature ideas. Triggered on demand by [[ideas-api|ideas-api]], it clones the target repo, runs a Azure OpenAI tool-use loop (default model: o3-mini, overridable per-run via ideas-api's run-bot) to read/write files and execute shell commands, commits the result, and opens a draft pull request. The bot also interacts with ideas-api to manage idea statuses and updates, ensuring smooth coordination across projects. Recent updates enforce stricter project resolution, requiring all ideas to link to a registered project, improving consistency and traceability.",
     "features": [
-      "App-level retry mechanism for GPT-4o API calls with up to 4 attempts and exponential backoff (60/120/300s) to handle sustained 429 rate limits",
-      "Sliding context window for GPT-4o tool-use loop now trims older exchanges beyond the last 14 to reduce token growth and further mitigate 429 risks",
+      "App-level retry mechanism for the Azure OpenAI API with up to 4 attempts and exponential backoff (60/120/300s) to handle sustained 429 rate limits",
+      "Sliding context window for Azure OpenAI tool-use loop (default model: o3-mini, overridable per-run via ideas-api's run-bot) now trims older exchanges beyond the last 14 to reduce token growth and further mitigate 429 risks",
       "Decomposes complex ideas into 2–4 focused sub-tasks, each assigned to the correct project based on repo-specific work, reducing token usage and API load",
       "Sub-tasks are now ordered and can be chained with hard dependencies, ensuring backend tasks complete before dependent frontend tasks",
       "Reduced token caps for tool outputs and agent loops: bash output capped at 2500 chars, read_file capped at 4000 chars, and max_tokens reduced to 4096",
@@ -297,13 +313,12 @@
       "Prior Q&A from previous triggers is now fetched and injected into the clarity check, preventing repeated questions and improving efficiency",
       "Added query_table tool for read-only access to Azure Table Storage, enabling the agent to inspect live ideas, projects, and updates tables to validate assumptions and understand record shapes before writing code",
       "Increased agent round limit from 40 to 60, with a wrap-up nudge injected at round 50 to preserve partial work and ensure progress is committed before hitting the limit",
-      "Agent now surfaces a summary explanation when no commits are made, allowing users to understand why no changes were implemented and providing actionable feedback",
-      "Added support for posting to the Writing API (quixotry.me) via a subprocess helper function, enabling the bot to create posts headlessly using a pre-warmed token cache"
+      "Agent now surfaces a summary explanation when no commits are made, allowing users to understand why no changes were implemented and providing actionable feedback"
     ],
     "architecture": {
       "overview": "A containerised Python agent that autonomously implements feature ideas. Triggered on demand by ideas-api, it clones the target repo, performs a pre-flight clarity check, runs an AI-driven tool-use loop to read/write files and execute shell commands, commits the result, and opens a draft pull request.",
       "keyPoints": [
-        "GPT-4o tool-use loop now includes app-level retry mechanism with up to 4 attempts and exponential backoff (60/120/300s) for handling sustained 429 rate limits",
+        "Azure OpenAI tool-use loop (default model: o3-mini, overridable per-run via ideas-api's run-bot) now includes app-level retry mechanism with up to 4 attempts and exponential backoff (60/120/300s) for handling sustained 429 rate limits",
         "Sliding context window trims older exchanges beyond the last 14 to bound token usage and reduce 429 risks",
         "Idea decomposition mechanism splits complex ideas into 2–4 focused sub-tasks, each assigned to the correct project based on repo-specific work, blocking the parent idea until all sub-tasks complete",
         "Sub-tasks are now ordered and can be chained with hard dependencies by setting 'depends_on_previous': true, ensuring backend tasks complete before dependent frontend tasks",
@@ -333,15 +348,15 @@
     "sections": [
       {
         "heading": "Features",
-        "content": "App-level retry mechanism for GPT-4o API calls with up to 4 attempts and exponential backoff (60/120/300s) to handle sustained 429 rate limits\n\nSliding context window for GPT-4o tool-use loop now trims older exchanges beyond the last 14 to reduce token growth and further mitigate 429 risks\n\nDecomposes complex ideas into 2–4 focused sub-tasks, each assigned to the correct project based on repo-specific work, reducing token usage and API load\n\nSub-tasks are now ordered and can be chained with hard dependencies, ensuring backend tasks complete before dependent frontend tasks\n\nReduced token caps for tool outputs and agent loops: bash output capped at 2500 chars, read_file capped at 4000 chars, and max_tokens reduced to 4096\n\nFetches CLAUDE.md from the target repository before the clarity check and agent execution, injecting repo-specific context to improve decision-making and reduce unnecessary questions\n\nPrior Q&A from previous triggers is now fetched and injected into the clarity check, preventing repeated questions and improving efficiency\n\nAdded query_table tool for read-only access to Azure Table Storage, enabling the agent to inspect live ideas, projects, and updates tables to validate assumptions and understand record shapes before writing code\n\nIncreased agent round limit from 40 to 60, with a wrap-up nudge injected at round 50 to preserve partial work and ensure progress is committed before hitting the limit\n\nAgent now surfaces a summary explanation when no commits are made, allowing users to understand why no changes were implemented and providing actionable feedback\n\nSupports updating idea statuses via PATCH /ideas/{id} endpoint in [[ideas-api|ideas-api]], leveraging machine key authentication for seamless bot-driven updates\n\nEnforces stricter project resolution during idea creation by requiring all ideas to link to a registered project, ensuring consistent project tracking and preventing orphaned ideas"
+        "content": "App-level retry mechanism for the Azure OpenAI API with up to 4 attempts and exponential backoff (60/120/300s) to handle sustained 429 rate limits\n\nSliding context window for Azure OpenAI tool-use loop (default model: o3-mini, overridable per-run via ideas-api's run-bot) now trims older exchanges beyond the last 14 to reduce token growth and further mitigate 429 risks\n\nDecomposes complex ideas into 2–4 focused sub-tasks, each assigned to the correct project based on repo-specific work, reducing token usage and API load\n\nSub-tasks are now ordered and can be chained with hard dependencies, ensuring backend tasks complete before dependent frontend tasks\n\nReduced token caps for tool outputs and agent loops: bash output capped at 2500 chars, read_file capped at 4000 chars, and max_tokens reduced to 4096\n\nFetches CLAUDE.md from the target repository before the clarity check and agent execution, injecting repo-specific context to improve decision-making and reduce unnecessary questions\n\nPrior Q&A from previous triggers is now fetched and injected into the clarity check, preventing repeated questions and improving efficiency\n\nAdded query_table tool for read-only access to Azure Table Storage, enabling the agent to inspect live ideas, projects, and updates tables to validate assumptions and understand record shapes before writing code\n\nIncreased agent round limit from 40 to 60, with a wrap-up nudge injected at round 50 to preserve partial work and ensure progress is committed before hitting the limit\n\nAgent now surfaces a summary explanation when no commits are made, allowing users to understand why no changes were implemented and providing actionable feedback\n\nUpdates idea statuses via the machine-key-only PATCH /ideas/{id}/bot endpoint in [[ideas-api|ideas-api]] (a distinct route from the general-purpose PATCH /ideas/{id})\n\nEnforces stricter project resolution during idea creation by requiring all ideas to link to a registered project, ensuring consistent project tracking and preventing orphaned ideas"
       },
       {
         "heading": "Architecture",
-        "content": "A containerised Python agent that autonomously implements feature ideas. Triggered on demand by [[ideas-api|ideas-api]], it clones the target repo, performs a pre-flight clarity check, runs an AI-driven tool-use loop to read/write files and execute shell commands, commits the result, and opens a draft pull request.\n\nGPT-4o tool-use loop now includes app-level retry mechanism with up to 4 attempts and exponential backoff (60/120/300s) for handling sustained 429 rate limits\n\nSliding context window trims older exchanges beyond the last 14 to bound token usage and reduce 429 risks\n\nIdea decomposition mechanism splits complex ideas into 2–4 focused sub-tasks, each assigned to the correct project based on repo-specific work, blocking the parent idea until all sub-tasks complete\n\nSub-tasks are now ordered and can be chained with hard dependencies by setting 'depends_on_previous': true, ensuring backend tasks complete before dependent frontend tasks\n\nToken caps adjusted to reduce API load: bash output capped at 2500 chars, read_file capped at 4000 chars, and max_tokens reduced to 4096 in agent and repair loops\n\nCLAUDE.md from the target repository is fetched and injected into the clarity check and agent system prompt, enabling the bot to answer structural questions autonomously and start with architecture context\n\nPrior Q&A from previous triggers is now injected into the clarity check, ensuring previously resolved questions are not re-asked and improving clarity assessment efficiency\n\nNew query_table tool provides read-only access to Azure Table Storage, allowing the agent to inspect live data in ideas, projects, and updates tables to validate assumptions and understand record shapes before writing code\n\nAgent round limit increased from 40 to 60, with a wrap-up nudge injected at round 50 to commit partial work and summarize progress, ensuring no work is lost if the hard cap is reached\n\nAgent now returns a summary explanation when no commits are made, enabling actionable feedback to users and improving transparency in cases where no changes are implemented\n\nSupports machine key authentication for PATCH /ideas/{id} in [[ideas-api|ideas-api]], enabling the bot to update idea statuses as part of its workflow\n\nRelies on [[ideas-api|ideas-api]] to enforce project linkage during idea creation, ensuring every idea is associated with a registered project. This prevents the creation of orphaned ideas and improves traceability."
+        "content": "A containerised Python agent that autonomously implements feature ideas. Triggered on demand by [[ideas-api|ideas-api]], it clones the target repo, performs a pre-flight clarity check, runs an AI-driven tool-use loop to read/write files and execute shell commands, commits the result, and opens a draft pull request.\n\nAzure OpenAI tool-use loop (default model: o3-mini, overridable per-run via ideas-api's run-bot) now includes app-level retry mechanism with up to 4 attempts and exponential backoff (60/120/300s) for handling sustained 429 rate limits\n\nSliding context window trims older exchanges beyond the last 14 to bound token usage and reduce 429 risks\n\nIdea decomposition mechanism splits complex ideas into 2–4 focused sub-tasks, each assigned to the correct project based on repo-specific work, blocking the parent idea until all sub-tasks complete\n\nSub-tasks are now ordered and can be chained with hard dependencies by setting 'depends_on_previous': true, ensuring backend tasks complete before dependent frontend tasks\n\nToken caps adjusted to reduce API load: bash output capped at 2500 chars, read_file capped at 4000 chars, and max_tokens reduced to 4096 in agent and repair loops\n\nCLAUDE.md from the target repository is fetched and injected into the clarity check and agent system prompt, enabling the bot to answer structural questions autonomously and start with architecture context\n\nPrior Q&A from previous triggers is now injected into the clarity check, ensuring previously resolved questions are not re-asked and improving clarity assessment efficiency\n\nNew query_table tool provides read-only access to Azure Table Storage, allowing the agent to inspect live data in ideas, projects, and updates tables to validate assumptions and understand record shapes before writing code\n\nAgent round limit increased from 40 to 60, with a wrap-up nudge injected at round 50 to commit partial work and summarize progress, ensuring no work is lost if the hard cap is reached\n\nAgent now returns a summary explanation when no commits are made, enabling actionable feedback to users and improving transparency in cases where no changes are implemented\n\nUses the machine-key-only PATCH /ideas/{id}/bot endpoint in [[ideas-api|ideas-api]] to update idea statuses — a distinct, more privileged route than the general-purpose PATCH /ideas/{id}\n\nRelies on [[ideas-api|ideas-api]] to enforce project linkage during idea creation, ensuring every idea is associated with a registered project. This prevents the creation of orphaned ideas and improves traceability."
       },
       {
         "heading": "Data Flow",
-        "content": "Decompose complex ideas into sub-tasks if needed · block parent idea\n\nEvaluate idea complexity · create 2–4 focused sub-tasks\n\nAssign exact project_name per subtask based on repo-specific work\n\nOrder sub-tasks and chain dependencies if needed (e.g., backend before frontend)\n\nFile sub-tasks via [[ideas-api|Ideas API]] · update parent idea status\n\nUpdate idea statuses via PATCH /ideas/{id} in [[ideas-api|ideas-api]] · unblock parent ideas when sub-tasks complete\n\nEnsure all ideas are linked to a registered project during creation by resolving project_name to project_id via [[ideas-api|ideas-api]]"
+        "content": "Decompose complex ideas into sub-tasks if needed · block parent idea\n\nEvaluate idea complexity · create 2–4 focused sub-tasks\n\nAssign exact project_name per subtask based on repo-specific work\n\nOrder sub-tasks and chain dependencies if needed (e.g., backend before frontend)\n\nFile sub-tasks via [[ideas-api|Ideas API]] · update parent idea status\n\nUpdate idea statuses via PATCH /ideas/{id}/bot in [[ideas-api|ideas-api]] · unblock parent ideas when sub-tasks complete\n\nEnsure all ideas are linked to a registered project during creation by resolving project_name to project_id via [[ideas-api|ideas-api]]"
       }
     ],
     "relatedPages": [
@@ -353,7 +368,8 @@
     "summary": "Defines and provisions all Azure resources at subscription scope using Bicep. Modules now include history-api with a Flex Consumption plan, Go-based Azure Function, EasyAuth integration, and supporting storage resources. Recent updates include integration of HISTORY_API_URL and HISTORY_API_KEY into posts-api for history-api-backed storage and version history support.",
     "description": "Bicep infrastructure-as-code package that defines and provisions every Azure resource in the system at subscription scope. Modules cover each service, the shared networking layer, and all RBAC role assignments. Recent updates include wiring history-api configuration into posts-api for version history and storage integration.",
     "features": [
-      "Integration of HISTORY_API_URL and HISTORY_API_KEY into posts-api for history-api-backed storage and version history support"
+      "Integration of HISTORY_API_URL and HISTORY_API_KEY into posts-api for history-api-backed storage and version history support",
+      "running-app has its own, wholly separate top-level template (running-app.bicep + modules/runningapp.bicep) — its own resource group, its own region (centralus, vs eastus for everything else), and its own Postgres Flexible Server. main.bicep (this package's primary subscription-scope deployment) never invokes it."
     ],
     "architecture": {
       "overview": "Modular Bicep files deployed at subscription scope. Each service has its own module. The Container App Environment module creates the shared Log Analytics workspace used for unified observability across all Container Apps. The arch-content-foundry module provisions an OpenAI resource with a GPT-4o deployment for the arch-content-update CI workflow. The gpt-5.3-codex model for ideas-bot is deployed independently to avoid quota-related deployment failures impacting the rest of the infrastructure. The history-api module introduces a Go-based Azure Function app running on a Flex Consumption plan, with EasyAuth integration and dedicated storage resources for versions table and history-attachments blob container. The posts-api module now integrates with history-api via HISTORY_API_URL and HISTORY_API_KEY app settings, enabling version history and storage functionality.",
@@ -369,7 +385,8 @@
         "history-api runs on a Flex Consumption plan, required for Go-based Azure Functions during public preview",
         "history-api uses EasyAuth with an App Registration for secure authentication and authorization",
         "Dedicated storage account for history-api includes versions table and history-attachments blob container",
-        "posts-api integrates with history-api using HISTORY_API_URL and HISTORY_API_KEY for version history and storage functionality"
+        "posts-api integrates with history-api using HISTORY_API_URL and HISTORY_API_KEY for version history and storage functionality",
+        "running-app is NOT provisioned by main.bicep — it deploys via a separate subscription-scope template in this same repo with its own resource group and region; treat it as an independent deployment pipeline sharing only the repo, not the resource group"
       ]
     },
     "dataFlow": [
@@ -413,21 +430,21 @@
     "updatedByPackage": "posts-api"
   },
   "learning-plan-api": {
-    "summary": "Generates structured learning plans via the Claude API and stores them per user in Azure Table Storage. Google ID tokens are verified server-side on every request, with user isolation enforced by partition key at the storage level.",
-    "description": "Azure Functions app that generates structured learning plans via the Claude API and stores them per user in Azure Table Storage. Google ID tokens are verified server-side for every request.",
+    "summary": "Generates structured learning plans via the Azure OpenAI and stores them per user in Azure Table Storage. Google ID tokens are verified server-side on every request, with user isolation enforced by partition key at the storage level.",
+    "description": "Azure Functions app that generates structured learning plans via the Azure OpenAI and stores them per user in Azure Table Storage. Google ID tokens are verified server-side for every request.",
     "features": [
-      "Generates structured learning plans (phases, steps, resources) via Claude API",
+      "Generates structured learning plans (phases, steps, resources) via Azure OpenAI",
       "User authentication via Google OAuth — ID token verified server-side on every request",
       "Stores plans per user in Azure Table Storage (partition key = Google sub claim)",
       "List, create, retrieve, and delete plans per authenticated user",
       "Plan content stored as markdown; frontend renders it with a lightweight parser"
     ],
     "architecture": {
-      "overview": "HTTP-triggered Azure Functions backed by Table Storage. Google ID tokens are validated using Google's public key endpoint. The Claude API generates the plan as markdown given a topic, duration, and depth. No session state — fully stateless JWT verification per request.",
+      "overview": "HTTP-triggered Azure Functions backed by Table Storage. Google ID tokens are validated using Google's public key endpoint. Azure OpenAI generates the plan as markdown given a topic, duration, and depth. No session state — fully stateless JWT verification per request.",
       "keyPoints": [
         "User isolation enforced at the storage level: partition key = Google sub claim",
         "Google token verification hits accounts.google.com/o/oauth2/v3/certs on each request (cached by the SDK)",
-        "Claude API called with a structured prompt; plan markdown is stored as-is",
+        "Azure OpenAI called with a structured prompt; plan markdown is stored as-is",
         "Frontend sends the Google ID token in Authorization: Bearer header",
         "No admin interface — plan deletion is user-self-service only"
       ]
@@ -453,7 +470,7 @@
         "color": "blue"
       },
       {
-        "label": "POST /api/plans/generate → Claude API",
+        "label": "POST /api/plans/generate → Azure OpenAI",
         "color": "orange",
         "sublines": [
           "structured prompt → markdown learning plan returned"
@@ -467,8 +484,9 @@
   },
   "posts-api": {
     "summary": "Azure Functions (Python) API that manages content sections, such as markdown blog posts, stored as files in a GitHub repository. Authentication is handled via Google ID tokens; content ownership is enforced per-creator, with an allowlist controlling who can write. Private sections now require authentication for all operations, including reads.",
-    "description": "A serverless write API for quixotry.me's content sections. Items are stored as files with YAML frontmatter committed directly to GitHub; the API provides a unified interface for managing these sections.",
+    "description": "A serverless write API for quixotry.me's content sections. Both current sections (writing, diary) store their content as history-api documents — every read and write is an HTTP call to history-api, not a GitHub commit. A GitHub-backed storage class and a Blob Storage-backed one still exist in the repo but are unused dead code.",
     "features": [
+      "Both \"writing\" and \"diary\" sections are private (writing was made private after this feature list was first written) and both are fully backed by history-api, not GitHub",
       "Restrict private-section reads to the item's own author; other authors' entries are excluded",
       "Private sections return 404 for wrong-owner requests, avoiding confirmation of item existence",
       "Private sections require authentication for all operations, including reads",
@@ -476,8 +494,9 @@
       "Version-history support: list, retrieve, and diff versions of content items via [[posts-api|history-api]]"
     ],
     "architecture": {
-      "overview": "Azure Functions v2 app (Python) deployed to a Consumption plan. Each HTTP trigger handles one REST operation. Content is organized into named sections, each with its own schema, visibility rules, and storage backend. The default storage backends are GitHub and Azure Blob Storage, with optional integration to [[posts-api|history-api]] for version-history functionality. Auth uses google-auth to validate Google ID tokens server-side; no session state is maintained. Private sections now enforce authentication and ownership checks for all operations, including reads.",
+      "overview": "Azure Functions v2 app (Python) deployed to a Consumption plan. Each HTTP trigger handles one REST operation. Content is organized into named sections, each with its own schema and visibility rules. Both current sections — writing and diary — use HistoryApiStorage exclusively: every get/list/create/update/delete call is an HTTP request to [[posts-api|history-api]], which is now the sole storage backend, not an optional add-on. The repo also still contains GitHub- and Blob-Storage-backed storage classes from before the history-api migration; neither is wired into any current section and both are exercised only by their own unit tests. Auth uses google-auth to validate Google ID tokens server-side; no session state is maintained. Private sections enforce authentication and ownership checks for all operations, including reads.",
       "keyPoints": [
+        "HistoryApiStorage is the only storage backend actually used by any section today — the GitHub- and Blob-Storage-backed classes (github_storage.py, blob_storage.py) are dead code, referenced only by their own tests",
         "Private sections enforce per-item read access: only the item's author can view it; wrong-owner requests return 404 instead of 403",
         "Private sections require authentication for all operations, including reads, aligning with ownership-based visibility rules",
         "Legacy items without stamped author_email remain accessible to any allowlisted writer, ensuring backward compatibility",
@@ -515,7 +534,7 @@
     "sections": [
       {
         "heading": "Azure EasyAuth (platform-level)",
-        "content": "[[ideas-api|ideas-api]] and [[history-api|history-api]] rely on Azure Functions' built-in EasyAuth: Azure validates the Google ID token at the platform layer before the request ever reaches application code, then injects the validated identity as a request header. This approach reduces the amount of authentication code in the application itself but requires configuration in Azure Function App settings, which can complicate future migrations or debugging. Additionally, both [[ideas-api|ideas-api]] and [[history-api|history-api]] support machine authentication via custom headers (e.g., X-Ideas-Key for [[ideas-api|ideas-api]] and HISTORY_WRITE_KEY for [[history-api|history-api]]) to enable bot-driven workflows alongside user-based authentication. Recent updates to [[ideas-api|ideas-api]] now allow machine-key authentication for creating projects (POST /projects), aligning it with other write endpoints like ideas and updates."
+        "content": "[[ideas-api|ideas-api]], [[dashboard-api|dashboard-api]], and [[history-api|history-api]] rely on Azure Functions' built-in EasyAuth: Azure validates the Google ID token at the platform layer before the request ever reaches application code, then injects the validated identity as a request header. dashboard-api decodes the same X-MS-CLIENT-PRINCIPAL header the identical way ideas-api does. This approach reduces the amount of authentication code in the application itself but requires configuration in Azure Function App settings, which can complicate future migrations or debugging. Additionally, both [[ideas-api|ideas-api]] and [[history-api|history-api]] support machine authentication via custom headers (e.g., X-Ideas-Key for [[ideas-api|ideas-api]] and HISTORY_WRITE_KEY for [[history-api|history-api]]) to enable bot-driven workflows alongside user-based authentication. Recent updates to [[ideas-api|ideas-api]] now allow machine-key authentication for creating projects (POST /projects), aligning it with other write endpoints like ideas and updates."
       }
     ],
     "relatedPages": [

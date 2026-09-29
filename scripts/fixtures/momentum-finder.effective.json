@@ -1,12 +1,14 @@
 {
   "architecture": {
     "keyPoints": [
-      "Scales 0–10 replicas — expect a cold start (~5–10s) on first request after idle",
+      "Scales 0-10 replicas — expect a cold start (~5-10s) on first request after idle, plus model download time",
+      "Models are pulled from Blob Storage at process startup via MODEL_STORAGE_CONNECTION_STRING, not bundled in the image — a separate model_trainer.py exists for retraining but has no CI workflow wiring it up",
+      "In-memory momentum cache per game_id with a 30-second TTL to reduce repeated model inference under polling",
+      "CORS is locked to two specific origins (https://www.quixotry.me and http://localhost:3000), not a wildcard",
       "Shared Log Analytics workspace with trail-finder; KQL queries in dashboard-api span both services",
-      "REACT_APP_API_BASE_URL must be set in the frontend build for this feature to work",
       "Structured logging middleware attaches request_id, duration_ms, and status_code to every log line"
     ],
-    "overview": "FastAPI on Uvicorn (port 80), containerised and deployed as an Azure Container App. Shares a Log Analytics workspace with trail-finder for unified observability. The app scales to zero replicas when idle."
+    "overview": "FastAPI on Uvicorn (port 80), containerised and deployed as an Azure Container App. At startup it downloads three joblib-serialized scikit-learn models (home_run_model.pkl, away_run_model.pkl, win_prob_model.pkl) from the \"models\" container in Azure Blob Storage. Shares a Log Analytics workspace with trail-finder for unified observability. The app scales to zero replicas when idle."
   },
   "dataFlow": [
     {
@@ -30,11 +32,13 @@
       "label": "Live game cards rendered — teams, score, momentum indicators"
     }
   ],
-  "description": "FastAPI Container App that analyses live NBA game data to detect and surface momentum shifts. Scales automatically between 0 and 10 replicas and emits structured JSON logs for dashboard monitoring.",
+  "description": "FastAPI Container App that analyses live NBA game data to detect and surface momentum shifts, using pre-trained scikit-learn models loaded from Azure Blob Storage. Scales automatically between 0 and 10 replicas and emits structured JSON logs for dashboard monitoring.",
   "features": [
-    "Fetches live NBA game scores and play-by-play data",
-    "Detects scoring runs and momentum shifts within a game",
-    "Returns structured game cards with team info, score, period, and momentum indicators",
+    "Fetches live NBA game scores and play-by-play data via nba_api",
+    "Scores scoring runs and momentum shifts with three pre-trained scikit-learn models (home-run, away-run, win-probability)",
+    "GET /get-current-games — structured game cards with team info, score, period, and momentum indicators",
+    "POST /get-momentum — momentum shifts for a specific team pair + date",
+    "30-second in-memory cache per game_id to absorb repeated polling",
     "/health endpoint consumed by dashboard-api for uptime monitoring",
     "Structured JSON request logs flow into shared Log Analytics workspace"
   ],
@@ -63,13 +67,18 @@
   "repoUrl": "https://github.com/skarumbu/momentum_finder",
   "role": "Identifies momentum shifts in live NBA games",
   "runsOn": "Azure Container Apps",
-  "summary": "Analyses live NBA game data to surface momentum shifts. Runs as a Container App (FastAPI + Uvicorn on port 80, scales 0–10 replicas). Emits structured JSON logs on every request that flow into Log Analytics for the dashboard to query.",
+  "summary": "Analyses live NBA game data to surface momentum shifts, scored by three scikit-learn models (home-run, away-run, and win-probability) downloaded from Azure Blob Storage at startup. Runs as a Container App (FastAPI + Uvicorn on port 80, scales 0-10 replicas). Emits structured JSON logs on every request that flow into Log Analytics for the dashboard to query.",
   "techStack": [
     "FastAPI",
-    "Python 3.11",
+    "Python 3.10",
     "Uvicorn",
     "Azure Container Apps",
     "Log Analytics",
+    "scikit-learn",
+    "pandas",
+    "joblib",
+    "Azure Blob Storage",
+    "nba_api",
     "Docker"
   ],
   "title": "momentum-finder"

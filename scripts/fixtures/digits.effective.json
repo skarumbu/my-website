@@ -3,7 +3,8 @@
     "keyPoints": [
       "Frontend skips this API in development — NODE_ENV=development activates hardcoded stub data",
       "Metrics rows are picked up by dashboard-api via Azure Table Storage queries",
-      "Timer trigger uses a cron expression: \"0 0 * * *\" (midnight UTC daily)",
+      "Timer trigger fires on a 6-field NCRONTAB cron expression, \"0 0 0 * * *\" (includes a leading seconds field, per Azure Functions' timer-trigger format) — midnight UTC daily",
+      "If Table Storage has no entry for today (e.g. the timer hasn't fired yet), the HTTP handler generates and caches that day's puzzles on demand instead of returning empty",
       "Puzzles are keyed by ISO date string — no cleanup needed, old rows simply age out"
     ],
     "overview": "Two Azure Function triggers: a timer trigger that generates the day's puzzles at midnight UTC and writes them to Table Storage, and an HTTP trigger that reads and returns them. Table Storage acts as both puzzle store and metrics sink."

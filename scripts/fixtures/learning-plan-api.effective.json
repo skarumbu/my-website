@@ -3,11 +3,11 @@
     "keyPoints": [
       "User isolation enforced at the storage level: partition key = Google sub claim",
       "Google token verification hits accounts.google.com/o/oauth2/v3/certs on each request (cached by the SDK)",
-      "Claude API called with a structured prompt; plan markdown is stored as-is",
+      "Azure OpenAI called with a structured prompt; plan markdown is stored as-is",
       "Frontend sends the Google ID token in Authorization: Bearer header",
       "No admin interface — plan deletion is user-self-service only"
     ],
-    "overview": "HTTP-triggered Azure Functions backed by Table Storage. Google ID tokens are validated using Google's public key endpoint. The Claude API generates the plan as markdown given a topic, duration, and depth. No session state — fully stateless JWT verification per request."
+    "overview": "HTTP-triggered Azure Functions backed by Table Storage. Google ID tokens are validated using Google's public key endpoint. Azure OpenAI generates the plan as markdown given a topic, duration, and depth. No session state — fully stateless JWT verification per request."
   },
   "dataFlow": [
     {
@@ -31,7 +31,7 @@
     },
     {
       "color": "orange",
-      "label": "POST /api/plans/generate → Claude API",
+      "label": "POST /api/plans/generate → Azure OpenAI",
       "sublines": [
         "structured prompt → markdown learning plan returned"
       ]
@@ -41,9 +41,9 @@
       "label": "POST /api/plans saves plan to Table Storage"
     }
   ],
-  "description": "Azure Functions app that generates structured learning plans via the Claude API and stores them per user in Azure Table Storage. Google ID tokens are verified server-side for every request.",
+  "description": "Azure Functions app that generates structured learning plans via the Azure OpenAI and stores them per user in Azure Table Storage. Google ID tokens are verified server-side for every request.",
   "features": [
-    "Generates structured learning plans (phases, steps, resources) via Claude API",
+    "Generates structured learning plans (phases, steps, resources) via Azure OpenAI",
     "User authentication via Google OAuth — ID token verified server-side on every request",
     "Stores plans per user in Azure Table Storage (partition key = Google sub claim)",
     "List, create, retrieve, and delete plans per authenticated user",
@@ -72,12 +72,12 @@
   "repoUrl": "https://github.com/skarumbu/learning-plan-api",
   "role": "Generates and stores AI-powered personalised learning plans",
   "runsOn": "Azure Functions",
-  "summary": "Generates structured learning plans via the Claude API and stores them per user in Azure Table Storage. Google ID tokens are verified server-side on every request, with user isolation enforced by partition key at the storage level.",
+  "summary": "Generates structured learning plans via the Azure OpenAI and stores them per user in Azure Table Storage. Google ID tokens are verified server-side on every request, with user isolation enforced by partition key at the storage level.",
   "techStack": [
     "Azure Functions v2",
     "Python 3.11",
     "Azure Table Storage",
-    "Claude API",
+    "Azure OpenAI",
     "Google OAuth"
   ],
   "title": "learning-plan-api"

@@ -63,7 +63,8 @@ export const PACKAGE_TEMPLATES: Record<string, PackageTemplate> = {
       keyPoints: [
         'Frontend skips this API in development — NODE_ENV=development activates hardcoded stub data',
         'Metrics rows are picked up by dashboard-api via Azure Table Storage queries',
-        'Timer trigger uses a cron expression: "0 0 * * *" (midnight UTC daily)',
+        'Timer trigger uses a 6-field NCRONTAB cron expression: "0 0 0 * * *" (midnight UTC daily)',
+        'On-demand fallback: if no puzzles exist yet for today, the HTTP handler generates and caches them itself instead of returning empty',
         'Puzzles are keyed by ISO date string — no cleanup needed, old rows simply age out',
       ],
     },
@@ -87,25 +88,27 @@ export const PACKAGE_TEMPLATES: Record<string, PackageTemplate> = {
     role: 'Identifies momentum shifts in live NBA games',
     runsOn: 'Azure Container Apps',
     description:
-      'FastAPI Container App that analyses live NBA game data to detect and surface momentum shifts. Scales automatically between 0 and 10 replicas and emits structured JSON logs for dashboard monitoring.',
+      'FastAPI Container App that analyses live NBA game data to detect and surface momentum shifts, using pre-trained scikit-learn models loaded from Azure Blob Storage. Scales automatically between 0 and 10 replicas and emits structured JSON logs for dashboard monitoring.',
     features: [
-      'Fetches live NBA game scores and play-by-play data',
-      'Detects scoring runs and momentum shifts within a game',
-      'Returns structured game cards with team info, score, period, and momentum indicators',
+      'Fetches live NBA game scores and play-by-play data via nba_api',
+      'Scores scoring runs and momentum shifts with three pre-trained scikit-learn models (home-run, away-run, win-probability)',
+      'GET /get-current-games and POST /get-momentum (a specific team pair + date) both return structured game cards with team info, score, period, and momentum indicators',
+      '30-second in-memory cache per game_id',
       '/health endpoint consumed by dashboard-api for uptime monitoring',
       'Structured JSON request logs flow into shared Log Analytics workspace',
     ],
     architecture: {
       overview:
-        'FastAPI on Uvicorn (port 80), containerised and deployed as an Azure Container App. Shares a Log Analytics workspace with trail-finder for unified observability. The app scales to zero replicas when idle.',
+        'FastAPI on Uvicorn (port 80), containerised and deployed as an Azure Container App. At startup it downloads three joblib-serialized scikit-learn models from a "models" Blob Storage container. Shares a Log Analytics workspace with trail-finder for unified observability. The app scales to zero replicas when idle.',
       keyPoints: [
-        'Scales 0–10 replicas — expect a cold start (~5–10s) on first request after idle',
+        'Scales 0–10 replicas — expect a cold start (~5–10s) on first request after idle, plus model download time',
+        'Models are pulled from Blob Storage at startup, not bundled in the image',
         'Shared Log Analytics workspace with trail-finder; KQL queries in dashboard-api span both services',
         'REACT_APP_API_BASE_URL must be set in the frontend build for this feature to work',
         'Structured logging middleware attaches request_id, duration_ms, and status_code to every log line',
       ],
     },
-    techStack: ['FastAPI', 'Python 3.11', 'Uvicorn', 'Azure Container Apps', 'Log Analytics', 'Docker'],
+    techStack: ['FastAPI', 'Python 3.10', 'Uvicorn', 'Azure Container Apps', 'Log Analytics', 'scikit-learn', 'pandas', 'joblib', 'Azure Blob Storage', 'nba_api', 'Docker'],
     pipeline: [
       { label: 'git push\nmain/master' },
       { label: 'GitHub Actions', color: 'blue' },
@@ -116,7 +119,7 @@ export const PACKAGE_TEMPLATES: Record<string, PackageTemplate> = {
     dataFlow: [
       { label: 'User opens /momentum-finder', color: 'blue' },
       { label: 'GET {REACT_APP_API_BASE_URL}/get-current-games', color: 'orange' },
-      { label: 'momentum-finder Container App', sublines: ['fetches live NBA data', 'analyses scoring runs and momentum'], color: 'orange' },
+      { label: 'momentum-finder Container App', sublines: ['fetches live NBA data via nba_api', 'scores it with 3 scikit-learn models loaded from Blob Storage at startup'], color: 'orange' },
       { label: 'Live game cards rendered — teams, score, momentum indicators', color: 'blue' },
     ],
   },
@@ -130,18 +133,18 @@ export const PACKAGE_TEMPLATES: Record<string, PackageTemplate> = {
     features: [
       'City search with Google Maps JS SDK autocomplete — runs entirely in the browser, zero backend cost',
       'Geocodes the city and searches Google Places for nearby hiking trails',
-      'Fetches weekend weather forecast from Open-Meteo (free, no API key)',
+      'Fetches weather from Open-Meteo for today through the coming weekend (free, no API key)',
       'Pulls AllTrails snippets via Google Custom Search for additional trail context',
       'Azure OpenAI synthesizes a condition summary and gear list from all sources',
-      'In-memory result cache keyed by normalised city name — 24h TTL',
+      'In-memory result cache keyed by city + date — resets at UTC midnight, not a rolling 24h window',
       '/health endpoint for dashboard monitoring',
     ],
     architecture: {
       overview:
         'FastAPI app with a sequential pipeline of external API calls fanned out where possible. Azure OpenAI synthesizes the final output from all gathered context. The in-memory cache is a Python dict — cleared on container restart.',
       keyPoints: [
-        'Autocomplete is browser-side (Google Maps JS SDK) — 300ms debounce, no backend request until search is submitted',
-        '24h cache TTL balances freshness with API cost; weather is the most volatile component',
+        'Autocomplete is browser-side (Google Maps JS SDK) — 300ms debounce, no backend request until search is submitted; the API\'s own GET /autocomplete route exists but is currently unused',
+        'Cache key includes the calendar date, so entries reset at UTC midnight rather than N hours after being written',
         'Identical structured JSON logging middleware to momentum-finder — same KQL queries work for both',
         'Scales to zero when idle — same cold start caveat as momentum-finder',
         'Google Places and Custom Search quotas are the primary cost driver; OpenAI is secondary',
@@ -169,26 +172,30 @@ export const PACKAGE_TEMPLATES: Record<string, PackageTemplate> = {
     role: 'Aggregates health, metrics, and cost across all services',
     runsOn: 'Azure Functions',
     description:
-      'Azure Functions app that fans out in parallel to health-check all services, query Log Analytics for request metrics, pull Digits Table Storage metrics, and fetch Azure Cost Management spend — returning everything in a single aggregated response.',
+      'Azure Functions app that is both a generic registry of every other app in the system and an aggregator over them: it health-checks, metrics-queries, and cost-queries whatever is registered, and can discover un-registered Azure resources on demand.',
     features: [
-      'Health checks for momentum-finder and trail-finder (HTTP /health)',
-      'Log Analytics KQL queries for request counts, average latency, and errors per service (24h window)',
+      'App registry (GET/POST /apps, PATCH/DELETE /apps/{name}) — any app typed as ContainerApp, FunctionApp, APIM, StaticWebApp, ContainerAppJob, or custom can be registered',
+      'GET /discover — on-behalf-of Azure Resource Graph query using the calling user\'s own token, to find un-registered resources',
+      'Per-type health check dispatch: HTTP /health, Function-App KQL, Container-App log query, or a Container-App-Job ARM execution-status check',
+      'Log Analytics KQL queries for request counts, average latency, and errors per registered service (24h window)',
       'Digits metrics from Table Storage (request volume, error rate)',
       'Azure Cost Management MTD spend breakdown — cached 1h due to API rate limits',
       'All data returned in a single response — frontend polls every 60 seconds',
     ],
     architecture: {
       overview:
-        'Single HTTP-triggered function that executes all sub-queries in parallel via asyncio.gather. Uses a system-assigned Managed Identity — no credentials stored in app settings. RBAC roles are assigned by the azure-infrastructure package.',
+        'Single HTTP-triggered function that executes all sub-queries in parallel via asyncio.gather, dispatching a different health-check strategy per registered app\'s type. Uses a system-assigned Managed Identity for its own queries — no credentials stored in app settings — plus an on-behalf-of flow for the /discover endpoint. RBAC roles are assigned by the azure-infrastructure package.',
       keyPoints: [
+        'The registry is generic — any app type can be added via POST /apps, not just a hardcoded pair of services',
+        'Container App Jobs have no /health endpoint — health is instead the job\'s latest ARM execution status, with console-log tailing on failure',
         'Managed Identity holds Log Analytics Reader (scoped to the shared workspace) and Cost Management Reader (scoped to subscription)',
-        'No API keys in environment variables — all Azure SDK auth flows through Managed Identity',
+        'No API keys in environment variables for the function\'s own queries — all Azure SDK auth flows through Managed Identity',
         'Cost Management responses cached for 1h in memory; all other queries are live',
         'Frontend dashboard polls /api/dashboard every 60 seconds',
         'Parallel fan-out keeps response time under 3s even with 5+ downstream calls',
       ],
     },
-    techStack: ['Azure Functions v2', 'Python 3.11', 'azure-monitor-query', 'azure-identity', 'Azure Cost Management', 'Managed Identity'],
+    techStack: ['Azure Functions v2', 'Python 3.11', 'azure-monitor-query', 'azure-identity', 'azure-data-tables', 'azure-mgmt-resourcegraph', 'Azure Cost Management', 'Managed Identity'],
     pipeline: [
       { label: 'git push\nmain/master' },
       { label: 'GitHub Actions', color: 'blue' },
@@ -197,8 +204,8 @@ export const PACKAGE_TEMPLATES: Record<string, PackageTemplate> = {
     ],
     dataFlow: [
       { label: 'Dashboard frontend (60s poll)', color: 'blue' },
-      { label: 'dashboard-api (Azure Functions) — parallel fan-out', sublines: [
-        'Health: GET momentum-finder /health, trail-finder /health',
+      { label: 'dashboard-api (Azure Functions) — parallel fan-out over the app registry', sublines: [
+        'Health: per-type dispatch (HTTP /health, Function-App KQL, Container-App logs, or Job execution status)',
         'Log Analytics KQL: request counts, latency, errors (24h)',
         'Table Storage: digits metrics rows (24h)',
         'Cost Management: MTD spend by service (1h cache)',
@@ -219,7 +226,8 @@ export const PACKAGE_TEMPLATES: Record<string, PackageTemplate> = {
       'List and create projects — ideas are grouped under projects',
       'EasyAuth JWT authentication for browser access (read)',
       'X-Ideas-Key machine write-key for automated idea creation (write)',
-      'POST /api/ideas/{id}/run-bot — triggers the ideas-bot Container App Job for a specific idea',
+      'POST /api/ideas/{id}/run-bot — triggers the ideas-bot Container App Job for a specific idea, with an optional model override (gpt-4o, gpt-5-mini, or gpt-4.1)',
+      'PATCH /api/ideas/{id}/bot — a separate, machine-key-ONLY route for bot-managed fields (bot_status, bot_pr_url, bot_error, bot_blocked_by); the general PATCH /api/ideas/{id} never writes these',
       'Ideas and projects stored in separate Table Storage tables',
     ],
     architecture: {
@@ -228,6 +236,7 @@ export const PACKAGE_TEMPLATES: Record<string, PackageTemplate> = {
       keyPoints: [
         'EasyAuth injects the validated Google ID token as a request header — the function reads sub and email from it',
         'X-Ideas-Key is a long-lived secret stored as a Function App setting (not in the codebase)',
+        'PATCH /ideas/{id} and PATCH /ideas/{id}/bot are two distinct routes with different privilege scopes — only the latter unlocks the bot-managed fields',
         'run-bot endpoint starts a Container App Job execution via the Azure SDK and returns immediately',
         'No compute runs between requests — fully serverless, scales to zero',
         'Table Storage partition key = project ID; row key = idea ID (UUID)',
@@ -254,27 +263,28 @@ export const PACKAGE_TEMPLATES: Record<string, PackageTemplate> = {
     role: 'Autonomous agent: implements features and opens draft PRs',
     runsOn: 'Container App Job',
     description:
-      'A containerised Python agent that autonomously implements feature ideas. Triggered on demand by ideas-api, it clones the target repo, runs a GPT-4o tool-use loop to read/write files and execute shell commands, commits the result, and opens a draft pull request.',
+      'A containerised Python agent that autonomously implements feature ideas. Triggered on demand by ideas-api, it clones the target repo, runs a tool-use loop against a configurable Azure OpenAI model (default: o3-mini) to read/write files and execute shell commands, commits the result, and opens a draft pull request.',
     features: [
       'Triggered on demand via ideas-api — one job execution per idea',
       'Clones the target GitHub repository fresh on each run',
-      'GPT-4o tool-use loop with file read/write and shell execution tools',
+      'Tool-use loop against a configurable Azure OpenAI model (default o3-mini; overridable per-run to gpt-4o/gpt-5-mini/gpt-4.1 via ideas-api\'s run-bot) with file read/write and shell execution tools',
       'Commits implemented changes with a descriptive commit message',
       'Opens a draft pull request on GitHub with a summary of changes',
       'Scales to zero between invocations — no idle cost',
     ],
     architecture: {
       overview:
-        'A Python script packaged as a Docker container and registered as a Container App Job. Each trigger spins up a fresh job execution from scratch. The GPT-4o agent loop iterates until the feature is implemented or a maximum iteration limit is reached, then commits and creates the PR.',
+        'A Python script packaged as a Docker container and registered as a Container App Job. Each trigger spins up a fresh job execution from scratch. The agent loop (o3-mini by default, a reasoning model needing max_completion_tokens rather than max_tokens/temperature) iterates until the feature is implemented or a maximum iteration limit is reached, then commits and creates the PR.',
       keyPoints: [
         'Fresh container per invocation — no shared state between runs',
         'GitHub PAT stored as a Container App secret (not an environment variable in the image)',
-        'GPT-4o tool-use loop has a hard iteration cap to prevent runaway API cost',
+        'Default model is o3-mini, not GPT-4o — GPT-4o is just one of several models the caller can select per run',
+        'Tool-use loop has a hard iteration cap to prevent runaway API cost',
         'Shell execution tool runs in a sandboxed subprocess within the container',
         'Job is triggered via az containerapp job start by ideas-api using Managed Identity',
       ],
     },
-    techStack: ['Python 3.11', 'Azure Container App Job', 'Azure OpenAI (GPT-4o)', 'GitHub API', 'Docker', 'Managed Identity'],
+    techStack: ['Python 3.11', 'Azure Container App Job', 'Azure OpenAI (o3-mini default, configurable)', 'GitHub API', 'Docker', 'Managed Identity'],
     pipeline: [
       { label: 'git push\nmain' },
       { label: 'GitHub Actions', color: 'blue' },
@@ -285,7 +295,7 @@ export const PACKAGE_TEMPLATES: Record<string, PackageTemplate> = {
     dataFlow: [
       { label: 'ideas-api receives POST /run-bot', color: 'purple' },
       { label: 'Container App Job starts — fresh container', color: 'orange' },
-      { label: 'Clone target repo · read idea description', sublines: ['GPT-4o tool-use loop', 'read files · write files · run shell commands'] },
+      { label: 'Clone target repo · read idea description', sublines: ['Azure OpenAI tool-use loop (o3-mini default)', 'read files · write files · run shell commands'] },
       { label: 'Commit changes · open draft PR on GitHub', color: 'green' },
     ],
   },
@@ -330,9 +340,9 @@ export const PACKAGE_TEMPLATES: Record<string, PackageTemplate> = {
     role: 'Generates and stores AI-powered personalised learning plans',
     runsOn: 'Azure Functions',
     description:
-      'Azure Functions app that generates structured learning plans via the Claude API and stores them per user in Azure Table Storage. Google ID tokens are verified server-side for every request.',
+      'Azure Functions app that generates structured learning plans via Azure OpenAI and stores them per user in Azure Table Storage. Google ID tokens are verified server-side for every request.',
     features: [
-      'Generates structured learning plans (phases, steps, resources) via Claude API',
+      'Generates structured learning plans (phases, steps, resources) via Azure OpenAI',
       'User authentication via Google OAuth — ID token verified server-side on every request',
       'Stores plans per user in Azure Table Storage (partition key = Google sub claim)',
       'List, create, retrieve, and delete plans per authenticated user',
@@ -340,16 +350,16 @@ export const PACKAGE_TEMPLATES: Record<string, PackageTemplate> = {
     ],
     architecture: {
       overview:
-        'HTTP-triggered Azure Functions backed by Table Storage. Google ID tokens are validated using Google\'s public key endpoint. The Claude API generates the plan as markdown given a topic, duration, and depth. No session state — fully stateless JWT verification per request.',
+        'HTTP-triggered Azure Functions backed by Table Storage. Google ID tokens are validated using Google\'s public key endpoint. Azure OpenAI (via the openai SDK\'s AzureOpenAI client) generates the plan as markdown given a topic, duration, and depth. No session state — fully stateless JWT verification per request.',
       keyPoints: [
         'User isolation enforced at the storage level: partition key = Google sub claim',
         'Google token verification hits accounts.google.com/o/oauth2/v3/certs on each request (cached by the SDK)',
-        'Claude API called with a structured prompt; plan markdown is stored as-is',
+        'Azure OpenAI called with a structured prompt (model set via AZURE_OPENAI_DEPLOYMENT_NAME); plan markdown is stored as-is',
         'Frontend sends the Google ID token in Authorization: Bearer header',
         'No admin interface — plan deletion is user-self-service only',
       ],
     },
-    techStack: ['Azure Functions v2', 'Python 3.11', 'Azure Table Storage', 'Claude API', 'Google OAuth'],
+    techStack: ['Azure Functions v2', 'Python 3.11', 'Azure Table Storage', 'Azure OpenAI', 'Google OAuth'],
     pipeline: [
       { label: 'git push\nmain' },
       { label: 'GitHub Actions', color: 'blue' },
@@ -361,7 +371,7 @@ export const PACKAGE_TEMPLATES: Record<string, PackageTemplate> = {
       { label: 'GET /api/plans — Authorization: Bearer {token}', color: 'green' },
       { label: 'learning-plan-api verifies Google token · reads Table Storage', sublines: ['returns plans for this user (partition = sub claim)'], color: 'green' },
       { label: 'User submits topic + duration + depth', color: 'blue' },
-      { label: 'POST /api/plans/generate → Claude API', sublines: ['structured prompt → markdown learning plan returned'], color: 'orange' },
+      { label: 'POST /api/plans/generate → Azure OpenAI', sublines: ['structured prompt → markdown learning plan returned'], color: 'orange' },
       { label: 'POST /api/plans saves plan to Table Storage', color: 'green' },
     ],
   },
@@ -371,30 +381,113 @@ export const PACKAGE_TEMPLATES: Record<string, PackageTemplate> = {
     role: 'Manages content sections (writing, diary) stored on GitHub',
     runsOn: 'Azure Functions',
     description:
-      'Azure Functions (Python) API that manages content sections, such as markdown blog posts and diary entries, stored as files in a GitHub repository. Authentication is handled via Google ID tokens; content ownership is enforced per-creator, with an allowlist controlling who can write.',
+      'Azure Functions (Python) API that manages content sections — currently writing and diary, both private and both fully backed by history-api. Authentication is handled via Google ID tokens; content ownership is enforced per-creator, with an allowlist controlling who can write.',
     features: [
       'Create, read, update, and delete content items in named sections via REST endpoints',
-      'Support for multiple content sections (writing, diary), each with its own schema and visibility rules',
+      'Both current sections (writing, diary) are private and stored entirely via history-api, not GitHub',
       'Google ID token authentication — unified path for both the web app and CLI clients',
-      'Per-item ownership: author_email stored in frontmatter; only the creator can edit or delete their items',
+      'Per-item ownership: author_email stored on the item; only the creator can edit or delete their items',
       'Allowlist-gated writes via an ALLOWED_WRITERS environment variable',
     ],
     architecture: {
       overview:
-        'Azure Functions v2 app (Python) on a Consumption plan. Each HTTP trigger handles one REST operation. Content is organised into named sections, each with its own schema, visibility rules, and storage backend — the default backend is GitHub, where items are stored as .md files with YAML frontmatter.',
+        'Azure Functions v2 app (Python) on a Consumption plan. Each HTTP trigger handles one REST operation. Content is organised into named sections, each with its own schema and visibility rules; both current sections use HistoryApiStorage exclusively — every read/write is an HTTP call to history-api. GitHub- and Blob-Storage-backed storage classes still exist in the repo from before this migration but are unused dead code.',
       keyPoints: [
-        'Storage is GitHub by default — each item is a file with YAML frontmatter, committed via the GitHub API',
+        'HistoryApiStorage is the only storage backend actually in use — the legacy GitHub/Blob-backed classes are exercised only by their own tests',
         'Google ID token validated server-side against one or more configured client IDs — no Azure EasyAuth',
-        'Private sections (e.g. diary) require allowlist membership for all operations, including reads',
-        'Public sections (e.g. writing) support a published/draft toggle in frontmatter',
+        'Private sections (writing and diary, both) require allowlist membership for all operations, including reads',
+        'Version history (list/get/diff) is available for every item via history-api',
       ],
     },
-    techStack: ['Azure Functions v2', 'Python 3.11', 'GitHub (storage backend)', 'Google ID token auth', 'python-frontmatter'],
+    techStack: ['Azure Functions v2', 'Python 3.11', 'history-api (HistoryApiStorage)', 'Google ID token auth', 'requests'],
     pipeline: [
       { label: 'git push\nmain' },
       { label: 'GitHub Actions', color: 'blue' },
       { label: 'func publish\n--python' },
       { label: 'Live on\nAzure Functions', color: 'green' },
+    ],
+  },
+
+  'running-app': {
+    title: 'running-app',
+    role: 'Personal running tracker — GPS, history, badges',
+    runsOn: 'Azure Static Web Apps + Functions',
+    description:
+      'Personal running tracker: a React SPA (also shipped as a native iOS app via Capacitor) records GPS runs client-side and stores them via its own Python Azure Functions API and dedicated PostgreSQL database. Shows run history, personal bests, and an automatic badge system.',
+    features: [
+      'Live run tracking: start/pause/resume/finish, elapsed timer, live distance/pace, screen wake-lock, a notification while a run is being tracked',
+      'GPS via the browser\'s navigator.geolocation on web, or a background-geolocation Capacitor plugin on iOS native (allows tracking while the app is backgrounded); low-accuracy fixes (>30m) are discarded and distance is computed client-side via haversine',
+      'Run history list with a month summary (km/runs/hours), a distance-over-time chart, and per-run detail with a route map',
+      'Personal bests (best pace, longest run, totals) and automatic badges (first run, 5k/10k/21k/42k distance, a 7-day streak) — computed server-side and idempotent per (user, badge type)',
+      'Google Sign-In: Google Identity Services on web, a native Capacitor plugin on iOS (the web GIS button doesn\'t work from a capacitor:// origin)',
+      'Delete a run',
+    ],
+    architecture: {
+      overview:
+        'A monorepo: the top-level React (TypeScript) SPA, plus an api/ subfolder that is a separate Python Azure Functions app with its own PostgreSQL database. The frontend calls the API with Authorization: Bearer <Google ID token>; the API validates every token itself by calling Google\'s tokeninfo endpoint and checking the audience claim — there is no local JWT verification and no Azure EasyAuth. The same React codebase also ships as a native iOS app via Capacitor, swapping in native GPS/notification/auth plugins where the platform check requires it.',
+      keyPoints: [
+        'API auth is entirely in application code (http_auth_level=ANONYMOUS at the Functions layer) — every route but /api/health requires a Bearer token, verified against Google\'s tokeninfo endpoint on every request',
+        'Users are auto-provisioned on first authenticated call, keyed on the Google "sub" claim',
+        'DB access uses the pure-Python pg8000 driver over TLS, without server-certificate verification',
+        'There is no PATCH route on /api/runs/{id} — only GET and DELETE are implemented, despite what an earlier version of this page\'s diagram entry claimed',
+        'History cards show plain distance/duration/pace/name — there is no route-shape classification, reverse geocoding, or weather lookup anywhere in the codebase, despite what an earlier version of this page\'s diagram entry claimed',
+      ],
+    },
+    techStack: ['React 18/19', 'TypeScript', 'React Router v7', 'Recharts', 'Leaflet', 'Capacitor 7 (iOS)', 'Google Identity Services', 'Azure Functions v2', 'Python', 'pg8000', 'PostgreSQL'],
+    pipeline: [
+      { label: 'git push\nmain' },
+      { label: 'GitHub Actions', color: 'blue' },
+      { label: 'npm ci && build\n(frontend)' },
+      { label: 'func publish\n--python (API)' },
+      { label: 'Azure SWA\ndeploy action', color: 'orange' },
+      { label: 'Live on\nAzure', color: 'green' },
+    ],
+    dataFlow: [
+      { label: 'User finishes a run (web or iOS)', color: 'blue' },
+      { label: 'POST /api/runs — Authorization: Bearer {Google ID token}', color: 'orange' },
+      { label: 'running-app API validates token via Google tokeninfo · computes pace · awards badges', sublines: ['writes run + badges to PostgreSQL'], color: 'green' },
+      { label: 'History, bests, and badges rendered', color: 'blue' },
+    ],
+  },
+
+  'history-api': {
+    title: 'history-api',
+    role: 'Shared version-history and diffing service for documents',
+    runsOn: 'Azure Functions (Go)',
+    description:
+      'A Go Azure Functions app providing version history, diffing, and visibility control for documents on behalf of other services — a single shared place for version storage instead of every consumer building its own. It is the sole storage backend for posts-api\'s writing and diary sections, and for my-website\'s /architecture wiki.',
+    features: [
+      'Save a new version of a document (markdown or JSON), with optional binary attachments; list versions; get a specific version; diff any two versions (text diff + attachment change classification)',
+      'Section-scoped document index: list/get/delete documents, and update per-document or per-section visibility settings',
+      'Document visibility model: private (default, auth required) or public (anonymous GET allowed and listed) — resolved per-document override, then section default, then private',
+      'A public-documents endpoint for anonymously browsing public content across every section',
+      'Optimistic concurrency on save via expected_version_id (409 Conflict on mismatch)',
+      'Pluggable storage backend registry (env-selected, defaults to Azure Table + Blob)',
+    ],
+    architecture: {
+      overview:
+        'Go (net/http-based) Azure Functions app using the community azure-functions-golang-worker SDK. Ten HTTP routes are registered in main.go, all passing through a shared logging middleware. Auth mirrors ideas-api\'s EasyAuth pattern exactly: it decodes the X-MS-CLIENT-PRINCIPAL header for interactive callers, layered with a machine header (X-History-Key) for service-to-service writes, and a public-read gate for GETs on documents resolved as public.',
+      keyPoints: [
+        'Three auth layers: RequireAuth (EasyAuth only), MachineOrUserAuth (EasyAuth or X-History-Key — used for writes), PublicReadOrAuth (anonymous GET only when the resolved visibility is public, else falls through to MachineOrUserAuth — used for reads)',
+        'Content is capped at 32768 bytes per version (half of Table Storage\'s 65536-byte property limit, kept as a safety margin)',
+        'Version rows are written before the document-index upsert; if the index upsert fails, the version is still durably saved and the index falls behind until the next successful write — a deliberate tradeoff, not a bug',
+        'Versions live in Azure Table Storage; attachments live in Azure Blob Storage',
+        'posts-api uses history-api as its sole storage backend for the writing and diary sections (not just for version history)',
+      ],
+    },
+    techStack: ['Go 1.25', 'Azure Functions (azure-functions-golang-worker)', 'Azure Table Storage', 'Azure Blob Storage', 'go-difflib', 'EasyAuth'],
+    pipeline: [
+      { label: 'git push\nmain' },
+      { label: 'go test\n./...', color: 'blue' },
+      { label: 'func pack\n--no-build' },
+      { label: 'func publish\n--go', color: 'orange' },
+      { label: 'Live on\nAzure Functions', color: 'green' },
+    ],
+    dataFlow: [
+      { label: 'Consumer (posts-api, my-website /architecture) calls history-api', color: 'blue' },
+      { label: 'POST /documents/{id}/versions — X-History-Key or EasyAuth', sublines: ['optimistic concurrency via expected_version_id'], color: 'orange' },
+      { label: 'GET /sections/{section}/documents/{slug} — public sections need no auth', color: 'green' },
+      { label: 'Version + diff data returned', color: 'blue' },
     ],
   },
 };
