@@ -378,7 +378,7 @@ export const PACKAGE_TEMPLATES: Record<string, PackageTemplate> = {
 
   'posts-api': {
     title: 'posts-api',
-    role: 'Manages content sections (writing, diary) stored on GitHub',
+    role: 'Manages content sections (writing, diary), both fully backed by history-api',
     runsOn: 'Azure Functions',
     description:
       'Azure Functions (Python) API that manages content sections — currently writing and diary, both private and both fully backed by history-api. Authentication is handled via Google ID tokens; content ownership is enforced per-creator, with an allowlist controlling who can write.',

@@ -15,15 +15,21 @@ closes or merges that PR automatically — that's a deliberate choice: review an
 merge it yourself, on your own schedule, independent of the code PR.
 
 The wiki-update PR carries a *preview*, not a direct edit: for each affected
-page it writes the proposed effective (template-merged) page JSON to
-docs/wiki-preview/<key>.json, plus one entry in docs/wiki-preview/manifest.json
-recording the history-api version it was generated against. It does not touch
-src/architecture-pages.json or src/architecture-history-index.json — those
-stay in the repo as an inert pre-migration backup. On merge, a separate
-workflow (wiki-update-merge.yml) reads the manifest and posts the as-merged
-preview content to history-api as a new version. See
-docs/design/2026-09-01-architecture-wiki-history-migration-design.md (in the
-history-api repo) for the full design.
+page it fetches the CURRENT effective page straight from history-api (the
+architecture section is public — no auth needed for reads), applies the
+AI-generated patch on top of that fetched content (or, for a page with no
+history-api entry yet, template-merges the patch as its initial content —
+see arch_effective_page.py), and writes the result to
+docs/wiki-preview/<key>.json, plus one entry in
+docs/wiki-preview/manifest.json recording the history-api version it was
+generated against. There is no git-tracked overlay file anymore
+(src/architecture-pages.json / architecture-history-index.json were removed
+once every page had a real history-api version — see
+docs/design/2026-09-01-architecture-wiki-history-migration-design.md, in the
+history-api repo, for the original design, and its "step 7" addendum for the
+overlay-removal that made this pipeline history-api-native). On merge, a
+separate workflow (wiki-update-merge.yml) reads the manifest and posts the
+as-merged preview content to history-api as a new version.
 
 Required env vars:
   ARCH_CONTENT_FOUNDRY_KEY  - API key for arch-content-foundry.services.ai.azure.com
@@ -35,7 +41,7 @@ Required env vars:
   PR_URL                    - HTML URL of the originating PR
   PR_NUMBER                 - PR number of the originating PR (integer string)
   HEAD_SHA                  - Full SHA of the PR's current head commit
-  REPO_NAME                 - Page key matching architecture-pages.json (e.g. "digits")
+  REPO_NAME                 - Page key matching the architecture wiki (e.g. "digits")
   REPO_FULL                 - Full repo slug of the calling repo (e.g. "skarumbu/digits")
 
 Optional env vars (used for extra prompt context and a more useful history
@@ -52,7 +58,6 @@ import subprocess
 import sys
 import urllib.error
 import urllib.request
-import base64
 from datetime import date
 
 from openai import AzureOpenAI
@@ -61,7 +66,6 @@ ENDPOINT = "https://eastus.api.cognitive.microsoft.com/"
 DEPLOYMENT = "gpt-4o"
 API_VERSION = "2024-02-01"
 MY_WEBSITE_REPO = "skarumbu/my-website"
-PAGES_FILE = "src/architecture-pages.json"
 MAX_RELATED_PAGES = 2
 
 # The architecture wiki's history-api section. Public read (see the
@@ -148,33 +152,56 @@ def run(cmd, **kw):
         raise
 
 
-# ── Fetch the current wiki page list from my-website's main (for the "reuse an
-#    existing page instead of duplicating" prompt hint) ─────────────────────
+# ── Fetch every wiki page's CURRENT effective content straight from
+#    history-api — the architecture section is public, so this needs no auth.
+#    Used both for prompt context (the "reuse an existing page" hint) and, in
+#    Phase 3, as the base each page's AI patch is applied on top of. ─────────
 
-def fetch_pages_from_main() -> dict:
-    api_url = f"https://api.github.com/repos/{MY_WEBSITE_REPO}/contents/{PAGES_FILE}"
-    req = urllib.request.Request(
-        api_url,
-        headers={
-            "Authorization": f"token {wiki_gh_token}",
-            "Accept": "application/vnd.github.v3+json",
-        },
-    )
+def fetch_latest_version_id(key: str) -> str:
+    """The history-api version_id for `key`'s current version, or "" if the
+    page has no version yet. A 401 here means "no document" (get_document.go
+    returns 401, not 404, for an anonymous caller on a missing document, to
+    avoid leaking existence of private docs)."""
+    url = f"{HISTORY_API_URL}/sections/{SECTION}/documents/{key}"
+    req = urllib.request.Request(url, headers={"Accept": "application/json"})
     try:
         with urllib.request.urlopen(req) as resp:
-            file_meta = json.loads(resp.read().decode("utf-8"))
-            return json.loads(base64.b64decode(file_meta["content"]).decode("utf-8"))
+            body = json.loads(resp.read().decode("utf-8"))
+            return body.get("version_id", "")
     except urllib.error.HTTPError as e:
-        if e.code in (401, 403):
-            print(f"Error: GitHub API returned {e.code} — WIKI_UPDATE_GH_TOKEN is expired or lacks Contents permission.", file=sys.stderr)
-            sys.exit(1)
-        if e.code == 404:
-            print(f"Warning: {PAGES_FILE} not found — will generate content from scratch.", file=sys.stderr)
-            return {}
+        if e.code in (401, 404):
+            return ""
         raise
 
 
-current_pages = fetch_pages_from_main()
+def fetch_current_effective_pages() -> dict:
+    url = f"{HISTORY_API_URL}/sections/{SECTION}/documents"
+    req = urllib.request.Request(url, headers={"Accept": "application/json"})
+    try:
+        with urllib.request.urlopen(req) as resp:
+            body = json.loads(resp.read().decode("utf-8"))
+    except urllib.error.HTTPError as e:
+        print(f"Error: history-api list failed ({e.code}) — {HISTORY_API_URL}", file=sys.stderr)
+        sys.exit(1)
+
+    pages = {}
+    for doc in body.get("documents", []):
+        key = doc["slug"]
+        page_req = urllib.request.Request(
+            f"{HISTORY_API_URL}/sections/{SECTION}/documents/{key}",
+            headers={"Accept": "application/json"},
+        )
+        try:
+            with urllib.request.urlopen(page_req) as resp:
+                version = json.loads(resp.read().decode("utf-8"))
+        except urllib.error.HTTPError as e:
+            print(f"Warning: could not fetch '{key}' ({e.code}) — skipping it as prompt context.", file=sys.stderr)
+            continue
+        pages[key] = json.loads(version["content"])
+    return pages
+
+
+current_pages = fetch_current_effective_pages()
 existing_pages_list = "\n".join(f"- {key}: {p.get('title', key)}" for key, p in current_pages.items()) or "(none yet)"
 
 # ── Phase 1: significance check ──────────────────────────────────────────────
@@ -418,15 +445,13 @@ Return valid JSON only (no markdown fences, no commentary)."""
         print(f"Skipping related page '{key}': failed to generate/parse ({e})", file=sys.stderr)
         continue
 
-# ── Phase 3: clone my-website, build preview files + manifest on a dedicated
-#    branch. Per the architecture-wiki -> history-api migration (step 4), this
-#    no longer mutates PAGES_FILE / HISTORY_INDEX_FILE in place — those stay as
-#    an inert pre-migration backup. Instead it writes the proposed *effective*
-#    page (template-merged) for each affected page under docs/wiki-preview/,
-#    plus a manifest recording the history-api version each preview was
-#    generated against. A merge-triggered workflow (wiki-update-merge.yml)
-#    reads that manifest and posts the as-merged content as a new history-api
-#    version — see docs/design/2026-09-01-architecture-wiki-history-migration-design.md.
+# ── Phase 3: clone my-website (needed only for arch_effective_page.py and
+#    arch-templates.generated.json — the templates, not any page content),
+#    build preview files + manifest on a dedicated branch. Each affected
+#    page's patch is applied on top of what fetch_current_effective_pages()
+#    already read from history-api above; there is no overlay file to read or
+#    write. A merge-triggered workflow (wiki-update-merge.yml) reads the
+#    manifest and posts the as-merged content as a new history-api version.
 
 clone_url = f"https://x-access-token:{wiki_gh_token}@github.com/{MY_WEBSITE_REPO}.git"
 run(["git", "clone", "--depth=1", clone_url, "my-website-clone"])
@@ -436,67 +461,76 @@ run(["git", "config", "user.name", "github-actions[bot]"], cwd=cwd)
 run(["git", "checkout", "-B", wiki_branch], cwd=cwd)
 
 # arch_effective_page.py is only available after the clone above (it lives in
-# my-website's own scripts/ dir, not fetched by the reusable workflow).
+# my-website's own scripts/ dir, not fetched by the reusable workflow). It's
+# needed only for a page with no history-api entry yet — everything else
+# patches the content already fetched into current_pages above.
 sys.path.insert(0, os.path.join(cwd, "scripts"))
 from arch_effective_page import build_effective_page, load_templates, to_canonical_json  # noqa: E402
-
-pages_path = os.path.join(cwd, PAGES_FILE)
-with open(pages_path, "r", encoding="utf-8") as f:
-    all_overlays = json.load(f)
 
 templates = load_templates(os.path.join(cwd, "src", "architecture", "arch-templates.generated.json"))
 
 
-def fetch_latest_version_id(key: str) -> str:
-    """The history-api version_id a preview for `key` was generated against, or
-    "" if the page has no version yet (first-ever write for it). The
-    `architecture` section is public, so this needs no auth; a 401 here means
-    "no document" (get_document.go returns 401, not 404, for an anonymous
-    caller on a missing document, to avoid leaking existence of private docs)."""
-    url = f"{HISTORY_API_URL}/sections/{SECTION}/documents/{key}"
-    req = urllib.request.Request(url, headers={"Accept": "application/json"})
-    try:
-        with urllib.request.urlopen(req) as resp:
-            body = json.loads(resp.read().decode("utf-8"))
-            return body.get("version_id", "")
-    except urllib.error.HTTPError as e:
-        if e.code in (401, 404):
-            return ""
-        raise
+def apply_patch(base: dict, patch: dict) -> dict:
+    """Apply an AI-generated field patch on top of an existing effective page.
+    Mirrors the old overlay-merge precedence: "architecture" is shallow-merged
+    key-by-key, every other patched field replaces the base's value outright."""
+    result = dict(base)
+    for field, value in patch.items():
+        if field == "architecture" and isinstance(value, dict):
+            result["architecture"] = {**result.get("architecture", {}), **value}
+        else:
+            result[field] = value
+    return result
 
 
-# Merge the package's own patch into its overlay (in-memory only — the overlay
-# file on disk is no longer written back).
-pkg_overlay = dict(all_overlays.get(repo_name, {}))
-for key, value in page_updates.items():
-    if key == "architecture" and isinstance(value, dict):
-        pkg_overlay["architecture"] = {**pkg_overlay.get("architecture", {}), **value}
-    else:
-        pkg_overlay[key] = value
-pkg_overlay["updatedAt"] = today
-pkg_overlay["updatedBySha"] = short_sha
-all_overlays[repo_name] = pkg_overlay
+# The package's own patch: apply on top of its current history-api content,
+# or template-merge it as the initial content if the page doesn't exist yet.
+if repo_name in current_pages:
+    pkg_page = apply_patch(current_pages[repo_name], page_updates)
+else:
+    pkg_page = build_effective_page(repo_name, page_updates, current_pages, templates)
+pkg_page["key"] = repo_name
+pkg_page["updatedAt"] = today
+pkg_page["updatedBySha"] = short_sha
+current_pages[repo_name] = pkg_page
 
-# Merge each related page's generated content into its overlay (full replace
-# of the generated fields, same as before).
+# Each related page, same treatment.
 for key, content in generated_related_pages.items():
-    existing = all_overlays.get(key, {})
-    merged = {**existing, **content}
+    if key in current_pages:
+        merged = apply_patch(current_pages[key], content)
+    else:
+        merged = build_effective_page(key, content, current_pages, templates)
+    merged["key"] = key
     merged["updatedAt"] = today
     merged["updatedBySha"] = short_sha
     merged["updatedByPackage"] = repo_name
-    all_overlays[key] = merged
+    current_pages[key] = merged
 
 affected_keys = [repo_name, *generated_related_pages.keys()]
+
+# Recompute relatedPages (forward ∪ reverse) for every affected page. Every
+# OTHER page's relatedPages already reflects this same forward-∪-reverse
+# resolution from the last time it was computed, so treating it as the
+# reverse-link source here is a stable fixed point, not a source of drift —
+# re-deriving a symmetric relation from an already-symmetric relation doesn't
+# add anything new.
+for key in affected_keys:
+    page = current_pages[key]
+    forward = page.get("relatedPages") or []
+    reverse = [k for k, p in current_pages.items() if k != key and key in (p.get("relatedPages") or [])]
+    seen, related = set(), []
+    for k in [*forward, *reverse]:
+        if k == key or k in seen:
+            continue
+        seen.add(k)
+        related.append(k)
+    page["relatedPages"] = related
 
 preview_dir = os.path.join(cwd, "docs", "wiki-preview")
 os.makedirs(preview_dir, exist_ok=True)
 manifest = []
 for key in affected_keys:
-    page = build_effective_page(key, all_overlays.get(key), all_overlays, templates)
-    if page is None:
-        print(f"Warning: no template or overlay for '{key}' — skipping preview.", file=sys.stderr)
-        continue
+    page = current_pages[key]
     with open(os.path.join(preview_dir, f"{key}.json"), "w", encoding="utf-8", newline="\n") as f:
         f.write(to_canonical_json(page))
     manifest.append({

@@ -1,40 +1,22 @@
-"""Cross-language contract: build_effective_page() must reproduce the TS
-resolvePage() byte-for-byte.
-
-The fixtures in scripts/fixtures/*.effective.json are generated from the TS
-side by `node scripts/gen-arch-fixtures.mjs`. If resolvePage(), the templates,
-or the pinned overlays change, regenerate them and eyeball the diff.
+"""Unit tests for the template-merge logic (build_effective_page /
+build_reverse_related). All fixtures here are synthetic — there is no
+git-tracked overlay file to pin against anymore (see the architecture-wiki ->
+history-api migration's "step 7": the overlay and legacy-history files were
+removed once every page had a real history-api version; the wiki_update_pr.py
+pipeline now patches content fetched live from history-api instead). This
+module still matters because a brand-new page (no history-api entry yet)
+still goes through this exact template merge, using the AI-generated patch as
+its initial overlay.
 """
-
-import json
-import os
 
 import pytest
 
 from arch_effective_page import (
     build_effective_page,
     build_reverse_related,
-    effective_page_for_key,
     load_templates,
     to_canonical_json,
 )
-
-_REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-_OVERLAYS_PATH = os.path.join(_REPO_ROOT, "src", "architecture-pages.json")
-_FIXTURE_DIR = os.path.join(_REPO_ROOT, "scripts", "fixtures")
-
-with open(_OVERLAYS_PATH, "r", encoding="utf-8") as _f:
-    _OVERLAYS = json.load(_f)
-
-# Every key in architecture-pages.json is pinned to a TS-generated fixture
-# (scripts/gen-arch-fixtures.mjs writes one per key). Regenerate + eyeball the
-# diff whenever resolvePage(), the templates, or the overlays change.
-PINNED_KEYS = list(_OVERLAYS)
-
-
-@pytest.fixture(scope="module")
-def overlays():
-    return _OVERLAYS
 
 
 @pytest.fixture(scope="module")
@@ -42,68 +24,14 @@ def templates():
     return load_templates()
 
 
-@pytest.mark.parametrize("key", PINNED_KEYS)
-def test_effective_page_matches_ts_fixture(key, overlays, templates):
-    fixture_path = os.path.join(_FIXTURE_DIR, f"{key}.effective.json")
-    with open(fixture_path, "r", encoding="utf-8") as f:
-        expected = f.read()
-
-    page = effective_page_for_key(key, overlays, templates)
-    actual = to_canonical_json(page)
-
-    assert actual == expected, (
-        f"{key}: Python effective page diverged from the TS-derived fixture. "
-        f"If resolvePage/templates/overlays changed, run "
-        f"`node scripts/gen-arch-fixtures.mjs` and review the diff."
-    )
-
-
-def test_all_current_pages_build_without_error(overlays, templates):
-    for key in overlays:
-        page = effective_page_for_key(key, overlays, templates)
-        assert page is not None
-        assert page["key"] == key
-        assert "relatedPages" in page  # always present, even when empty
-        # canonical serialization must not raise
-        to_canonical_json(page)
-
-
-def test_reverse_related_links_are_symmetric(overlays, templates):
-    # authentication lists posts-api; posts-api's effective page must link back.
-    auth = effective_page_for_key("authentication", overlays, templates)
-    assert "posts-api" in auth["relatedPages"]
-    posts = effective_page_for_key("posts-api", overlays, templates)
-    assert "authentication" in posts["relatedPages"]
-
-
-def test_service_page_gets_template_fields(overlays, templates):
-    page = effective_page_for_key("digits", overlays, templates)
-    assert page["runsOn"] == "Azure Functions"
-    assert page["repoUrl"] == "https://github.com/skarumbu/digits"
-    assert isinstance(page["techStack"], list) and page["techStack"]
-    assert isinstance(page["pipeline"], list) and page["pipeline"]
-
-
-def test_cross_cutting_page_has_no_package_fields(overlays, templates):
-    page = effective_page_for_key("authentication", overlays, templates)
-    for pkg_field in ("runsOn", "repoUrl", "techStack", "pipeline", "dataFlow"):
-        assert pkg_field not in page
-
-
-def test_null_overlay_datastream_drops_key(overlays, templates):
-    # my-website overlay: "dataFlow": null, and the my-website template has no
-    # dataFlow -> the key must be absent (mirrors JSON.stringify dropping undefined).
-    page = effective_page_for_key("my-website", overlays, templates)
-    assert "dataFlow" not in page
-
-
-def test_missing_key_returns_none(overlays, templates):
-    assert build_effective_page("no-such-page", None, overlays, templates) is None
+def test_missing_key_returns_none(templates):
+    assert build_effective_page("no-such-page", None, {}, templates) is None
 
 
 def test_empty_overlay_still_yields_a_page(templates):
     # TS: `if (!template && !gen) return null` — {} is truthy in JS, so an
-    # empty-object overlay with no template still resolves to a page.
+    # empty-object overlay with no template still resolves to a page, with no
+    # package-only fields present.
     overlays = {"bare": {}}
     page = build_effective_page("bare", {}, overlays, templates)
     assert page is not None
@@ -111,7 +39,8 @@ def test_empty_overlay_still_yields_a_page(templates):
     assert page["title"] == "bare"          # falls back to the key
     assert page["description"] == ""        # falls back to ""
     assert page["relatedPages"] == []
-    assert "runsOn" not in page             # no template -> no package fields
+    for pkg_field in ("runsOn", "repoUrl", "techStack", "pipeline", "dataFlow"):
+        assert pkg_field not in page
 
 
 def test_explicit_null_passthrough_field_is_kept():
@@ -165,6 +94,22 @@ def test_null_role_and_features_fall_through_to_template():
     assert page["features"] == ["tf"]
 
 
+def test_dataflow_null_in_overlay_with_no_template_dataflow_drops_key():
+    # dataFlow's presence check differs from ??: "dataFlow" in gen -> use
+    # gen.dataFlow ?? template.dataFlow; if that's also nullish, drop the key
+    # entirely (mirrors JSON.stringify dropping undefined, not emitting null).
+    templates = {
+        "packageTemplates": {"svc": {
+            "title": "t", "runsOn": "x", "description": "d",
+            "techStack": [], "pipeline": [],
+        }},
+        "repoUrlByPackage": {},
+    }
+    overlays = {"svc": {"dataFlow": None}}
+    page = build_effective_page("svc", overlays["svc"], overlays, templates)
+    assert "dataFlow" not in page
+
+
 def test_synthetic_merge_precedence():
     templates = {
         "packageTemplates": {
@@ -204,11 +149,22 @@ def test_synthetic_merge_precedence():
     # dataFlow: overlay has no dataFlow key -> template value
     assert svc["dataFlow"] == [{"label": "t-flow"}]
     assert svc["repoUrl"] == "https://example.com/svc"
+    # package-only fields present on a page with a template
+    assert svc["runsOn"] == "Azure Functions"
+    assert isinstance(svc["techStack"], list) and svc["techStack"]
+    assert isinstance(svc["pipeline"], list) and svc["pipeline"]
 
-    # reverse link resolved
+    # reverse link resolved, symmetric in both directions
     topic = build_effective_page("topic", overlays["topic"], overlays, templates)
     assert topic["relatedPages"] == ["svc"]
     assert svc["relatedPages"] == ["topic"]
+    # a cross-cutting page (no template) carries no package-only fields
+    for pkg_field in ("runsOn", "repoUrl", "techStack", "pipeline", "dataFlow"):
+        assert pkg_field not in topic
+
+    # canonical serialization must not raise for either shape
+    to_canonical_json(svc)
+    to_canonical_json(topic)
 
 
 def test_reverse_related_dedups_and_preserves_order():

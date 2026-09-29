@@ -665,7 +665,7 @@
           "label": "Live on\nAzure Functions"
         }
       ],
-      "role": "Manages content sections (writing, diary) stored on GitHub",
+      "role": "Manages content sections (writing, diary), both fully backed by history-api",
       "runsOn": "Azure Functions",
       "techStack": [
         "Azure Functions v2",
