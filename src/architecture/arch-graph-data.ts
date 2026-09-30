@@ -18,7 +18,7 @@ export const initialNodes: ArchNode[] = [
   {
     id: 'browser',
     type: 'service',
-    position: { x: 440, y: 0 },
+    position: { x: 600, y: 0 },
     data: {
       label: 'User Browser',
       subtitle: 'Client',
@@ -33,7 +33,7 @@ export const initialNodes: ArchNode[] = [
   {
     id: 'my-website',
     type: 'service',
-    position: { x: 340, y: 140 },
+    position: { x: 600, y: 220 },
     data: {
       label: 'my-website',
       subtitle: 'Azure Static Web Apps',
@@ -53,7 +53,7 @@ export const initialNodes: ArchNode[] = [
   {
     id: 'digits',
     type: 'service',
-    position: { x: 0, y: 360 },
+    position: { x: 0, y: 440 },
     data: {
       label: 'digits',
       subtitle: 'Azure Functions · Python 3.11',
@@ -73,7 +73,7 @@ export const initialNodes: ArchNode[] = [
   {
     id: 'momentum_finder',
     type: 'service',
-    position: { x: 220, y: 360 },
+    position: { x: 300, y: 440 },
     data: {
       label: 'momentum_finder',
       subtitle: 'Azure Container Apps · FastAPI',
@@ -94,7 +94,7 @@ export const initialNodes: ArchNode[] = [
   {
     id: 'trail_finder',
     type: 'service',
-    position: { x: 450, y: 360 },
+    position: { x: 600, y: 440 },
     data: {
       label: 'trail_finder',
       subtitle: 'Azure Container Apps · FastAPI',
@@ -113,7 +113,7 @@ export const initialNodes: ArchNode[] = [
   {
     id: 'ideas_api',
     type: 'service',
-    position: { x: 680, y: 360 },
+    position: { x: 900, y: 440 },
     data: {
       label: 'ideas-api',
       subtitle: 'Azure Functions · Python 3.11',
@@ -135,7 +135,7 @@ export const initialNodes: ArchNode[] = [
   {
     id: 'dashboard_api',
     type: 'service',
-    position: { x: 900, y: 360 },
+    position: { x: 1200, y: 440 },
     data: {
       label: 'dashboard_api',
       subtitle: 'Azure Functions · Python 3.11',
@@ -157,7 +157,7 @@ export const initialNodes: ArchNode[] = [
   {
     id: 'ideas_bot',
     type: 'service',
-    position: { x: 680, y: 540 },
+    position: { x: 900, y: 660 },
     data: {
       label: 'ideas-bot',
       subtitle: 'Container App Job · Python',
@@ -175,7 +175,7 @@ export const initialNodes: ArchNode[] = [
   {
     id: 'posts_api',
     type: 'service',
-    position: { x: 900, y: 140 },
+    position: { x: 0, y: 660 },
     data: {
       label: 'posts-api',
       subtitle: 'Azure Functions · Python 3.11',
@@ -194,7 +194,7 @@ export const initialNodes: ArchNode[] = [
   {
     id: 'learning_plan_api',
     type: 'service',
-    position: { x: 1120, y: 360 },
+    position: { x: 300, y: 660 },
     data: {
       label: 'learning-plan-api',
       subtitle: 'Azure Functions · Python 3.11',
@@ -212,7 +212,7 @@ export const initialNodes: ArchNode[] = [
   {
     id: 'azure_infrastructure',
     type: 'service',
-    position: { x: 340, y: 560 },
+    position: { x: 1200, y: 660 },
     data: {
       label: 'azure-infrastructure',
       subtitle: 'Bicep · Subscription scope',
@@ -227,7 +227,7 @@ export const initialNodes: ArchNode[] = [
   {
     id: 'history_api',
     type: 'service',
-    position: { x: 1120, y: 140 },
+    position: { x: 600, y: 660 },
     data: {
       label: 'history-api',
       subtitle: 'Azure Functions (Go) · Flex Consumption',
@@ -247,7 +247,7 @@ export const initialNodes: ArchNode[] = [
   {
     id: 'open_meteo',
     type: 'service',
-    position: { x: 450, y: 760 },
+    position: { x: 600, y: 880 },
     data: {
       label: 'Open-Meteo',
       subtitle: 'External · Weather API',
@@ -262,7 +262,7 @@ export const initialNodes: ArchNode[] = [
   {
     id: 'google_apis',
     type: 'service',
-    position: { x: 220, y: 760 },
+    position: { x: 300, y: 880 },
     data: {
       label: 'Google APIs',
       subtitle: 'External · Places, Custom Search, Identity',
@@ -277,7 +277,7 @@ export const initialNodes: ArchNode[] = [
   {
     id: 'azure_openai',
     type: 'service',
-    position: { x: 680, y: 760 },
+    position: { x: 900, y: 880 },
     data: {
       label: 'Azure OpenAI',
       subtitle: 'External · Cognitive Services (multiple deployments)',
@@ -292,7 +292,7 @@ export const initialNodes: ArchNode[] = [
   {
     id: 'github_api',
     type: 'service',
-    position: { x: 900, y: 760 },
+    position: { x: 1200, y: 880 },
     data: {
       label: 'GitHub API',
       subtitle: 'External',
@@ -307,7 +307,7 @@ export const initialNodes: ArchNode[] = [
   {
     id: 'nba_stats',
     type: 'service',
-    position: { x: 220, y: 900 },
+    position: { x: 0, y: 880 },
     data: {
       label: 'NBA Stats (nba_api)',
       subtitle: 'External',
@@ -322,7 +322,7 @@ export const initialNodes: ArchNode[] = [
   {
     id: 'running_app',
     type: 'service',
-    position: { x: -220, y: 140 },
+    position: { x: 0, y: 220 },
     data: {
       label: 'running-app',
       subtitle: 'Azure Static Web Apps + Functions · Python/React',
