@@ -1,0 +1,168 @@
+{
+  "architecture": {
+    "keyPoints": [
+      "API auth is entirely in application code (http_auth_level=ANONYMOUS at the Functions layer) — every route but /api/health requires a Bearer token, verified against Google's tokeninfo endpoint on every request",
+      "Users are auto-provisioned on first authenticated call, keyed on the Google \"sub\" claim",
+      "DB access uses the pure-Python pg8000 driver over TLS, without server-certificate verification",
+      "There is no PATCH route on /api/runs/{id} — only GET and DELETE are implemented, despite what an earlier version of this page's diagram entry claimed",
+      "History cards show plain distance/duration/pace/name — there is no route-shape classification, reverse geocoding, or weather lookup anywhere in the codebase, despite what an earlier version of this page's diagram entry claimed"
+    ],
+    "overview": "A monorepo: the top-level React (TypeScript) SPA, plus an api/ subfolder that is a separate Python Azure Functions app with its own PostgreSQL database. The frontend calls the API with Authorization: Bearer <Google ID token>; the API validates every token itself by calling Google's tokeninfo endpoint and checking the audience claim — there is no local JWT verification and no Azure EasyAuth. The same React codebase also ships as a native iOS app via Capacitor, swapping in native GPS/notification/auth plugins where the platform check requires it."
+  },
+  "dataFlow": [
+    {
+      "color": "blue",
+      "label": "User finishes a run (web or iOS)"
+    },
+    {
+      "color": "orange",
+      "label": "POST /api/runs — Authorization: Bearer {Google ID token}"
+    },
+    {
+      "color": "green",
+      "label": "running-app API validates token via Google tokeninfo · computes pace · awards badges",
+      "sublines": [
+        "writes run + badges to PostgreSQL"
+      ]
+    },
+    {
+      "color": "blue",
+      "label": "History, bests, and badges rendered"
+    }
+  ],
+  "description": "Personal running tracker: a React SPA (also shipped as a native iOS app via Capacitor) records GPS runs client-side and stores them via its own Python Azure Functions API and dedicated PostgreSQL database. Shows run history, personal bests, and an automatic badge system. The backend integrates with Application Insights for telemetry, providing insights into API usage, performance, and errors.",
+  "features": [
+    "Live run tracking: start/pause/resume/finish, elapsed timer, live distance/pace, screen wake-lock, a notification while a run is being tracked",
+    "GPS via the browser's navigator.geolocation on web, or a background-geolocation Capacitor plugin on iOS native (allows tracking while the app is backgrounded); low-accuracy fixes (>30m) are discarded and distance is computed client-side via haversine",
+    "Run history list with a month summary (km/runs/hours), a distance-over-time chart, and per-run detail with a route map",
+    "Personal bests (best pace, longest run, totals) and automatic badges (first run, 5k/10k/21k/42k distance, a 7-day streak) — computed server-side and idempotent per (user, badge type)",
+    "Google Sign-In: Google Identity Services on web, a native Capacitor plugin on iOS (the web GIS button doesn't work from a capacitor:// origin)",
+    "Delete a run"
+  ],
+  "key": "running-app",
+  "pipeline": [
+    {
+      "label": "git push\nmain"
+    },
+    {
+      "color": "blue",
+      "label": "GitHub Actions"
+    },
+    {
+      "label": "npm ci && build\n(frontend)"
+    },
+    {
+      "label": "func publish\n--python (API)"
+    },
+    {
+      "color": "orange",
+      "label": "Azure SWA\ndeploy action"
+    },
+    {
+      "color": "green",
+      "label": "Live on\nAzure"
+    }
+  ],
+  "relatedPages": [
+    "azure-infrastructure"
+  ],
+  "repoUrl": "https://github.com/skarumbu/running-app",
+  "role": "Personal running tracker — GPS, history, badges",
+  "runsOn": "Azure Static Web Apps + Functions",
+  "sections": [
+    {
+      "content": {
+        "keyPoints": [
+          "API auth is entirely in application code (http_auth_level=ANONYMOUS at the Functions layer) — every route but /api/health requires a Bearer token, verified against Google's tokeninfo endpoint on every request",
+          "Users are auto-provisioned on first authenticated call, keyed on the Google \"sub\" claim",
+          "DB access uses the pure-Python pg8000 driver over TLS, without server-certificate verification",
+          "There is no PATCH route on /api/runs/{id} — only GET and DELETE are implemented, despite what an earlier version of this page's diagram entry claimed",
+          "History cards show plain distance/duration/pace/name — there is no route-shape classification, reverse geocoding, or weather lookup anywhere in the codebase, despite what an earlier version of this page's diagram entry claimed",
+          "Application Insights is integrated for backend telemetry, automatically capturing HTTP request metrics (route, method, status, duration, exceptions) without requiring code changes."
+        ],
+        "overview": "A monorepo: the top-level React (TypeScript) SPA, plus an api/ subfolder that is a separate Python Azure Functions app with its own PostgreSQL database. The frontend calls the API with Authorization: Bearer <Google ID token>; the API validates every token itself by calling Google's tokeninfo endpoint and checking the audience claim — there is no local JWT verification and no Azure EasyAuth. The same React codebase also ships as a native iOS app via Capacitor, swapping in native GPS/notification/auth plugins where the platform check requires it."
+      },
+      "heading": "Architecture"
+    },
+    {
+      "content": [
+        {
+          "color": "blue",
+          "label": "User finishes a run (web or iOS)"
+        },
+        {
+          "color": "orange",
+          "label": "POST /api/runs — Authorization: Bearer {Google ID token}"
+        },
+        {
+          "color": "green",
+          "label": "running-app API validates token via Google tokeninfo · computes pace · awards badges",
+          "sublines": [
+            "writes run + badges to PostgreSQL"
+          ]
+        },
+        {
+          "color": "blue",
+          "label": "History, bests, and badges rendered"
+        }
+      ],
+      "heading": "Data Flow"
+    },
+    {
+      "content": [
+        "Live run tracking: start/pause/resume/finish, elapsed timer, live distance/pace, screen wake-lock, a notification while a run is being tracked",
+        "GPS via the browser's navigator.geolocation on web, or a background-geolocation Capacitor plugin on iOS native (allows tracking while the app is backgrounded); low-accuracy fixes (>30m) are discarded and distance is computed client-side via haversine",
+        "Run history list with a month summary (km/runs/hours), a distance-over-time chart, and per-run detail with a route map",
+        "Personal bests (best pace, longest run, totals) and automatic badges (first run, 5k/10k/21k/42k distance, a 7-day streak) — computed server-side and idempotent per (user, badge type)",
+        "Google Sign-In: Google Identity Services on web, a native Capacitor plugin on iOS (the web GIS button doesn't work from a capacitor:// origin)",
+        "Delete a run"
+      ],
+      "heading": "Features"
+    },
+    {
+      "content": [
+        {
+          "label": "git push\nmain"
+        },
+        {
+          "color": "blue",
+          "label": "GitHub Actions"
+        },
+        {
+          "label": "npm ci && build\n(frontend)"
+        },
+        {
+          "label": "func publish\n--python (API)"
+        },
+        {
+          "color": "orange",
+          "label": "Azure SWA\ndeploy action"
+        },
+        {
+          "color": "green",
+          "label": "Live on\nAzure"
+        }
+      ],
+      "heading": "Pipeline"
+    }
+  ],
+  "summary": "Cross-platform personal running tracker with GPS, history, and badges.",
+  "techStack": [
+    "React 18/19",
+    "TypeScript",
+    "React Router v7",
+    "Recharts",
+    "Leaflet",
+    "Capacitor 7 (iOS)",
+    "Google Identity Services",
+    "Azure Functions v2",
+    "Python",
+    "pg8000",
+    "PostgreSQL",
+    "Application Insights"
+  ],
+  "title": "running-app",
+  "updatedAt": "2026-10-03",
+  "updatedByPackage": "azure-infrastructure",
+  "updatedBySha": "05c8a2f"
+}
