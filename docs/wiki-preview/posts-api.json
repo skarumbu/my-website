@@ -1,0 +1,147 @@
+{
+  "architecture": {
+    "keyPoints": [
+      "HistoryApiStorage is the only storage backend actually used by any section today — the GitHub- and Blob-Storage-backed classes (github_storage.py, blob_storage.py) are dead code, referenced only by their own tests",
+      "Private sections enforce per-item read access: only the item's author can view it; wrong-owner requests return 404 instead of 403",
+      "Private sections require authentication for all operations, including reads, aligning with ownership-based visibility rules",
+      "Legacy items without stamped author_email remain accessible to any allowlisted writer, ensuring backward compatibility",
+      "HistoryApiStorage backend enables version-history operations, including optimistic concurrency checks for create, update, and delete"
+    ],
+    "overview": "Azure Functions v2 app (Python) deployed to a Consumption plan. Each HTTP trigger handles one REST operation. Content is organized into named sections, each with its own schema and visibility rules. Both current sections — writing and diary — use HistoryApiStorage exclusively: every get/list/create/update/delete call is an HTTP request to [[posts-api|history-api]], which is now the sole storage backend, not an optional add-on. The repo also still contains GitHub- and Blob-Storage-backed storage classes from before the history-api migration; neither is wired into any current section and both are exercised only by their own unit tests. Auth uses google-auth to validate Google ID tokens server-side; no session state is maintained. Private sections enforce authentication and ownership checks for all operations, including reads."
+  },
+  "dataFlow": [
+    {
+      "color": "orange",
+      "label": "Ownership / allowlist check",
+      "sublines": [
+        "POST: email must be in ALLOWED_WRITERS",
+        "PUT/DELETE: requester must match author_email (or be in allowlist for legacy items)",
+        "Private sections require allowlist membership for all operations, including reads",
+        "Private-section reads: requester must match author_email; wrong-owner requests return 404"
+      ]
+    },
+    {
+      "color": "blue",
+      "label": "Version-history operations",
+      "sublines": [
+        "GET /versions: mirrors get_item visibility rules (private sections require auth + allowlist + author match)",
+        "GET /versions/{version_id}: retrieves a specific version of an item",
+        "GET /versions/{v1}/diff/{v2}: computes a diff between two versions of an item"
+      ]
+    }
+  ],
+  "description": "A serverless write API for quixotry.me's content sections. Both current sections (writing, diary) store their content as history-api documents — every read and write is an HTTP call to history-api, not a GitHub commit. A GitHub-backed storage class and a Blob Storage-backed one still exist in the repo but are unused dead code. The service now integrates with Application Insights for backend telemetry, enabling automatic tracking of HTTP request metrics (route, method, status, duration, exceptions) without requiring code changes.",
+  "features": [
+    "Both \"writing\" and \"diary\" sections are private (writing was made private after this feature list was first written) and both are fully backed by history-api, not GitHub",
+    "Restrict private-section reads to the item's own author; other authors' entries are excluded",
+    "Private sections return 404 for wrong-owner requests, avoiding confirmation of item existence",
+    "Private sections require authentication for all operations, including reads",
+    "Legacy item support: items without author_email remain visible to any allowlisted writer",
+    "Version-history support: list, retrieve, and diff versions of content items via [[posts-api|history-api]]"
+  ],
+  "key": "posts-api",
+  "pipeline": [
+    {
+      "label": "git push\nmain"
+    },
+    {
+      "color": "blue",
+      "label": "GitHub Actions"
+    },
+    {
+      "label": "func publish\n--python"
+    },
+    {
+      "color": "green",
+      "label": "Live on\nAzure Functions"
+    }
+  ],
+  "relatedPages": [
+    "azure-infrastructure",
+    "authentication"
+  ],
+  "repoUrl": "https://github.com/skarumbu/posts-api",
+  "role": "Manages content sections (writing, diary), both fully backed by history-api",
+  "runsOn": "Azure Functions",
+  "sections": [
+    {
+      "content": "Azure Functions v2 app (Python) deployed to a Consumption plan. Each HTTP trigger handles one REST operation. Content is organized into named sections, each with its own schema and visibility rules. Both current sections — writing and diary — use HistoryApiStorage exclusively: every get/list/create/update/delete call is an HTTP request to [[history-api|history-api]], which is now the sole storage backend, not an optional add-on. The repo also still contains GitHub- and Blob-Storage-backed storage classes from before the history-api migration; neither is wired into any current section and both are exercised only by their own unit tests. Auth uses google-auth to validate Google ID tokens server-side; no session state is maintained. Private sections enforce authentication and ownership checks for all operations, including reads. Application Insights is integrated for backend telemetry, automatically capturing HTTP request metrics (e.g., route, method, status, duration, exceptions) for all endpoints.",
+      "heading": "Architecture"
+    },
+    {
+      "content": [
+        {
+          "color": "orange",
+          "label": "Ownership / allowlist check",
+          "sublines": [
+            "POST: email must be in ALLOWED_WRITERS",
+            "PUT/DELETE: requester must match author_email (or be in allowlist for legacy items)",
+            "Private sections require allowlist membership for all operations, including reads",
+            "Private-section reads: requester must match author_email; wrong-owner requests return 404"
+          ]
+        },
+        {
+          "color": "blue",
+          "label": "Version-history operations",
+          "sublines": [
+            "GET /versions: mirrors get_item visibility rules (private sections require auth + allowlist + author match)",
+            "GET /versions/{version_id}: retrieves a specific version of an item",
+            "GET /versions/{v1}/diff/{v2}: computes a diff between two versions of an item"
+          ]
+        },
+        {
+          "color": "purple",
+          "label": "Telemetry",
+          "sublines": [
+            "Automatic tracking of HTTP request metrics (route, method, status, duration, exceptions) via Application Insights",
+            "No code changes required for telemetry; metrics flow directly from Azure Functions' built-in integration"
+          ]
+        }
+      ],
+      "heading": "Data Flow"
+    },
+    {
+      "content": [
+        "Both \"writing\" and \"diary\" sections are private (writing was made private after this feature list was first written) and both are fully backed by history-api, not GitHub",
+        "Restrict private-section reads to the item's own author; other authors' entries are excluded",
+        "Private sections return 404 for wrong-owner requests, avoiding confirmation of item existence",
+        "Private sections require authentication for all operations, including reads",
+        "Legacy item support: items without author_email remain visible to any allowlisted writer",
+        "Version-history support: list, retrieve, and diff versions of content items via [[history-api|history-api]]",
+        "Application Insights integration: backend telemetry for HTTP request metrics (route, method, status, duration, exceptions)"
+      ],
+      "heading": "Features"
+    },
+    {
+      "content": [
+        {
+          "label": "git push\nmain"
+        },
+        {
+          "color": "blue",
+          "label": "GitHub Actions"
+        },
+        {
+          "label": "func publish\n--python"
+        },
+        {
+          "color": "green",
+          "label": "Live on\nAzure Functions"
+        }
+      ],
+      "heading": "Pipeline"
+    }
+  ],
+  "summary": "Azure Functions (Python) API that manages content sections — currently writing and diary, both private and both fully backed by history-api (not GitHub). Authentication is handled via Google ID tokens; content ownership is enforced per-creator, with an allowlist controlling who can write. Now includes Application Insights for backend telemetry.",
+  "techStack": [
+    "Azure Functions v2",
+    "Python 3.11",
+    "history-api (HistoryApiStorage)",
+    "Google ID token auth",
+    "requests"
+  ],
+  "title": "posts-api",
+  "updatedAt": "2026-10-03",
+  "updatedByPackage": "azure-infrastructure",
+  "updatedBySha": "05c8a2f"
+}
