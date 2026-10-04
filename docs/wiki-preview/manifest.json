@@ -1,0 +1,14 @@
+[
+  {
+    "base_version_id": "ee423484-0114-4d9d-a9d5-7020d0a6f567",
+    "key": "posts-api",
+    "message": "Merge 9d0aa28efccf7a971b62594c1f73b87fb69bf460 into 56e8a2517aa5ebafe1a10c9acb6efd2122cc511e",
+    "triggering_repo": "skarumbu/posts-api"
+  },
+  {
+    "base_version_id": "a8791a51-d3ed-450b-863a-58e3fa64b573",
+    "key": "azure-infrastructure",
+    "message": "Merge 9d0aa28efccf7a971b62594c1f73b87fb69bf460 into 56e8a2517aa5ebafe1a10c9acb6efd2122cc511e",
+    "triggering_repo": "skarumbu/posts-api"
+  }
+]
