@@ -28,11 +28,58 @@ function isTokenExpired(token: string): boolean {
 export function useGoogleAuth() {
   const [authState, setAuthState] = useState<AuthState>('loading');
   const [googleToken, setGoogleToken] = useState<string | null>(null);
+  // True once we've noticed the current token has expired, without tearing
+  // down authState/googleToken. Kept separate from signOut() so a caller
+  // mid-edit (e.g. the diary editor) can prompt re-auth inline instead of
+  // being bounced to the full sign-in screen and losing sight of their draft.
+  const [sessionExpired, setSessionExpired] = useState(false);
   const googleBtnRef = useRef<HTMLDivElement>(null);
+  const googleTokenRef = useRef<string | null>(null);
 
   const handleCredentialResponse = useCallback((response: { credential: string }) => {
     setGoogleToken(response.credential);
     setAuthState('authenticated');
+    setSessionExpired(false);
+  }, []);
+
+  useEffect(() => {
+    googleTokenRef.current = googleToken;
+  }, [googleToken]);
+
+  // Google ID tokens last ~1hr. A tab left open longer than that carries a
+  // stale token in state with nothing to notice until some action tries to
+  // use it. Poll periodically so a long-idle tab surfaces "please sign in
+  // again" on its own rather than only after a write fails.
+  useEffect(() => {
+    if (authState !== 'authenticated') return;
+    const check = () => {
+      const current = googleTokenRef.current;
+      if (current && isTokenExpired(current)) setSessionExpired(true);
+    };
+    check();
+    const id = setInterval(check, 30000);
+    return () => clearInterval(id);
+  }, [authState]);
+
+  // Callers should run this immediately before any write that requires a
+  // fresh token. It avoids sending a request we already know will be
+  // rejected, and routes the failure through the same sessionExpired banner
+  // instead of a generic save-failed message that invites a useless retry.
+  const ensureFreshSession = useCallback((): boolean => {
+    const current = googleTokenRef.current;
+    if (!current || isTokenExpired(current)) {
+      setSessionExpired(true);
+      return false;
+    }
+    return true;
+  }, []);
+
+  // Server-side rejection (expired, revoked, or otherwise invalid token)
+  // discovered despite the token looking unexpired locally — e.g. clock
+  // skew, or Google invalidating it early. Same inline prompt, not a full
+  // sign-out, so in-progress edits stay visible.
+  const markSessionExpired = useCallback(() => {
+    setSessionExpired(true);
   }, []);
 
   const initGoogleSignIn = useCallback(() => {
@@ -79,9 +126,12 @@ export function useGoogleAuth() {
     }
   }, [googleToken]);
 
-  // Load GIS and render button when unauthenticated
+  // Load GIS and render button when unauthenticated, or when a caller needs
+  // an inline re-auth button while sessionExpired is true (googleBtnRef may
+  // be mounted in either the full sign-in screen or an inline banner).
+  const needsSignInUi = authState === 'unauthenticated' || sessionExpired;
   useEffect(() => {
-    if (authState !== 'unauthenticated') return;
+    if (!needsSignInUi) return;
     const g = (window as any).google;
     if (g?.accounts) {
       initGoogleSignIn();
@@ -98,20 +148,21 @@ export function useGoogleAuth() {
     script.defer = true;
     script.onload = initGoogleSignIn;
     document.head.appendChild(script);
-  }, [authState, initGoogleSignIn]);
+  }, [needsSignInUi, initGoogleSignIn]);
 
   // Re-render button when ref is available
   useEffect(() => {
-    if (authState === 'unauthenticated' && (window as any).google?.accounts) {
+    if (needsSignInUi && (window as any).google?.accounts) {
       initGoogleSignIn();
     }
-  }, [authState, googleBtnRef.current, initGoogleSignIn]); // eslint-disable-line
+  }, [needsSignInUi, googleBtnRef.current, initGoogleSignIn]); // eslint-disable-line
 
   const signOut = useCallback(() => {
     setGoogleToken(null);
+    setSessionExpired(false);
     sessionStorage.removeItem(TOKEN_KEY);
     setAuthState('unauthenticated');
   }, []);
 
-  return { authState, googleToken, googleBtnRef, signOut };
+  return { authState, googleToken, googleBtnRef, signOut, sessionExpired, ensureFreshSession, markSessionExpired };
 }
