@@ -16,7 +16,7 @@ export default function DiaryEditor() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
 
-  const { authState, googleToken, googleBtnRef, signOut } = useGoogleAuth();
+  const { authState, googleToken, googleBtnRef, signOut, sessionExpired, ensureFreshSession, markSessionExpired } = useGoogleAuth();
   const diaryVersionClient = useMemo(
     () => createPostsApiVersionClient('diary', slug ?? '', googleToken),
     [slug, googleToken],
@@ -119,6 +119,15 @@ export default function DiaryEditor() {
       setError('API not configured');
       return;
     }
+    // Check the token's own expiry before spending a round trip on it. A
+    // tab left open past the ~1hr Google ID token lifetime would otherwise
+    // hit the server, get rejected, and land on the generic catch-all
+    // message below — which reads as a transient failure worth retrying,
+    // when retrying with the same expired token can never succeed.
+    if (!ensureFreshSession()) {
+      setAutosaveStatus('Unsaved changes');
+      return;
+    }
     setSaving(true);
     setError(null);
     setAutosaveStatus('Saving…');
@@ -132,7 +141,10 @@ export default function DiaryEditor() {
           body: JSON.stringify({ title, blocks }),
         });
         if (resp.status === 401) {
-          signOut();
+          // Rarer race: token expired between the check above and the
+          // server validating it. Prompt inline rather than signing out
+          // outright — the draft stays visible and sendable once re-signed.
+          markSessionExpired();
           setAutosaveStatus('Unsaved changes');
           return;
         }
@@ -148,7 +160,7 @@ export default function DiaryEditor() {
           body: JSON.stringify({ title, blocks }),
         });
         if (resp.status === 401) {
-          signOut();
+          markSessionExpired();
           setAutosaveStatus('Unsaved changes');
           return;
         }
@@ -166,6 +178,17 @@ export default function DiaryEditor() {
       setSaving(false);
     }
   };
+
+  // Once the user re-authenticates through the inline banner, retry
+  // automatically instead of leaving them to notice and click Save again —
+  // that's the whole point of catching this inline rather than signing out.
+  const wasSessionExpiredRef = useRef(false);
+  useEffect(() => {
+    if (wasSessionExpiredRef.current && !sessionExpired && unsavedSinceApi) {
+      handleSave();
+    }
+    wasSessionExpiredRef.current = sessionExpired;
+  }, [sessionExpired]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleDelete = async () => {
     if (!slug) return;
@@ -247,6 +270,12 @@ export default function DiaryEditor() {
       <NavBar />
       <div className="diary-editor-content">
         {error && <p className="diary-editor-error">{error}</p>}
+        {sessionExpired && (
+          <div className="diary-editor-reauth-banner">
+            <p>Your session expired. Your draft is safe — sign in again to keep saving.</p>
+            <div ref={googleBtnRef} />
+          </div>
+        )}
         {loading && <WritingCursor />}
         {!loading && (
           <>
