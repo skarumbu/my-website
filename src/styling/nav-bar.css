@@ -8,6 +8,12 @@
     display: flex;
     justify-content: flex-end;
     font-family: 'Josefin Sans';
+    /* White link text has nothing to read against on its own — every page
+       using this shared nav (Digits, Write, Diary, Today, …) renders its
+       own, often light, background right up to the top edge. The home
+       page has its own separate nav (.home-nav) and isn't affected. */
+    background-color: #2B2B2B;
+    box-shadow: 0 1px 6px rgba(0, 0, 0, 0.25);
   }
 
   
