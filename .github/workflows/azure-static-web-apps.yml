@@ -11,7 +11,12 @@ on:
 
 jobs:
   build_and_deploy_job:
-    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed')
+    # wiki-update/* PRs (opened by wiki_update_pr.py, see wiki-update-merge.yml)
+    # are docs-only content changes that often sit open for a while before
+    # merging. A preview environment for them isn't worth a slot out of the
+    # Free tier's hard cap of 3 concurrent staging environments, which is
+    # exactly what repeatedly starved every other PR's preview deploy.
+    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed' && !startsWith(github.head_ref, 'wiki-update/'))
     runs-on: ubuntu-latest
     name: Build and Deploy Job
     steps:
