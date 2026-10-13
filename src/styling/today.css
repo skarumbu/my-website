@@ -104,6 +104,47 @@
   float: right;
 }
 
+.wiki-featured-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  width: 100%;
+  text-align: left;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0.85rem 1rem;
+  margin-bottom: 0.75rem;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.wiki-featured-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-3);
+}
+
+.wiki-featured-title {
+  font-family: 'Fraunces', serif;
+  font-size: 1.05rem;
+}
+
+.wiki-featured-extract {
+  font-size: 0.85rem;
+  color: var(--ink-2);
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.wiki-featured-card.wiki-featured-read {
+  border-color: var(--good);
+}
+
 .cards-current-text {
   font-size: 1.1rem;
   margin-bottom: 1rem;
