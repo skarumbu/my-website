@@ -155,3 +155,13 @@
   gap: 0.5rem;
   flex-wrap: wrap;
 }
+
+.cards-add-row {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.cards-add-row input {
+  flex: 1;
+}

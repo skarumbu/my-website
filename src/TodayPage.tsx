@@ -56,6 +56,10 @@ export default function TodayPage() {
     setDueCards(prev => prev.filter(c => c.id !== cardId));
   };
 
+  const handleCardAdded = (card: typeof dueCards[number]) => {
+    setDueCards(prev => [...prev, card]);
+  };
+
   if (authState === 'loading') {
     return (
       <div className="today-page">
@@ -104,6 +108,7 @@ export default function TodayPage() {
               token={googleToken!}
               cards={dueCards}
               onReviewed={handleCardReviewed}
+              onAdded={handleCardAdded}
               onUnauthorized={signOut}
             />
           </div>
