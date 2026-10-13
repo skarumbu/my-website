@@ -15,6 +15,7 @@ import WriteEditor from './WriteEditor.tsx';
 import Diary from './Diary.tsx';
 import DiaryEditor from './DiaryEditor.tsx';
 import DiaryViewer from './DiaryViewer.tsx';
+import TodayPage from './TodayPage.tsx';
 import reportWebVitals from './reportWebVitals';
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { PublicClientApplication } from "@azure/msal-browser";
@@ -87,6 +88,10 @@ const router = createBrowserRouter([
   {
     path: "/diary/:slug/edit",
     element: <DiaryEditor />,
+  },
+  {
+    path: "/today",
+    element: <TodayPage />,
   }
 ]);
 
