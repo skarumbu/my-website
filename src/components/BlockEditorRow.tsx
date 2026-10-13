@@ -1,5 +1,6 @@
 import React from 'react';
 import { Block, BlockStyle, FONT_OPTIONS, STICKER_EMOJIS } from '../lib/diaryTypes.ts';
+import { useSpeechToText } from '../lib/useSpeechToText.ts';
 
 interface Props {
   block: Block;
@@ -15,7 +16,22 @@ function updateStyle(block: Block, style: Partial<BlockStyle>): Block {
   return { ...block, style: { ...block.style, ...style } };
 }
 
+// Appends a dictated phrase to existing content, adding a separating space
+// only when one isn't already there (start of block, or right after a
+// newline, shouldn't get a leading space).
+function appendDictatedText(content: string, phrase: string): string {
+  if (!phrase) return content;
+  if (!content || /\s$/.test(content)) return content + phrase;
+  return content + ' ' + phrase;
+}
+
 function BlockEditorRow({ block, onChange, onMoveUp, onMoveDown, onDelete, isFirst, isLast }: Props) {
+  const handleFinalText = (phrase: string) => {
+    if (block.type !== 'text') return;
+    onChange({ ...block, content: appendDictatedText(block.content, phrase) });
+  };
+  const speech = useSpeechToText(handleFinalText);
+
   return (
     <div className="block-editor-row" style={{ transform: `rotate(${block.style.rotation ?? 0}deg)` }}>
       <div className="block-editor-controls">
@@ -33,7 +49,23 @@ function BlockEditorRow({ block, onChange, onMoveUp, onMoveDown, onDelete, isFir
             style={{ fontFamily: block.style.font, color: block.style.color }}
             onChange={e => onChange({ ...block, content: e.target.value })}
           />
+          {speech.isListening && speech.interimText && (
+            <p className="block-editor-interim" aria-live="polite">{speech.interimText}</p>
+          )}
+          {speech.error && <p className="block-editor-speech-error">{speech.error}</p>}
           <div className="block-editor-style-row">
+            {speech.isSupported && (
+              <button
+                type="button"
+                className={`block-editor-mic-btn${speech.isListening ? ' is-listening' : ''}`}
+                onClick={() => (speech.isListening ? speech.stop() : speech.start())}
+                aria-pressed={speech.isListening}
+                aria-label={speech.isListening ? 'Stop voice entry' : 'Start voice entry'}
+                title={speech.isListening ? 'Stop voice entry' : 'Dictate into this block'}
+              >
+                {speech.isListening ? '⏹' : '🎤'}
+              </button>
+            )}
             <label>
               Font
               <select
