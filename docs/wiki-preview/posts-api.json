@@ -1,0 +1,93 @@
+{
+  "architecture": {
+    "keyPoints": [
+      "HistoryApiStorage is the sole storage backend for content sections; GitHub- and Blob-Storage-backed classes are dead code",
+      "Daily-tracker modules use Azure Table Storage for frequent, small writes to ephemeral state, avoiding the overhead of [[history-api]]'s permanent versioning",
+      "Private sections enforce per-item read access: only the item's author can view it; wrong-owner requests return 404 instead of 403",
+      "Private sections require authentication for all operations, including reads, aligning with ownership-based visibility rules",
+      "Legacy items without stamped author_email remain accessible to any allowlisted writer, ensuring backward compatibility",
+      "HistoryApiStorage backend enables version-history operations, including optimistic concurrency checks for create, update, and delete",
+      "Daily-tracker tables are scoped by PartitionKey = author_email, derived server-side from the verified token"
+    ],
+    "overview": "Azure Functions v2 app (Python) deployed to a Consumption plan. Each HTTP trigger handles one REST operation. Content sections (writing, diary) use [[history-api]] for permanent versioning, while daily-tracker modules (checklist, links, cards) leverage Azure Table Storage for lightweight, ephemeral state. Auth uses google-auth to validate Google ID tokens server-side; no session state is maintained. Private sections enforce authentication and ownership checks for all operations, including reads."
+  },
+  "dataFlow": [
+    {
+      "color": "orange",
+      "label": "Ownership / allowlist check",
+      "sublines": [
+        "POST: email must be in ALLOWED_WRITERS",
+        "PUT/DELETE: requester must match author_email (or be in allowlist for legacy items)",
+        "Private sections require allowlist membership for all operations, including reads",
+        "Private-section reads: requester must match author_email; wrong-owner requests return 404",
+        "Daily-tracker tables: PartitionKey = author_email derived server-side; no cross-user ownership checks needed"
+      ]
+    },
+    {
+      "color": "blue",
+      "label": "Version-history operations",
+      "sublines": [
+        "GET /versions: mirrors get_item visibility rules (private sections require auth + allowlist + author match)",
+        "GET /versions/{version_id}: retrieves a specific version of an item",
+        "GET /versions/{v1}/diff/{v2}: computes a diff between two versions of an item"
+      ]
+    },
+    {
+      "color": "purple",
+      "label": "Daily-tracker operations",
+      "sublines": [
+        "Checklist: append-only completion dates for recurring tasks",
+        "Links: runtime-editable curated links with per-day opened flags",
+        "Index cards: spaced-repetition scheduling with server-side due-date filtering"
+      ]
+    }
+  ],
+  "description": "A serverless API for quixotry.me's content sections and daily-tracker features. Content sections use [[history-api]] for permanent versioning, while daily-tracker modules leverage Azure Table Storage for lightweight, ephemeral state.",
+  "features": [
+    "Both \"writing\" and \"diary\" sections are private and fully backed by [[history-api]], not GitHub",
+    "Daily-tracker modules (checklist, links, index cards) use Azure Table Storage for frequent, small writes to ephemeral state",
+    "Restrict private-section reads to the item's own author; other authors' entries are excluded",
+    "Private sections return 404 for wrong-owner requests, avoiding confirmation of item existence",
+    "Private sections require authentication for all operations, including reads",
+    "Legacy item support: items without author_email remain visible to any allowlisted writer",
+    "Version-history support: list, retrieve, and diff versions of content items via [[posts-api|history-api]]",
+    "Daily checklist: append-only completion dates for recurring tasks, scoped by user",
+    "Daily links: runtime-editable curated links with per-day opened flags",
+    "Spaced-repetition index cards: SM-2-style scheduling with server-side due-date filtering"
+  ],
+  "key": "posts-api",
+  "pipeline": [
+    {
+      "label": "git push\nmain"
+    },
+    {
+      "color": "blue",
+      "label": "GitHub Actions"
+    },
+    {
+      "label": "func publish\n--python"
+    },
+    {
+      "color": "green",
+      "label": "Live on\nAzure Functions"
+    }
+  ],
+  "relatedPages": [
+    "azure-infrastructure",
+    "authentication"
+  ],
+  "repoUrl": "https://github.com/skarumbu/posts-api",
+  "role": "Manages content sections (writing, diary), both fully backed by history-api",
+  "runsOn": "Azure Functions",
+  "summary": "Azure Functions (Python) API managing content sections and daily-tracker features. Content sections (writing, diary) are private and backed by [[history-api]], while daily-tracker modules use Azure Table Storage for ephemeral state like checklists, links, and spaced-repetition cards.",
+  "techStack": [
+    "Azure Functions v2",
+    "Python 3.11",
+    "history-api (HistoryApiStorage)",
+    "Google ID token auth",
+    "requests"
+  ],
+  "title": "posts-api",
+  "updatedAt": "2026-10-13",
+  "updatedBySha": "c4cf25c"
+}
