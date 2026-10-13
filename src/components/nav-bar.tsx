@@ -23,6 +23,9 @@ const NavBar: React.FC = () => {
       <a href="/write" className="button">
         Write
       </a>
+      <a href="/today" className="button">
+        Today
+      </a>
     </nav>
   );
 };
