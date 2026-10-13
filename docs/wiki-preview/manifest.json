@@ -1,0 +1,20 @@
+[
+  {
+    "base_version_id": "a8791a51-d3ed-450b-863a-58e3fa64b573",
+    "key": "azure-infrastructure",
+    "message": "Merge 05c8a2f995ccabaf75473fd5d2eff99bb4a57887 into b5c11a628d6faa16b05e5f0d30b31eac05aeea99",
+    "triggering_repo": "skarumbu/azure-infrastructure"
+  },
+  {
+    "base_version_id": "ee423484-0114-4d9d-a9d5-7020d0a6f567",
+    "key": "posts-api",
+    "message": "Merge 05c8a2f995ccabaf75473fd5d2eff99bb4a57887 into b5c11a628d6faa16b05e5f0d30b31eac05aeea99",
+    "triggering_repo": "skarumbu/azure-infrastructure"
+  },
+  {
+    "base_version_id": "40176c4c-76e7-43db-b71a-8c1aeede9c97",
+    "key": "running-app",
+    "message": "Merge 05c8a2f995ccabaf75473fd5d2eff99bb4a57887 into b5c11a628d6faa16b05e5f0d30b31eac05aeea99",
+    "triggering_repo": "skarumbu/azure-infrastructure"
+  }
+]
