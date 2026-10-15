@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import NavBar from './components/nav-bar.tsx';
 import WritingCursor from './components/WritingCursor.tsx';
-import StudioSummary from './components/StudioSummary.tsx';
+import StudioSummary, { buildRecentItems } from './components/StudioSummary.tsx';
 import { sectionUrl, isApiConfigured } from './lib/postsApi.ts';
 import { useGoogleAuth } from './lib/useGoogleAuth.ts';
 import { Post } from './lib/writeTypes.ts';
@@ -120,6 +120,15 @@ function Write() {
     );
   }
 
+  // Posts already surfaced in the "Recent across both" strip are excluded
+  // here so they don't also appear at the top of the list below it.
+  const recentSlugs = new Set(
+    buildRecentItems(posts, diaryEntries, diaryError)
+      .filter(item => item.type === 'writing')
+      .map(item => item.slug)
+  );
+  const listPosts = posts.filter(post => !recentSlugs.has(post.slug));
+
   return (
     <div className="write-page">
       <NavBar />
@@ -134,9 +143,6 @@ function Write() {
         />
         <div className="write-header-row">
           <h1 className="write-heading">Your posts</h1>
-          <button className="write-new-btn" onClick={() => navigate('/write/new')}>
-            + New Post
-          </button>
         </div>
         {loading && <WritingCursor />}
         {error && <p className="write-error">{error}</p>}
@@ -149,9 +155,9 @@ function Write() {
             </button>
           </div>
         )}
-        {!loading && !error && posts.length > 0 && (
+        {!loading && !error && listPosts.length > 0 && (
           <ul className="write-list">
-            {posts.map(post => (
+            {listPosts.map(post => (
               <li key={post.slug} className="write-row">
                 <div className="write-row-top">
                   <a className="write-row-title" href={`/write/${post.slug}`}>

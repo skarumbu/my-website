@@ -31,3 +31,8 @@ api/local.settings.json
 # Claude Code internal directory
 .claude/
 .superpowers/
+
+# Python bytecode from scripts/
+__pycache__/
+*.pyc
+.pytest_cache/

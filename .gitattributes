@@ -1,0 +1,4 @@
+# Byte-exact artifact for the architecture-wiki -> history-api migration's
+# template export. Compared byte-for-byte by scripts/export-arch-templates.mjs
+# --check, so it must stay LF regardless of core.autocrlf on the checkout.
+src/architecture/arch-templates.generated.json   text eol=lf

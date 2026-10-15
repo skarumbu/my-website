@@ -37,7 +37,7 @@ export default function ArchDiagram() {
       <div
         style={{
           width: '100%',
-          height: 560,
+          height: 720,
           background: '#0d1117',
           borderRadius: 8,
           border: '1px solid #30363d',

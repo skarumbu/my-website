@@ -1,26 +1,40 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import NavBar from './components/nav-bar.tsx';
 import './styling/architecture.css';
-import archPages from './architecture-pages.json';
-import { PACKAGE_TEMPLATES } from './architecture/packageTemplates.ts';
 import ArchDiagram from './architecture/ArchDiagram.tsx';
 import PageDetail from './architecture/PageDetail.tsx';
-
-type GeneratedPageSummary = { title?: string; summary?: string };
-const pageSummaries = archPages as Record<string, GeneratedPageSummary>;
-
-// A page is "a package" precisely when it has a static template — see pageTypes.ts.
-const packageKeys = Object.keys(PACKAGE_TEMPLATES);
-const nonPackageKeys = Object.keys(pageSummaries).filter(k => !PACKAGE_TEMPLATES[k]);
+import { listPages, getPage } from './architecture/historyApi.ts';
+import { Page, PackagePage, isPackagePage } from './architecture/pageTypes.ts';
 
 const Architecture: React.FC = () => {
   const today = new Date().toISOString().split('T')[0];
   const [searchParams, setSearchParams] = useSearchParams();
   const initialPage = searchParams.get('page');
-  const [selection, setSelection] = useState<string | null>(
-    initialPage && pageSummaries[initialPage] ? initialPage : null
-  );
+  const [selection, setSelection] = useState<string | null>(initialPage);
+
+  // Index-view data: every page's effective content, fetched live on every
+  // visit (listPages() then getPage() per page — an accepted N+1, see the
+  // migration design doc). No build-time bundle, no cached fallback — a
+  // fetch failure shows an error state, never stale or blank content.
+  const [pages, setPages] = useState<Record<string, Page | PackagePage> | null>(null);
+  const [pagesError, setPagesError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (selection) return; // not needed while a detail page is open
+    let cancelled = false;
+    setPagesError(null);
+    listPages()
+      .then(docs => Promise.all(docs.map(d => getPage(d.slug))))
+      .then(fetched => {
+        if (cancelled) return;
+        const byKey: Record<string, Page | PackagePage> = {};
+        for (const p of fetched) byKey[p.key] = p;
+        setPages(byKey);
+      })
+      .catch(e => { if (!cancelled) setPagesError(e.message); });
+    return () => { cancelled = true; };
+  }, [selection]);
 
   const selectPage = (key: string | null) => {
     setSelection(key);
@@ -42,6 +56,36 @@ const Architecture: React.FC = () => {
       </div>
     );
   }
+
+  if (pagesError) {
+    return (
+      <div className="arch-page">
+        <NavBar />
+        <div className="arch-content">
+          <h1 className="arch-title">System Architecture</h1>
+          <div className="arch-error-banner">Failed to load the architecture wiki: {pagesError}</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!pages) {
+    return (
+      <div className="arch-page">
+        <NavBar />
+        <div className="arch-content">
+          <h1 className="arch-title">System Architecture</h1>
+          <div className="arch-loader">Loading…</div>
+        </div>
+      </div>
+    );
+  }
+
+  // A page is "a package" precisely when its effective content carries
+  // package-specific fields (repoUrl, techStack, pipeline) — see pageTypes.ts.
+  const packageKeys = Object.keys(pages).filter(k => isPackagePage(pages[k])).sort();
+  const nonPackageKeys = Object.keys(pages).filter(k => !isPackagePage(pages[k])).sort();
+  const pageSummaries = pages;
 
   return (
     <div className="arch-page">
@@ -87,8 +131,8 @@ const Architecture: React.FC = () => {
                       <code className="arch-inline-code">{key}</code>
                     </button>
                   </td>
-                  <td>{PACKAGE_TEMPLATES[key].role}</td>
-                  <td>{PACKAGE_TEMPLATES[key].runsOn}</td>
+                  <td>{(pages[key] as PackagePage).role}</td>
+                  <td>{(pages[key] as PackagePage).runsOn}</td>
                 </tr>
               ))}
             </tbody>
@@ -116,7 +160,7 @@ const Architecture: React.FC = () => {
                 {pageSummaries[key]?.summary ?? ''}
               </p>
               <div className="arch-tech-stack">
-                {PACKAGE_TEMPLATES[key].techStack.map(t => <span key={t} className="arch-tech-item">{t}</span>)}
+                {(pages[key] as PackagePage).techStack.map(t => <span key={t} className="arch-tech-item">{t}</span>)}
               </div>
             </React.Fragment>
           ))}
