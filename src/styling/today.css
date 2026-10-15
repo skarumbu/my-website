@@ -17,10 +17,31 @@
   margin-bottom: 1.5rem;
 }
 
+/* Same shape as .write-login-view. Padding rather than margin, so the top
+   spacing can't collapse through .today-page and expose the white body. */
 .today-login-view {
-  max-width: 480px;
-  margin: 4rem auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  padding: 4rem 1.5rem;
   text-align: center;
+  gap: 16px;
+}
+
+.today-login-view h1 {
+  font-family: 'Fraunces', serif;
+  font-size: 28px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.today-login-view p {
+  font-size: 16px;
+  color: var(--ink-2);
+  margin: 0;
+  max-width: 400px;
 }
 
 .today-error {
@@ -38,6 +59,72 @@
   border: 1px solid var(--line);
   border-radius: 12px;
   padding: 1.25rem;
+}
+
+.today-panels input[type="text"],
+.today-panels button {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  color: var(--ink);
+  border-radius: 10px;
+}
+
+.today-panels input[type="text"] {
+  min-width: 0;
+  padding: 8px 12px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+}
+
+.today-panels input[type="text"]:focus {
+  outline: none;
+  border-color: var(--ink-3);
+}
+
+.today-panels input[type="text"]::placeholder {
+  color: var(--ink-3);
+}
+
+.checklist-add-row button,
+.cards-add-row button {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  padding: 8px 14px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: 0 2px 0 var(--accent-dk);
+}
+
+.checklist-add-row button:hover:not(:disabled),
+.cards-add-row button:hover:not(:disabled) {
+  background: var(--accent-dk);
+}
+
+.checklist-add-row button:disabled,
+.cards-add-row button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.cards-grade-row button {
+  flex: 1;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  padding: 7px 4px;
+  font-weight: 600;
+  color: var(--ink-2);
+  cursor: pointer;
+}
+
+.cards-grade-row button:hover:not(:disabled) {
+  background: var(--bg-1);
+}
+
+.cards-grade-row button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 .daily-panel-title {
@@ -95,7 +182,11 @@
   cursor: pointer;
 }
 
-.links-item-opened {
+.links-item button:hover {
+  background: var(--bg-1);
+}
+
+.links-item button.links-item-opened {
   color: var(--good);
   border-color: var(--good);
 }
