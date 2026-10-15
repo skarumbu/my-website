@@ -1,6 +1,7 @@
 import "./styling/main.css";
 import "./styling/home.css";
 import React from "react";
+import NavBar from "./components/nav-bar.tsx";
 
 const ArrowIcon: React.FC = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -12,17 +13,7 @@ const App: React.FC = () => {
   return (
     <div className="main home">
 
-      {/* NAV */}
-      <nav className="home-nav">
-        <div className="home-nav-links">
-          <a href="/" className="active">Home</a>
-          <a href="/digits">Digits</a>
-          <a href="/momentum-finder">NBA Games</a>
-          <a href="/trail-finder">Trail Finder</a>
-          <a href="/ideas">Ideas</a>
-          <a href="/learning-plan">Learning Plan</a>
-        </div>
-      </nav>
+      <NavBar />
 
       {/* PLAYGROUND */}
       <div className="section-eyebrow">
