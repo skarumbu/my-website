@@ -259,6 +259,12 @@
   min-height: 420px;
 }
 
+/* The toast floats over the bottom of the panel; this keeps it clear of the
+   grade buttons while it shows. */
+.cards-panel-toast {
+  padding-bottom: 3.5rem;
+}
+
 .cards-head-row {
   display: flex;
   justify-content: space-between;
@@ -269,6 +275,16 @@
 
 .cards-head-row .daily-panel-title {
   margin: 0;
+  white-space: nowrap;
+}
+
+/* At the desktop panel width (~284px) the full-size count pushes the title
+   onto two lines next to the pill, so it drops to body size. */
+.cards-due-count {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-2);
 }
 
 .today-panels .cards-new-pill {

@@ -99,9 +99,11 @@ export default function CardReviewPanel({ token, cards, onReviewed, onAdded, onR
   const toggleFlip = () => setFlippedId(flipped ? null : current.id);
 
   return (
-    <section className={`daily-panel cards-panel${sheet.kind === 'open' ? ' cards-panel-sheet-open' : ''}`}>
+    <section
+      className={`daily-panel cards-panel${sheet.kind === 'open' ? ' cards-panel-sheet-open' : ''}${toast ? ' cards-panel-toast' : ''}`}
+    >
       <div className="cards-head-row">
-        <h2 className="daily-panel-title">Review ({cards.length} due)</h2>
+        <h2 className="daily-panel-title">Review <span className="cards-due-count">({cards.length} due)</span></h2>
         <button type="button" ref={newCardRef} className="cards-new-pill" onClick={openSheet}>+ New card</button>
       </div>
       {error && <p className="daily-panel-error">{error}</p>}
