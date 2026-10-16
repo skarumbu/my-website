@@ -6,9 +6,11 @@
       "Private sections require authentication for all operations, including reads, aligning with ownership-based visibility rules",
       "Legacy items without stamped author_email remain accessible to any allowlisted writer, ensuring backward compatibility",
       "HistoryApiStorage backend enables version-history operations, including optimistic concurrency checks for create, update, and delete",
-      "Daily-tracker modules (checklist, links, cards) use Azure Table Storage instead of HistoryApiStorage — frequent small writes to ephemeral state don't fit a substrate that permanently versions every write; Table Storage rows are scoped by PartitionKey = author_email, derived server-side from the verified token"
+      "Daily-tracker modules (checklist, links, cards) use Azure Table Storage instead of HistoryApiStorage — frequent small writes to ephemeral state don't fit a substrate that permanently versions every write; Table Storage rows are scoped by PartitionKey = author_email, derived server-side from the verified token",
+      "Index cards now support optional back sides, stored as an additional field in Table Storage, with backward compatibility for legacy rows",
+      "DELETE /daily/cards/{card_id} enables idempotent card deletion, ensuring retried or double-clicked Undo actions do not result in errors"
     ],
-    "overview": "Azure Functions v2 app (Python) deployed to a Consumption plan. Each HTTP trigger handles one REST operation. Content is organized into named sections, each with its own schema and visibility rules. Both current sections — writing and diary — use HistoryApiStorage exclusively: every get/list/create/update/delete call is an HTTP request to [[posts-api|history-api]], which is now the sole storage backend, not an optional add-on. The repo also still contains GitHub- and Blob-Storage-backed storage classes from before the history-api migration; neither is wired into any current section and both are exercised only by their own unit tests. Auth uses google-auth to validate Google ID tokens server-side; no session state is maintained. Private sections enforce authentication and ownership checks for all operations, including reads. A separate daily/ module (checklist, links, cards) backs a personal daily-tracker feature with real Azure Table Storage (DailyChecklist/DailyLinks/DailyCards tables) rather than history-api, since that workload (frequent writes to a checkbox or a boolean flag) is the opposite of what history-api's permanent per-write versioning was built for."
+    "overview": "Azure Functions v2 app (Python) deployed to a Consumption plan. Each HTTP trigger handles one REST operation. Content is organized into named sections, each with its own schema and visibility rules. Both current sections — writing and diary — use [[history-api|HistoryApiStorage]] exclusively: every get/list/create/update/delete call is an HTTP request to [[history-api]], which is now the sole storage backend, not an optional add-on. The repo also still contains GitHub- and Blob-Storage-backed storage classes from before the history-api migration; neither is wired into any current section and both are exercised only by their own unit tests. Auth uses google-auth to validate Google ID tokens server-side; no session state is maintained. Private sections enforce authentication and ownership checks for all operations, including reads. Application Insights is integrated for backend telemetry, automatically capturing HTTP request metrics (e.g., route, method, status, duration, exceptions) for all endpoints. A separate daily/ module (checklist, links, cards) backs a personal daily-tracker feature on real Azure Table Storage rather than [[history-api]], since frequent small writes to ephemeral state (a checkbox, a boolean flag, a card review) is the opposite of what history-api's permanent per-write versioning was built for. Index cards now support optional back sides and DELETE operations, enabling enhanced functionality for spaced-repetition workflows."
   },
   "dataFlow": [
     {
@@ -37,21 +39,26 @@
         "Checklist: append-only completion dates for recurring tasks",
         "Links: runtime-editable curated links with per-day opened flags",
         "Index cards: spaced-repetition scheduling with a server-side due-date filter",
+        "Index cards now support optional back sides, stored as a separate field in Table Storage",
+        "DELETE /daily/cards/{card_id}: idempotent card deletion ensures retried Undo actions do not error",
         "All three scoped by PartitionKey = author_email, no ETag concurrency check (single user, one device at a time)"
       ]
     }
   ],
-  "description": "A serverless write API for quixotry.me's content sections, plus a personal daily-tracker feature. Both current sections (writing, diary) store their content as history-api documents — every read and write is an HTTP call to history-api, not a GitHub commit. A GitHub-backed storage class and a Blob Storage-backed one still exist in the repo but are unused dead code. The service now integrates with Application Insights for backend telemetry, enabling automatic tracking of HTTP request metrics (route, method, status, duration, exceptions) without requiring code changes. The daily-tracker feature (checklist, curated daily links, spaced-repetition index cards) is backed by real Azure Table Storage rather than history-api, since its write pattern (frequent, small, ephemeral) is the opposite of what history-api's permanent versioning was built for.",
+  "description": "A serverless write API for quixotry.me's content sections, plus a personal daily-tracker feature with enhanced card functionality.",
   "features": [
-    "Both \"writing\" and \"diary\" sections are private (writing was made private after this feature list was first written) and both are fully backed by history-api, not GitHub",
+    "Both \"writing\" and \"diary\" sections are private (writing was made private after this feature list was first written) and both are fully backed by [[history-api]], not GitHub",
     "Restrict private-section reads to the item's own author; other authors' entries are excluded",
     "Private sections return 404 for wrong-owner requests, avoiding confirmation of item existence",
     "Private sections require authentication for all operations, including reads",
     "Legacy item support: items without author_email remain visible to any allowlisted writer",
-    "Version-history support: list, retrieve, and diff versions of content items via [[posts-api|history-api]]",
+    "Version-history support: list, retrieve, and diff versions of content items via [[history-api]]",
+    "Application Insights integration: backend telemetry for HTTP request metrics (route, method, status, duration, exceptions)",
     "Daily checklist: append-only completion dates per task, no reset job or carry-over logic needed",
     "Daily links: runtime-editable curated link config plus per-day opened flags",
-    "Spaced-repetition index cards: SM-2-style scheduling with a server-side due-date filter (Table Storage OData), scoped per user via PartitionKey = author_email"
+    "Spaced-repetition index cards: SM-2-style scheduling with a server-side due-date filter (Table Storage OData), scoped per user via PartitionKey = author_email",
+    "Index cards now support optional back sides, enabling two-sided card functionality",
+    "Index cards can be deleted via DELETE /daily/cards/{card_id}, with idempotent behavior for non-existent cards"
   ],
   "key": "posts-api",
   "pipeline": [
@@ -72,7 +79,8 @@
   ],
   "relatedPages": [
     "azure-infrastructure",
-    "authentication"
+    "authentication",
+    "my-website"
   ],
   "repoUrl": "https://github.com/skarumbu/posts-api",
   "role": "Manages content sections (writing, diary) backed by history-api, plus a daily-tracker feature backed by Azure Table Storage",
@@ -159,7 +167,7 @@
       "heading": "Pipeline"
     }
   ],
-  "summary": "Azure Functions (Python) API that manages content sections — currently writing and diary, both private and both fully backed by history-api (not GitHub). Authentication is handled via Google ID tokens; content ownership is enforced per-creator, with an allowlist controlling who can write. Now includes Application Insights for backend telemetry, plus a daily-tracker feature (checklist, daily links, spaced-repetition cards) backed by real Azure Table Storage instead of history-api, since that workload doesn't fit a substrate built to permanently version every write.",
+  "summary": "Azure Functions (Python) API that manages content sections — currently writing and diary, both private and both fully backed by [[history-api]]. Authentication is handled via Google ID tokens; content ownership is enforced per-creator, with an allowlist controlling who can write. Now includes Application Insights for backend telemetry, plus a daily-tracker feature (checklist, daily links, spaced-repetition cards with optional back sides and DELETE support) backed by real Azure Table Storage instead of [[history-api]], since that workload doesn't fit a substrate built to permanently version every write.",
   "techStack": [
     "Azure Functions v2",
     "Python 3.11",
@@ -169,6 +177,6 @@
     "requests"
   ],
   "title": "posts-api",
-  "updatedAt": "2026-10-13",
-  "updatedBySha": "c4cf25c"
+  "updatedAt": "2026-10-16",
+  "updatedBySha": "83bf795"
 }
