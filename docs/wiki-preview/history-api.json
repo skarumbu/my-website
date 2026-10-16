@@ -1,0 +1,156 @@
+{
+  "architecture": {
+    "keyPoints": [
+      "Three auth layers: RequireAuth (EasyAuth only), MachineOrUserAuth (EasyAuth or X-History-Key — used for writes), PublicReadOrAuth (anonymous GET only when the resolved visibility is public, else falls through to MachineOrUserAuth — used for reads)",
+      "Content is capped at 32768 bytes per version (half of Table Storage's 65536-byte property limit, kept as a safety margin)",
+      "Version rows are written before the document-index upsert; if the index upsert fails, the version is still durably saved and the index falls behind until the next successful write — a deliberate tradeoff, not a bug",
+      "Versions live in Azure Table Storage; attachments live in Azure Blob Storage",
+      "posts-api uses history-api as its sole storage backend for the writing and diary sections (not just for version history)"
+    ],
+    "overview": "Go (net/http-based) Azure Functions app using the community azure-functions-golang-worker SDK. Ten HTTP routes are registered in main.go, all passing through a shared logging middleware. Auth mirrors ideas-api's EasyAuth pattern exactly: it decodes the X-MS-CLIENT-PRINCIPAL header for interactive callers, layered with a machine header (X-History-Key) for service-to-service writes, and a public-read gate for GETs on documents resolved as public."
+  },
+  "dataFlow": [
+    {
+      "color": "blue",
+      "label": "Consumer (posts-api, my-website /architecture) calls history-api"
+    },
+    {
+      "color": "orange",
+      "label": "POST /documents/{id}/versions — X-History-Key or EasyAuth",
+      "sublines": [
+        "optimistic concurrency via expected_version_id"
+      ]
+    },
+    {
+      "color": "green",
+      "label": "GET /sections/{section}/documents/{slug} — public sections need no auth"
+    },
+    {
+      "color": "blue",
+      "label": "Version + diff data returned"
+    }
+  ],
+  "description": "A Go Azure Functions app providing version history, diffing, and visibility control for documents on behalf of other services — a single shared place for version storage instead of every consumer building its own. It runs on a Flex Consumption (FC1) plan in Azure, which is the preferred plan type for Azure Functions in the my-website-prod-rg resource group. It is the sole storage backend for [[posts-api|posts-api]]'s writing and diary sections, and for [[my-website|my-website]]'s /architecture wiki.",
+  "features": [
+    "Save a new version of a document (markdown or JSON), with optional binary attachments; list versions; get a specific version; diff any two versions (text diff + attachment change classification)",
+    "Section-scoped document index: list/get/delete documents, and update per-document or per-section visibility settings",
+    "Document visibility model: private (default, auth required) or public (anonymous GET allowed and listed) — resolved per-document override, then section default, then private",
+    "A public-documents endpoint for anonymously browsing public content across every section",
+    "Optimistic concurrency on save via expected_version_id (409 Conflict on mismatch)",
+    "Pluggable storage backend registry (env-selected, defaults to Azure Table + Blob)"
+  ],
+  "key": "history-api",
+  "pipeline": [
+    {
+      "label": "git push\nmain"
+    },
+    {
+      "color": "blue",
+      "label": "go test\n./..."
+    },
+    {
+      "label": "func pack\n--no-build"
+    },
+    {
+      "color": "orange",
+      "label": "func publish\n--go"
+    },
+    {
+      "color": "green",
+      "label": "Live on\nAzure Functions"
+    }
+  ],
+  "relatedPages": [
+    "azure-infrastructure"
+  ],
+  "repoUrl": "https://github.com/skarumbu/history-api",
+  "role": "Shared version-history and diffing service for documents",
+  "runsOn": "Azure Functions (Go)",
+  "sections": [
+    {
+      "content": {
+        "keyPoints": [
+          "Three auth layers: RequireAuth (EasyAuth only), MachineOrUserAuth (EasyAuth or X-History-Key — used for writes), PublicReadOrAuth (anonymous GET only when the resolved visibility is public, else falls through to MachineOrUserAuth — used for reads)",
+          "Content is capped at 32768 bytes per version (half of Table Storage's 65536-byte property limit, kept as a safety margin)",
+          "Version rows are written before the document-index upsert; if the index upsert fails, the version is still durably saved and the index falls behind until the next successful write — a deliberate tradeoff, not a bug",
+          "Versions live in Azure Table Storage; attachments live in Azure Blob Storage",
+          "posts-api uses history-api as its sole storage backend for the writing and diary sections (not just for version history)",
+          "Runs on a Flex Consumption (FC1) plan in Azure Functions, which is the preferred plan type for Azure Functions in the my-website-prod-rg resource group"
+        ],
+        "overview": "Go (net/http-based) Azure Functions app using the community azure-functions-golang-worker SDK. Ten HTTP routes are registered in main.go, all passing through a shared logging middleware. Auth mirrors [[ideas-api|ideas-api]]'s EasyAuth pattern exactly: it decodes the X-MS-CLIENT-PRINCIPAL header for interactive callers, layered with a machine header (X-History-Key) for service-to-service writes, and a public-read gate for GETs on documents resolved as public."
+      },
+      "heading": "Architecture"
+    },
+    {
+      "content": [
+        {
+          "color": "blue",
+          "label": "Consumer (posts-api, [[my-website|my-website]] /architecture) calls history-api"
+        },
+        {
+          "color": "orange",
+          "label": "POST /documents/{id}/versions — X-History-Key or EasyAuth",
+          "sublines": [
+            "optimistic concurrency via expected_version_id"
+          ]
+        },
+        {
+          "color": "green",
+          "label": "GET /sections/{section}/documents/{slug} — public sections need no auth"
+        },
+        {
+          "color": "blue",
+          "label": "Version + diff data returned"
+        }
+      ],
+      "heading": "Data Flow"
+    },
+    {
+      "content": [
+        "Save a new version of a document (markdown or JSON), with optional binary attachments; list versions; get a specific version; diff any two versions (text diff + attachment change classification)",
+        "Section-scoped document index: list/get/delete documents, and update per-document or per-section visibility settings",
+        "Document visibility model: private (default, auth required) or public (anonymous GET allowed and listed) — resolved per-document override, then section default, then private",
+        "A public-documents endpoint for anonymously browsing public content across every section",
+        "Optimistic concurrency on save via expected_version_id (409 Conflict on mismatch)",
+        "Pluggable storage backend registry (env-selected, defaults to Azure Table + Blob)"
+      ],
+      "heading": "Features"
+    },
+    {
+      "content": [
+        {
+          "label": "git push\nmain"
+        },
+        {
+          "color": "blue",
+          "label": "go test\n./..."
+        },
+        {
+          "label": "func pack\n--no-build"
+        },
+        {
+          "color": "orange",
+          "label": "func publish\n--go"
+        },
+        {
+          "color": "green",
+          "label": "Live on\nAzure Functions"
+        }
+      ],
+      "heading": "Pipeline"
+    }
+  ],
+  "summary": "Shared version-history and diffing service for documents, running as a Go Azure Functions app on Flex Consumption.",
+  "techStack": [
+    "Go 1.25",
+    "Azure Functions (azure-functions-golang-worker)",
+    "Azure Table Storage",
+    "Azure Blob Storage",
+    "go-difflib",
+    "EasyAuth"
+  ],
+  "title": "history-api",
+  "updatedAt": "2026-10-16",
+  "updatedByPackage": "azure-infrastructure",
+  "updatedBySha": "c106a65"
+}
