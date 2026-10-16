@@ -36,7 +36,7 @@ function postedBody(call: number = 0) {
 }
 
 beforeEach(() => {
-  process.env.REACT_APP_POSTS_API_BASE_URL = 'http://test.local';
+  process.env.REACT_APP_DAILY_API_BASE_URL = 'http://test.local';
   global.fetch = jest.fn();
 });
 
