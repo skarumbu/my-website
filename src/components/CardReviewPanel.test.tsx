@@ -117,7 +117,7 @@ it('Save & add another keeps the sheet open, clears it, and counts the adds', as
   await waitFor(() => expect(screen.getByText(/✓ 1 added/)).toBeInTheDocument());
   expect(screen.getByRole('dialog')).toBeInTheDocument();
   expect(screen.getByLabelText(/^front/i)).toHaveValue('');
-  expect(screen.getByLabelText(/^front/i)).toHaveFocus();
+  await waitFor(() => expect(screen.getByLabelText(/^front/i)).toHaveFocus());
   expect(screen.queryByLabelText(/^back/i)).not.toBeInTheDocument();
 
   fireEvent.change(screen.getByLabelText(/^front/i), { target: { value: 'second' } });
