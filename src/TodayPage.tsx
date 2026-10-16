@@ -60,6 +60,10 @@ export default function TodayPage() {
     setDueCards(prev => [...prev, card]);
   };
 
+  const handleCardRemoved = (cardId: string) => {
+    setDueCards(prev => prev.filter(c => c.id !== cardId));
+  };
+
   if (authState === 'loading') {
     return (
       <div className="today-page">
@@ -109,6 +113,7 @@ export default function TodayPage() {
               cards={dueCards}
               onReviewed={handleCardReviewed}
               onAdded={handleCardAdded}
+              onRemoved={handleCardRemoved}
               onUnauthorized={signOut}
             />
           </div>
