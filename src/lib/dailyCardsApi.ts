@@ -15,13 +15,22 @@ export async function fetchDueCards(token: string, dateIso: string, limit: numbe
   return json.items;
 }
 
-export async function createIndexCard(token: string, text: string): Promise<IndexCard> {
+export async function createIndexCard(token: string, text: string, back: string = ''): Promise<IndexCard> {
   const res = await fetch(dailyUrl('cards'), {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ text }),
+    body: JSON.stringify({ text, back }),
   });
   return handle(res);
+}
+
+export async function deleteIndexCard(token: string, cardId: string): Promise<void> {
+  const res = await fetch(dailyUrl(`cards/${cardId}`), {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (res.status === 401) throw new Error('unauthorized');
+  if (!res.ok) throw new Error(`${res.status}`);
 }
 
 export async function reviewCard(token: string, cardId: string, grade: ReviewGrade): Promise<IndexCard> {

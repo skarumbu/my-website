@@ -5,6 +5,7 @@ export type ReviewGrade = 'again' | 'hard' | 'good' | 'easy';
 export interface IndexCard {
   id: string;
   text: string;
+  back: string;
   ease_factor: number;
   interval_days: number;
   next_review_date: string;
