@@ -226,3 +226,74 @@ it('a card without a back has no flip affordance', () => {
   expect(screen.queryByText(/tap to show answer/i)).not.toBeInTheDocument();
   expect(screen.queryByRole('button', { pressed: false })).not.toBeInTheDocument();
 });
+
+it('Delete card asks for confirmation and Cancel backs out', () => {
+  renderPanel({ cards: [card()] });
+  fireEvent.click(screen.getByRole('button', { name: /delete card/i }));
+  expect(screen.getByText('Delete this card?')).toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: /delete card/i })).not.toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole('button', { name: /cancel/i }));
+  expect(screen.queryByText('Delete this card?')).not.toBeInTheDocument();
+  expect(screen.getByRole('button', { name: /delete card/i })).toBeInTheDocument();
+  expect(global.fetch).not.toHaveBeenCalled();
+});
+
+it('Esc cancels the delete confirmation', () => {
+  renderPanel({ cards: [card()] });
+  fireEvent.click(screen.getByRole('button', { name: /delete card/i }));
+  fireEvent.keyDown(screen.getByRole('button', { name: /cancel/i }), { key: 'Escape' });
+  expect(screen.queryByText('Delete this card?')).not.toBeInTheDocument();
+});
+
+it('confirming deletes the card, calls onRemoved and shows a toast with no Undo', async () => {
+  (global.fetch as jest.Mock).mockResolvedValueOnce({ ok: true, status: 204 });
+  const { onRemoved } = renderPanel({ cards: [card()] });
+  fireEvent.click(screen.getByRole('button', { name: /delete card/i }));
+  fireEvent.click(screen.getByRole('button', { name: /^delete$/i }));
+
+  await waitFor(() => expect(onRemoved).toHaveBeenCalledWith('c1'));
+  const [url, init] = (global.fetch as jest.Mock).mock.calls[0];
+  expect(url).toBe('http://test.local/api/daily/cards/c1');
+  expect(init.method).toBe('DELETE');
+  expect(screen.getByText('Card deleted.')).toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: /undo/i })).not.toBeInTheDocument();
+});
+
+it('a failed delete shows an error and keeps the card', async () => {
+  (global.fetch as jest.Mock).mockResolvedValueOnce({ ok: false, status: 500, json: async () => ({}) });
+  const { onRemoved } = renderPanel({ cards: [card()] });
+  fireEvent.click(screen.getByRole('button', { name: /delete card/i }));
+  fireEvent.click(screen.getByRole('button', { name: /^delete$/i }));
+
+  await waitFor(() => expect(screen.getByText('Could not delete card. Try again.')).toBeInTheDocument());
+  expect(onRemoved).not.toHaveBeenCalled();
+  expect(screen.getByText(/capital of mongolia is ulaanbaatar/i)).toBeInTheDocument();
+  expect(screen.queryByText('Card deleted.')).not.toBeInTheDocument();
+});
+
+it('calls onUnauthorized when deleting returns 401', async () => {
+  (global.fetch as jest.Mock).mockResolvedValueOnce({ ok: false, status: 401, json: async () => ({}) });
+  const { onUnauthorized } = renderPanel({ cards: [card()] });
+  fireEvent.click(screen.getByRole('button', { name: /delete card/i }));
+  fireEvent.click(screen.getByRole('button', { name: /^delete$/i }));
+  await waitFor(() => expect(onUnauthorized).toHaveBeenCalled());
+});
+
+it('the delete confirmation does not carry over to the next card', () => {
+  const handlers = { onReviewed: jest.fn(), onAdded: jest.fn(), onRemoved: jest.fn(), onUnauthorized: jest.fn() };
+  const { rerender } = render(<CardReviewPanel token="t" cards={[card(), card({ id: 'c2', text: 'Next' })]} {...handlers} />);
+  fireEvent.click(screen.getByRole('button', { name: /delete card/i }));
+  expect(screen.getByText('Delete this card?')).toBeInTheDocument();
+
+  rerender(<CardReviewPanel token="t" cards={[card({ id: 'c2', text: 'Next' })]} {...handlers} />);
+  expect(screen.queryByText('Delete this card?')).not.toBeInTheDocument();
+  expect(screen.getByRole('button', { name: /delete card/i })).toBeInTheDocument();
+});
+
+it('Delete card on a two-sided card does not flip it', () => {
+  renderPanel({ cards: [card({ text: 'Capital of Mongolia?', back: 'Ulaanbaatar' })] });
+  fireEvent.click(screen.getByRole('button', { name: /delete card/i }));
+  expect(screen.getByRole('button', { name: /capital of mongolia/i })).toHaveAttribute('aria-pressed', 'false');
+  expect(screen.getByText('Delete this card?')).toBeInTheDocument();
+});
