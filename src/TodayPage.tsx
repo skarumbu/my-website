@@ -25,7 +25,7 @@ export default function TodayPage() {
   useEffect(() => {
     if (authState !== 'authenticated') return;
     if (!isApiConfigured()) {
-      setError('REACT_APP_POSTS_API_BASE_URL is not configured');
+      setError('REACT_APP_DAILY_API_BASE_URL is not configured');
       return;
     }
     setLoading(true);
@@ -58,6 +58,10 @@ export default function TodayPage() {
 
   const handleCardAdded = (card: typeof dueCards[number]) => {
     setDueCards(prev => [...prev, card]);
+  };
+
+  const handleCardRemoved = (cardId: string) => {
+    setDueCards(prev => prev.filter(c => c.id !== cardId));
   };
 
   if (authState === 'loading') {
@@ -109,6 +113,7 @@ export default function TodayPage() {
               cards={dueCards}
               onReviewed={handleCardReviewed}
               onAdded={handleCardAdded}
+              onRemoved={handleCardRemoved}
               onUnauthorized={signOut}
             />
           </div>

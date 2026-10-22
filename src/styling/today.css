@@ -86,7 +86,7 @@
 }
 
 .checklist-add-row button,
-.cards-add-row button {
+.today-panels .cards-sheet-save {
   background: var(--accent);
   color: #fff;
   border: none;
@@ -98,12 +98,13 @@
 }
 
 .checklist-add-row button:hover:not(:disabled),
-.cards-add-row button:hover:not(:disabled) {
+.today-panels .cards-sheet-save:hover:not(:disabled) {
   background: var(--accent-dk);
 }
 
 .checklist-add-row button:disabled,
-.cards-add-row button:disabled {
+.cards-sheet-save:disabled,
+.cards-sheet-ghost:disabled {
   opacity: 0.45;
   cursor: not-allowed;
 }
@@ -247,12 +248,307 @@
   flex-wrap: wrap;
 }
 
-.cards-add-row {
-  display: flex;
-  gap: 0.5rem;
-  margin-top: 1rem;
+.cards-panel {
+  position: relative;
+  overflow: hidden;
 }
 
-.cards-add-row input {
-  flex: 1;
+/* The sheet is absolutely positioned inside the panel, so the panel has to
+   be tall enough to hold it even when the review body is short. */
+.cards-panel-sheet-open {
+  min-height: 420px;
+}
+
+/* The toast floats over the bottom of the panel; this keeps it clear of the
+   grade buttons while it shows. */
+.cards-panel-toast {
+  padding-bottom: 3.5rem;
+}
+
+.cards-head-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 0.75rem;
+}
+
+.cards-head-row .daily-panel-title {
+  margin: 0;
+  white-space: nowrap;
+}
+
+/* At the desktop panel width (~284px) the full-size count pushes the title
+   onto two lines next to the pill, so it drops to body size. */
+.cards-due-count {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+
+.today-panels .cards-new-pill {
+  border: none;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 6px 12px;
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: 0 2px 0 var(--accent-dk);
+}
+
+.today-panels .cards-new-pill:hover {
+  background: var(--accent-dk);
+}
+
+.cards-new-pill:focus-visible,
+.cards-sheet-linkish:focus-visible,
+.cards-flip-wrap:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.cards-empty b {
+  font-style: normal;
+  color: var(--ink-2);
+}
+
+.cards-flip-wrap {
+  perspective: 800px;
+  margin-bottom: 1rem;
+  cursor: pointer;
+  border-radius: 10px;
+}
+
+/* Both faces share one grid cell, so the card grows to fit the longer side
+   instead of clipping it. */
+.cards-flip {
+  display: grid;
+  min-height: 92px;
+  transition: transform 0.45s;
+  transform-style: preserve-3d;
+}
+
+.cards-flip-flipped {
+  transform: rotateY(180deg);
+}
+
+.cards-face {
+  grid-area: 1 / 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  background: #FFF8EC;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  overflow-wrap: anywhere;
+}
+
+.cards-face-back {
+  transform: rotateY(180deg);
+  background: #F1F8F2;
+}
+
+.cards-face small {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.cards-face-text {
+  font-size: 1.05rem;
+  line-height: 1.4;
+}
+
+.cards-flip-hint {
+  margin-top: auto;
+  font-size: 12px;
+  color: var(--ink-3);
+}
+
+.cards-sheet-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  align-items: flex-end;
+  background: rgba(58, 36, 24, 0.28);
+  animation: cards-fade 0.15s;
+}
+
+.cards-sheet {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  background: var(--paper);
+  border-radius: 16px 16px 0 0;
+  animation: cards-rise 0.2s ease-out;
+}
+
+.cards-sheet-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.cards-sheet-head h3 {
+  margin: 0;
+  font-family: 'Fraunces', serif;
+  font-size: 17px;
+}
+
+.today-panels .cards-sheet-close {
+  background: none;
+  border: none;
+  padding: 0 4px;
+  font-size: 22px;
+  line-height: 1;
+  color: var(--ink-3);
+  cursor: pointer;
+}
+
+.today-panels .cards-sheet-close:hover {
+  color: var(--ink);
+}
+
+.cards-sheet label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-3);
+}
+
+.cards-sheet textarea {
+  font: 14px/1.4 'DM Sans', sans-serif;
+  color: var(--ink);
+  text-transform: none;
+  letter-spacing: normal;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 8px 10px;
+  resize: none;
+}
+
+.cards-sheet textarea:focus {
+  outline: none;
+  border-color: var(--ink-3);
+}
+
+.cards-sheet textarea::placeholder {
+  color: var(--ink-3);
+}
+
+.today-panels .cards-sheet-linkish {
+  align-self: flex-start;
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent-dk);
+  cursor: pointer;
+}
+
+.cards-sheet-added {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--good);
+}
+
+.cards-sheet-error {
+  margin: 0;
+}
+
+.cards-sheet-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 6px;
+}
+
+.today-panels .cards-sheet-ghost {
+  background: none;
+  border: none;
+  padding: 8px 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-3);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.today-panels .cards-sheet-ghost:hover:not(:disabled) {
+  color: var(--ink);
+}
+
+.cards-toast-region {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+  z-index: 20;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.cards-toast {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 14px;
+  background: var(--ink);
+  color: var(--bg-1);
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 999px;
+  pointer-events: auto;
+  animation: cards-toast-in 0.2s ease-out;
+}
+
+.today-panels .cards-toast button {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--c-butter);
+  cursor: pointer;
+}
+
+@keyframes cards-fade {
+  from { opacity: 0; }
+}
+
+@keyframes cards-rise {
+  from { transform: translateY(40px); }
+}
+
+@keyframes cards-toast-in {
+  from { opacity: 0; transform: translateY(20px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cards-flip,
+  .cards-sheet-backdrop,
+  .cards-sheet,
+  .cards-toast {
+    animation: none;
+    transition: none;
+  }
 }
