@@ -1,14 +1,20 @@
 [
   {
-    "base_version_id": "ee423484-0114-4d9d-a9d5-7020d0a6f567",
+    "base_version_id": "f653d561-3500-4faa-8c32-4828ef960243",
     "key": "posts-api",
-    "message": "Merge c4cf25c3c404dc3f64f1c07d619ce3f8d7d664b8 into bcc23f6f7bc9219693ddc5aed07db0527fba2b37",
+    "message": "Merge 68367f9963517fe015643fd7dc4afb01366d1be4 into 5dc91105ca59fa57109348b36c46ee84e4cf1146",
     "triggering_repo": "skarumbu/posts-api"
   },
   {
-    "base_version_id": "a8791a51-d3ed-450b-863a-58e3fa64b573",
+    "base_version_id": "48504005-af87-4c72-981b-022618ec692f",
     "key": "azure-infrastructure",
-    "message": "Merge c4cf25c3c404dc3f64f1c07d619ce3f8d7d664b8 into bcc23f6f7bc9219693ddc5aed07db0527fba2b37",
+    "message": "Merge 68367f9963517fe015643fd7dc4afb01366d1be4 into 5dc91105ca59fa57109348b36c46ee84e4cf1146",
+    "triggering_repo": "skarumbu/posts-api"
+  },
+  {
+    "base_version_id": "cc76291a-fdde-4b4c-bee7-3a9ce3635410",
+    "key": "my-website",
+    "message": "Merge 68367f9963517fe015643fd7dc4afb01366d1be4 into 5dc91105ca59fa57109348b36c46ee84e4cf1146",
     "triggering_repo": "skarumbu/posts-api"
   }
 ]
