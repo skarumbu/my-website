@@ -1,0 +1,32 @@
+{
+  "description": "The Daily API is a cross-cutting backend service designed to support daily workflows, including checklist management, daily links, and spaced-repetition cards. It is implemented as an Azure Functions app on a Flex Consumption plan and utilizes its own dedicated Azure Storage Account for Table Storage and Application Insights. The service was split out from posts-api to better modularize functionality and reduce coupling between services.",
+  "key": "daily-api",
+  "relatedPages": [
+    "azure-infrastructure",
+    "posts-api",
+    "my-website"
+  ],
+  "sections": [
+    {
+      "content": "Daily API is implemented as a Python 3.12 Azure Functions app running on the Flex Consumption (FC1) plan. It uses a dedicated Azure Storage Account to manage Table Storage tables (`DailyChecklist`, `DailyLinks`, `DailyCards`) and Application Insights for monitoring (`daily-api-{environment}-insights`). This design ensures scalability and separation of concerns, allowing the service to focus exclusively on daily-related features.",
+      "heading": "Architecture"
+    },
+    {
+      "content": "Daily API handles data related to daily workflows, including checklist items, links, and spaced-repetition cards. These data entities are stored in dedicated Table Storage tables within the service's own Azure Storage Account. The API serves as the backend for quixotry.me/today, enabling seamless integration with the frontend while maintaining clear boundaries between services.",
+      "heading": "Data Flow"
+    },
+    {
+      "content": "Daily API was split out from [[posts-api|posts-api]] to better modularize functionality. During the transition, posts-api temporarily retained a `DAILY_STORAGE_CONNECTION_STRING` app setting to access daily-related tables. This temporary setting has now been removed following the complete migration of daily routes and storage responsibilities to Daily API. Posts-api no longer interacts with daily-related data, ensuring a clean separation between the two services.",
+      "heading": "Transition from posts-api"
+    },
+    {
+      "content": "Daily API is deployed using Azure Bicep templates, which define its infrastructure components, including the Azure Functions app, Storage Account, and Application Insights. The deployment process ensures consistency and reliability across environments, with external source repositories cloned at deploy time for integration with the frontend.",
+      "heading": "Deployment"
+    }
+  ],
+  "summary": "A backend service for managing daily checklist, links, and spaced-repetition cards.",
+  "title": "Daily API",
+  "updatedAt": "2026-10-22",
+  "updatedByPackage": "azure-infrastructure",
+  "updatedBySha": "4f7cad8"
+}
