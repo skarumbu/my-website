@@ -211,6 +211,16 @@
   font-family: inherit;
 }
 
+/* With no links and the article showing, the list is empty; drop it so the
+   panel doesn't end in a gap. */
+.links-items:empty {
+  display: none;
+}
+
+.wiki-featured-card:has(+ .links-items:empty) {
+  margin-bottom: 0;
+}
+
 .wiki-featured-label {
   font-size: 0.75rem;
   text-transform: uppercase;
