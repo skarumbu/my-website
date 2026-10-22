@@ -30,6 +30,9 @@ export default function CardReviewPanel({ token, cards, onReviewed, onAdded, onR
   const [toast, setToast] = useState<Toast>(null);
   // Keyed by card id so the flip resets on its own when the queue advances.
   const [flippedId, setFlippedId] = useState<string | null>(null);
+  // Same keying as the flip, so a pending confirm never carries over to the
+  // next card.
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const newCardRef = useRef<HTMLButtonElement>(null);
   const current = cards[0];
 
@@ -95,6 +98,24 @@ export default function CardReviewPanel({ token, cards, onReviewed, onAdded, onR
     }
   };
 
+  const handleDelete = async () => {
+    if (!current) return;
+    setSubmitting(true);
+    setError(null);
+    try {
+      await deleteIndexCard(token, current.id);
+      onRemoved(current.id);
+      // No Undo: a delete can't bring back the card's review history.
+      setToast({ message: 'Card deleted.' });
+    } catch (e: any) {
+      if (e.message === 'unauthorized') return onUnauthorized();
+      setError('Could not delete card. Try again.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const confirmingDelete = current !== undefined && confirmDeleteId === current.id;
   const flipped = current !== undefined && flippedId === current.id;
   const toggleFlip = () => setFlippedId(flipped ? null : current.id);
 
@@ -150,6 +171,28 @@ export default function CardReviewPanel({ token, cards, onReviewed, onAdded, onR
               </button>
             ))}
           </div>
+          {confirmingDelete ? (
+            <div
+              className="cards-delete-row"
+              onKeyDown={e => {
+                if (e.key === 'Escape') setConfirmDeleteId(null);
+              }}
+            >
+              <span>Delete this card?</span>
+              <button type="button" className="cards-delete-confirm" disabled={submitting} onClick={handleDelete}>
+                Delete
+              </button>
+              <button type="button" className="cards-delete-link" autoFocus onClick={() => setConfirmDeleteId(null)}>
+                Cancel
+              </button>
+            </div>
+          ) : (
+            <div className="cards-delete-row">
+              <button type="button" className="cards-delete-link" onClick={() => setConfirmDeleteId(current.id)}>
+                Delete card
+              </button>
+            </div>
+          )}
         </div>
       )}
       {sheet.kind === 'open' && (

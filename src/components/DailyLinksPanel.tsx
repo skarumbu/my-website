@@ -86,7 +86,9 @@ export default function DailyLinksPanel({ token, dateIso, links, onOpened }: Pro
             </button>
           </li>
         ))}
-        {links.length === 0 && <li className="links-empty">No links configured yet.</li>}
+        {/* Only once the article has failed: while it loads, or once it shows,
+            the panel isn't empty. */}
+        {links.length === 0 && articleError && <li className="links-empty">No links configured yet.</li>}
       </ul>
     </section>
   );
