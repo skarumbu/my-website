@@ -16,6 +16,7 @@ it('normalizeUrl rejects other schemes and garbage', () => {
   expect(normalizeUrl('ftp://example.com')).toBeNull();
   expect(normalizeUrl('mailto:a@b.com')).toBeNull();
   expect(normalizeUrl('not a url')).toBeNull();
+  expect(normalizeUrl('exa mple.com')).toBeNull();
   expect(normalizeUrl('https://')).toBeNull();
   expect(normalizeUrl('   ')).toBeNull();
 });

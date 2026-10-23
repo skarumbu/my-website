@@ -34,7 +34,9 @@ const SCHEME = /^[a-z][a-z0-9+.-]*:(?!\d)/i;
 // Returns the URL to store, or null when it isn't a usable http(s) link.
 export function normalizeUrl(raw: string): string | null {
   const trimmed = raw.trim();
-  if (!trimmed) return null;
+  // Chrome's URL parser percent-encodes a space in the host instead of
+  // throwing, so "not a url" would otherwise pass.
+  if (!trimmed || /\s/.test(trimmed)) return null;
   const withScheme = SCHEME.test(trimmed) ? trimmed : `https://${trimmed}`;
   try {
     const parsed = new URL(withScheme);
