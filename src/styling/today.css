@@ -196,6 +196,190 @@
   float: right;
 }
 
+/* Holds the Edit button's height even while it's hidden, so the title
+   doesn't shift when the editor opens. */
+.links-head-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  min-height: 32px;
+  margin-bottom: 0.75rem;
+}
+
+.links-head-row .daily-panel-title {
+  margin: 0;
+}
+
+/* Secondary to the list itself, so it stays quiet: no pill, no fill. */
+.today-panels .links-edit-toggle,
+.today-panels .links-edit-cancel {
+  background: none;
+  border: none;
+  min-height: 32px;
+  padding: 4px 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-3);
+  cursor: pointer;
+}
+
+.today-panels .links-edit-toggle {
+  margin-right: -8px;
+}
+
+.today-panels .links-edit-toggle:hover,
+.today-panels .links-edit-cancel:hover {
+  color: var(--ink);
+}
+
+.links-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.6rem;
+}
+
+.links-empty-state .links-empty {
+  margin: 0;
+}
+
+.today-panels .links-add-first,
+.today-panels .links-edit-add {
+  background: none;
+  border: 1px dashed var(--line);
+  min-height: 32px;
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent-dk);
+  cursor: pointer;
+}
+
+.today-panels .links-add-first:hover,
+.today-panels .links-edit-add:hover {
+  background: var(--bg-1);
+  border-color: var(--ink-3);
+}
+
+.links-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.links-edit-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* Label and the three 32px controls share the top line; the URL, usually
+   the longer value, gets the full width below. That fits the ~284px
+   desktop panel and a 390px phone alike. */
+.links-edit-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) repeat(3, 32px);
+  column-gap: 2px;
+  align-items: center;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+.links-edit-label { grid-area: 1 / 1; margin-right: 4px; }
+.links-edit-up { grid-area: 1 / 2; }
+.links-edit-down { grid-area: 1 / 3; }
+.links-edit-remove { grid-area: 1 / 4; }
+.links-edit-label-error { grid-area: 2 / 1 / 3 / -1; }
+.links-edit-url { grid-area: 3 / 1 / 4 / -1; margin-top: 6px; }
+.links-edit-url-error { grid-area: 4 / 1 / 5 / -1; }
+
+.today-panels .links-edit-icon {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  line-height: 1;
+  color: var(--ink-3);
+  cursor: pointer;
+}
+
+.today-panels .links-edit-remove {
+  font-size: 20px;
+}
+
+.today-panels .links-edit-icon:hover:not(:disabled) {
+  background: var(--bg-1);
+  color: var(--ink);
+}
+
+.today-panels .links-edit-icon:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.today-panels .links-edit-row input[aria-invalid="true"] {
+  border-color: var(--accent);
+}
+
+.links-edit-error {
+  margin-top: 3px;
+  font-size: 12px;
+  color: var(--accent-dk);
+}
+
+.links-edit-save-error {
+  margin: 0;
+}
+
+.today-panels .links-edit-add {
+  align-self: flex-start;
+}
+
+.links-edit-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 6px;
+}
+
+.today-panels .links-edit-save {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  min-height: 32px;
+  padding: 8px 16px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 2px 0 var(--accent-dk);
+}
+
+.today-panels .links-edit-save:hover:not(:disabled) {
+  background: var(--accent-dk);
+}
+
+.today-panels .links-edit-save:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.links-edit-toggle:focus-visible,
+.links-add-first:focus-visible,
+.links-edit-add:focus-visible,
+.links-edit-icon:focus-visible,
+.links-edit-cancel:focus-visible,
+.links-edit-save:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 .wiki-featured-card {
   display: flex;
   flex-direction: column;
@@ -209,16 +393,6 @@
   margin-bottom: 0.75rem;
   cursor: pointer;
   font-family: inherit;
-}
-
-/* With no links and the article showing, the list is empty; drop it so the
-   panel doesn't end in a gap. */
-.links-items:empty {
-  display: none;
-}
-
-.wiki-featured-card:has(+ .links-items:empty) {
-  margin-bottom: 0;
 }
 
 .wiki-featured-label {

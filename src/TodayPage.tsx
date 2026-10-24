@@ -107,6 +107,8 @@ export default function TodayPage() {
               dateIso={dateIso}
               links={links}
               onOpened={handleLinkOpened}
+              onLinksChange={setLinks}
+              onUnauthorized={signOut}
             />
             <CardReviewPanel
               token={googleToken!}
