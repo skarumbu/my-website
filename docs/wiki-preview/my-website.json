@@ -18,7 +18,7 @@
     "Ideas Board — EasyAuth sign-in, feature idea list and project management, one-click bot trigger",
     "Learning Plan — Google OAuth sign-in, AI-generated personalised study plans, save and review history",
     "Write — private writing section with Google sign-in, an editor, and per-item version history, served by [[posts-api|posts-api]]",
-    "Diary — private diary entries with Google sign-in and a block editor, served by [[posts-api|posts-api]]",
+    "Diary — private diary entries with Google sign-in, served by [[posts-api|posts-api]]. The editor's paragraphs grow to fit their text, each paragraph's controls (mic dictation, font, color, tilt, move, delete) appear in one toolbar only while it's being edited, and new stickers can't be added (existing ones still render)",
     "Today — three panels backed by [[daily-api|daily-api]] (REACT_APP_DAILY_API_BASE_URL): a daily checklist; Daily Links (Wikipedia's featured article plus an editor for your own links); and two-sided review cards with flip, a \"+ New card\" sheet with Undo, and delete with confirm",
     "Architecture reference — internal system documentation (not linked from the main nav)"
   ],
