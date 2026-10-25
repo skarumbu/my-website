@@ -1,0 +1,93 @@
+{
+  "architecture": {
+    "keyPoints": [
+      "Checklist tasks keep an append-only log of done dates instead of per-day snapshots, so nothing carries over between days",
+      "Daily links keep one config row plus one row per day of opened-link flags, in the same table",
+      "Card scheduling is a pure function, so the SM-2-style model can be swapped without touching storage",
+      "CORS allows only https://www.quixotry.me",
+      "Provisioned by azure-infrastructure modules/dailyapi.bicep on FC1, because a new Linux Y1 plan is refused in this resource group"
+    ],
+    "overview": "Azure Functions Python v2 programming model on a Flex Consumption (FC1) plan. One HTTP trigger per route under /api/daily/, plus an unauthenticated /api/health. Data lives in three Table Storage tables (DailyChecklist, DailyLinks, DailyCards) in the app's own storage account. Auth is in application code: each request's Bearer token is verified with google-auth against GOOGLE_CLIENT_ID, then checked against ALLOWED_WRITERS."
+  },
+  "dataFlow": [
+    {
+      "color": "blue",
+      "label": "User opens /today, signed in with Google"
+    },
+    {
+      "color": "green",
+      "label": "GET /api/daily/checklist, /links/config, /links/opened, /cards/due — Authorization: Bearer {ID token}"
+    },
+    {
+      "color": "green",
+      "label": "daily-api verifies the token and the ALLOWED_WRITERS allowlist",
+      "sublines": [
+        "reads DailyChecklist, DailyLinks, DailyCards (partition = user email)"
+      ]
+    },
+    {
+      "color": "blue",
+      "label": "User toggles a task, opens a link, or grades a card"
+    },
+    {
+      "color": "green",
+      "label": "POST to the matching /api/daily/* route; review grades reschedule the card"
+    }
+  ],
+  "description": "Azure Functions (Python) API behind my-website's /today page: a recurring daily checklist, a curated set of daily links, and spaced-repetition review cards. Split out of posts-api on 2026-10-22, with its own storage account and its own Google ID token auth.",
+  "features": [
+    "Daily checklist: list and create recurring tasks (optional expires_after), toggle a task done for a given day",
+    "Daily links: GET/PUT the link config, record and list which links were opened on a given day",
+    "Review cards: create a card (text plus optional back), list cards due on a date, grade a review (again/hard/good/easy), delete a card",
+    "SM-2-style scheduling: the ease factor moves per grade (floored at 1.3) and \"again\" resets the interval to 1 day",
+    "Per-user data: every table is partitioned by the signed-in user's email",
+    "Google ID token auth, plus an ALLOWED_WRITERS allowlist when that setting is non-empty"
+  ],
+  "key": "daily-api",
+  "pipeline": [
+    {
+      "label": "git push\nmain"
+    },
+    {
+      "color": "blue",
+      "label": "pytest\n(also on PRs)"
+    },
+    {
+      "color": "orange",
+      "label": "func azure functionapp\npublish --python"
+    },
+    {
+      "color": "green",
+      "label": "Live on\nAzure Functions"
+    }
+  ],
+  "relatedPages": [
+    "my-website",
+    "posts-api",
+    "azure-infrastructure",
+    "authentication"
+  ],
+  "repoUrl": "https://github.com/skarumbu/daily-api",
+  "role": "Backs /today: daily checklist, daily links, and review cards",
+  "runsOn": "Azure Functions (Flex Consumption)",
+  "sections": [
+    {
+      "content": "Function App daily-api-prod-hwbxtkz6lsfoq runs on Flex Consumption (FC1): Python 3.12, up to 40 instances, 2048 MB per instance. Its own storage account (dailyapihwbxtkz6lsfoq) holds the DailyChecklist, DailyLinks and DailyCards tables. Infrastructure is defined in [[azure-infrastructure|azure-infrastructure]]'s modules/dailyapi.bicep. GitHub Actions runs pytest on every PR and push to main; pushes to main then deploy with `func azure functionapp publish --python`, signed in as the daily-api-deploy service principal, which has Website Contributor on this one app only. Request telemetry goes to Application Insights (daily-api-prod-insights), backed by the daily-api-prod-logs Log Analytics workspace.",
+      "heading": "Hosting, deploy and monitoring"
+    },
+    {
+      "content": "The daily checklist, links and cards routes originally lived in [[posts-api|posts-api]], on tables in posts-api's storage account. On 2026-10-22 they moved to this service, and the existing rows were copied into daily-api's own storage account. [[my-website|my-website]]'s /today page now calls daily-api through REACT_APP_DAILY_API_BASE_URL, and posts-api's daily routes, its azure-data-tables dependency and its DAILY_STORAGE_CONNECTION_STRING setting were removed.",
+      "heading": "Split from posts-api"
+    }
+  ],
+  "summary": "Azure Functions (Python) API behind quixotry.me/today: daily checklist, daily links, and spaced-repetition review cards, stored per user in its own Table Storage. Split out of [[posts-api|posts-api]] on 2026-10-22.",
+  "techStack": [
+    "Azure Functions (Python v2 model)",
+    "Python 3.12",
+    "Azure Table Storage",
+    "google-auth"
+  ],
+  "title": "daily-api",
+  "updatedAt": "2026-10-25",
+  "updatedBySha": "af6e786"
+}
