@@ -76,8 +76,16 @@ function DiaryViewer() {
             <a className="diary-viewer-back" href="/diary">&#8592; Diary</a>
             <div className="diary-viewer-header">
               <h1 className="diary-viewer-title">{entry.title}</h1>
-              <p className="diary-viewer-date">{fmtDate(entry.date)}</p>
-              <a className="diary-viewer-edit-link" href={`/diary/${entry.slug}/edit`}>Edit</a>
+              <div className="diary-viewer-meta">
+                <p className="diary-viewer-date">{fmtDate(entry.date)}</p>
+                <a className="diary-viewer-edit-link" href={`/diary/${entry.slug}/edit`}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                    <path d="m14.5 5.5 3 3" />
+                  </svg>
+                  Edit
+                </a>
+              </div>
             </div>
             <div className="diary-viewer-page-surface">
               {entry.blocks.map((block, index) => (
