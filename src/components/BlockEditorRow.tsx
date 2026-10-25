@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { Block, BlockStyle, FONT_OPTIONS, STICKER_EMOJIS } from '../lib/diaryTypes.ts';
 import { useSpeechToText } from '../lib/useSpeechToText.ts';
+import { useAutoGrow } from '../lib/useAutoGrow.ts';
 
 interface Props {
   block: Block;
@@ -31,6 +32,8 @@ function BlockEditorRow({ block, onChange, onMoveUp, onMoveDown, onDelete, isFir
     onChange({ ...block, content: appendDictatedText(block.content, phrase) });
   };
   const speech = useSpeechToText(handleFinalText);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  useAutoGrow(textareaRef, block.type === 'text' ? block.content : '', block.style.font);
 
   return (
     <div className="block-editor-row" style={{ transform: `rotate(${block.style.rotation ?? 0}deg)` }}>
@@ -43,7 +46,9 @@ function BlockEditorRow({ block, onChange, onMoveUp, onMoveDown, onDelete, isFir
       {block.type === 'text' && (
         <div className="block-editor-text">
           <textarea
+            ref={textareaRef}
             className="block-editor-textarea"
+            rows={2}
             placeholder="Write something…"
             value={block.content}
             style={{ fontFamily: block.style.font, color: block.style.color }}

@@ -240,15 +240,20 @@
   cursor: not-allowed;
 }
 
+/* Height is set from scrollHeight by useAutoGrow, so the whole paragraph
+   is always visible: no inner scrollbar and no resize handle. */
 .block-editor-textarea {
+  display: block;
   width: 100%;
-  min-height: 80px;
+  min-height: 3.2em;
+  padding: 0;
   border: none;
   outline: none;
   font-size: 16px;
   line-height: 1.6;
   background: transparent;
-  resize: vertical;
+  resize: none;
+  overflow: hidden;
   box-sizing: border-box;
   font-family: inherit;
 }

@@ -94,3 +94,10 @@ describe('with Web Speech API support', () => {
     expect(screen.getByText('still talking')).toBeInTheDocument();
   });
 });
+
+it('sizes the paragraph textarea to fit its whole content', () => {
+  const spy = jest.spyOn(HTMLTextAreaElement.prototype, 'scrollHeight', 'get').mockReturnValue(721);
+  renderRow({ type: 'text', content: 'A long paragraph', style: {} });
+  expect(screen.getByPlaceholderText(/write something/i).style.height).toBe('721px');
+  spy.mockRestore();
+});
