@@ -217,11 +217,6 @@ export default function DiaryEditor() {
     markDirty();
   };
 
-  const addStickerBlock = () => {
-    setBlocks(prev => [...prev, { type: 'sticker', emoji: '🌻', style: { rotation: (Math.random() * 10 - 5) } }]);
-    markDirty();
-  };
-
   const updateBlock = (index: number, updated: Block) => {
     setBlocks(prev => prev.map((b, i) => (i === index ? updated : b)));
     markDirty();
@@ -328,8 +323,7 @@ export default function DiaryEditor() {
               ))}
             </div>
             <div className="diary-editor-add-row">
-              <button type="button" onClick={addTextBlock}>+ Text</button>
-              <button type="button" onClick={addStickerBlock}>+ Sticker</button>
+              <button type="button" onClick={addTextBlock}>+ Paragraph</button>
             </div>
             {slug && <VersionHistoryPanel client={diaryVersionClient} />}
           </>
