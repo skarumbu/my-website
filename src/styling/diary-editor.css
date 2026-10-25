@@ -122,7 +122,8 @@
 .diary-editor-blocks {
   display: flex;
   flex-direction: column;
-  gap: 22px;
+  gap: 36px; /* room for a block's floating toolbar above it */
+  margin-top: 16px;
 }
 
 .diary-editor-add-row {
@@ -211,33 +212,168 @@
     0 3px 0 rgba(58, 36, 24, 0.08),
     0 8px 16px rgba(58, 36, 24, 0.08);
   position: relative;
+  transition: box-shadow 150ms ease, transform 150ms ease;
 }
 
-.block-editor-controls {
+/* A tilted scrap straightens while it's being edited so the text being
+   typed isn't on a slant. Display only: the saved rotation is untouched,
+   and !important is what lets this beat the inline rotate(). */
+.block-editor-row:focus-within {
+  transform: none !important;
+  box-shadow:
+    0 0 0 2px var(--line),
+    0 6px 18px rgba(58, 36, 24, 0.12);
+}
+
+/* Floating toolbar — every per-block control in one dark pill, shown only
+   for the block being edited (or hovered with a mouse) so long prose isn't
+   framed by buttons. Opacity rather than display keeps it in the tab order,
+   so Tab from the text reaches it and :focus-within keeps it up. */
+.block-editor-float {
+  position: absolute;
+  bottom: calc(100% + 3px);
+  right: 8px;
+  z-index: 2;
   display: flex;
-  gap: 4px;
-  justify-content: flex-end;
-  margin-bottom: 8px;
-}
-
-.block-editor-controls button {
-  background: transparent;
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  cursor: pointer;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  background: var(--ink);
+  color: #FFEFD9;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(58, 36, 24, 0.2);
   font-size: 12px;
-  padding: 3px 9px;
-  color: var(--ink-2);
-  transition: background 120ms ease;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 120ms ease;
 }
 
-.block-editor-controls button:hover:not(:disabled) {
-  background: var(--bg-1);
+.block-editor-row:focus-within .block-editor-float {
+  opacity: 1;
+  pointer-events: auto;
 }
 
-.block-editor-controls button:disabled {
-  opacity: 0.4;
+@media (hover: hover) and (min-width: 641px) {
+  .block-editor-row:hover .block-editor-float {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+.block-editor-float button {
+  background: none;
+  border: 0;
+  color: inherit;
+  cursor: pointer;
+  font: 600 13px 'DM Sans', sans-serif;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 4px;
+  border-radius: 6px;
+}
+
+.block-editor-float button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.block-editor-float button:disabled {
+  opacity: 0.35;
   cursor: not-allowed;
+}
+
+.block-editor-float :focus-visible {
+  outline: 2px solid #FFEFD9;
+  outline-offset: 1px;
+}
+
+.block-editor-float select {
+  font: 12px 'DM Sans', sans-serif;
+  height: 24px;
+  background: #4a3226;
+  color: #FFEFD9;
+  border: 0;
+  border-radius: 6px;
+  padding: 0 4px;
+}
+
+.block-editor-float input[type="color"] {
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  flex-shrink: 0;
+  border: 2px solid #FFEFD9;
+  border-radius: 50%;
+  cursor: pointer;
+  background: none;
+}
+
+.block-editor-float input[type="color"]::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.block-editor-float input[type="color"]::-webkit-color-swatch {
+  border: none;
+  border-radius: 50%;
+}
+
+.block-editor-tilt {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.block-editor-tilt input[type="range"] {
+  width: 64px;
+  margin: 0;
+  accent-color: #FFEFD9;
+}
+
+.block-editor-float-sep {
+  width: 1px;
+  height: 14px;
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* Phones: no hover, and a toolbar floating above the block would cover the
+   end of the paragraph above. Show it inside the focused block instead,
+   across its top edge, in flow so it never sits on top of any text. */
+@media (max-width: 640px) {
+  .diary-editor-blocks {
+    gap: 22px;
+  }
+
+  .block-editor-row {
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Stretched across the block, with the font menu absorbing the slack,
+     so all the controls fit on one row even at 320px. */
+  .block-editor-float {
+    position: static;
+    order: -1;
+    display: none;
+    gap: 4px;
+    margin: -6px -8px 12px;
+  }
+
+  .block-editor-float select {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .block-editor-tilt input[type="range"] {
+    width: 52px;
+  }
+
+  .block-editor-tilt span,
+  .block-editor-float-sep {
+    display: none;
+  }
+
+  .block-editor-row:focus-within .block-editor-float {
+    display: flex;
+  }
 }
 
 /* Height is set from scrollHeight by useAutoGrow, so the whole paragraph
@@ -265,78 +401,15 @@
   cursor: pointer;
 }
 
-/* Tool tray — frosted pill grouping the style controls, echoing the
-   site's operator-tray pattern from the home page puzzle. */
-.block-editor-style-row {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin-top: 10px;
-  padding: 8px 14px;
-  background: rgba(255, 255, 255, 0.5);
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--ink-2);
-  flex-wrap: wrap;
-  width: fit-content;
-}
-
-.block-editor-style-row label {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.block-editor-style-row select {
-  font-family: 'DM Sans', sans-serif;
-  font-size: 12px;
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  padding: 2px 6px;
-  background: var(--paper);
-  color: var(--ink);
-}
-
-.block-editor-style-row input[type="color"] {
-  width: 22px;
-  height: 22px;
-  padding: 0;
-  border: 2px solid var(--paper);
-  border-radius: 50%;
-  cursor: pointer;
-  box-shadow: 0 0 0 1px var(--line);
-  background: none;
-}
-
-.block-editor-style-row input[type="range"] {
-  accent-color: var(--accent);
-}
-
-.block-editor-mic-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  border: 1px solid var(--line);
-  background: var(--paper);
+.block-editor-float .block-editor-mic-btn {
   font-size: 14px;
   line-height: 1;
-  cursor: pointer;
   padding: 0;
-  transition: background 120ms ease, border-color 120ms ease;
 }
 
-.block-editor-mic-btn:hover {
-  background: var(--bg-1);
-}
-
-.block-editor-mic-btn.is-listening {
+.block-editor-float .block-editor-mic-btn.is-listening {
   background: var(--accent);
-  border-color: var(--accent-dk);
-  color: #fff;
+  border-radius: 50%;
   animation: block-editor-mic-pulse 1.4s ease-in-out infinite;
 }
 
@@ -359,8 +432,13 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .block-editor-mic-btn.is-listening {
+  .block-editor-float .block-editor-mic-btn.is-listening {
     animation: none;
+  }
+
+  .block-editor-row,
+  .block-editor-float {
+    transition: none;
   }
 }
 

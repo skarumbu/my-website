@@ -101,3 +101,28 @@ it('sizes the paragraph textarea to fit its whole content', () => {
   expect(screen.getByPlaceholderText(/write something/i).style.height).toBe('721px');
   spy.mockRestore();
 });
+
+it('puts every block control in one toolbar that Tab reaches straight after the text', () => {
+  renderRow(textBlock);
+  const toolbar = screen.getByRole('group', { name: /block options/i });
+  for (const name of [/font/i, /color/i, /tilt/i, /move block up/i, /move block down/i, /delete block/i]) {
+    expect(toolbar).toContainElement(screen.getByLabelText(name));
+  }
+  const textarea = screen.getByPlaceholderText(/write something/i);
+  // DOM order is tab order here: nothing focusable sits between the
+  // textarea and the toolbar's first control.
+  const focusables = Array.from(document.querySelectorAll('textarea, select, input, button'));
+  expect(focusables.indexOf(screen.getByLabelText(/font/i))).toBe(focusables.indexOf(textarea) + 1);
+});
+
+it('keeps a sticker block editable, with its controls in the same toolbar', () => {
+  const sticker: Block = { type: 'sticker', emoji: '⭐', style: { rotation: 4, background: '#ffeeaa' } };
+  const onChange = renderRow(sticker);
+  expect(screen.getByLabelText(/sticker/i)).toHaveValue('⭐');
+  const toolbar = screen.getByRole('group', { name: /block options/i });
+  expect(toolbar).toContainElement(screen.getByLabelText(/background/i));
+  expect(toolbar).toContainElement(screen.getByLabelText(/tilt/i));
+
+  fireEvent.change(screen.getByLabelText(/sticker/i), { target: { value: '🌙' } });
+  expect(onChange).toHaveBeenCalledWith({ ...sticker, emoji: '🌙' });
+});
