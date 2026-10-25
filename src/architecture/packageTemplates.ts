@@ -408,6 +408,47 @@ export const PACKAGE_TEMPLATES: Record<string, PackageTemplate> = {
     ],
   },
 
+  'daily-api': {
+    title: 'daily-api',
+    role: 'Backs /today: daily checklist, daily links, and review cards',
+    runsOn: 'Azure Functions (Flex Consumption)',
+    description:
+      'Azure Functions (Python) API behind my-website\'s /today page: a recurring daily checklist, a curated set of daily links, and spaced-repetition review cards. Split out of posts-api on 2026-10-22, with its own storage account and its own Google ID token auth.',
+    features: [
+      'Daily checklist: list and create recurring tasks (optional expires_after), toggle a task done for a given day',
+      'Daily links: GET/PUT the link config, record and list which links were opened on a given day',
+      'Review cards: create a card (text plus optional back), list cards due on a date, grade a review (again/hard/good/easy), delete a card',
+      'SM-2-style scheduling: the ease factor moves per grade (floored at 1.3) and "again" resets the interval to 1 day',
+      'Per-user data: every table is partitioned by the signed-in user\'s email',
+      'Google ID token auth, plus an ALLOWED_WRITERS allowlist when that setting is non-empty',
+    ],
+    architecture: {
+      overview:
+        'Azure Functions Python v2 programming model on a Flex Consumption (FC1) plan. One HTTP trigger per route under /api/daily/, plus an unauthenticated /api/health. Data lives in three Table Storage tables (DailyChecklist, DailyLinks, DailyCards) in the app\'s own storage account. Auth is in application code: each request\'s Bearer token is verified with google-auth against GOOGLE_CLIENT_ID, then checked against ALLOWED_WRITERS.',
+      keyPoints: [
+        'Checklist tasks keep an append-only log of done dates instead of per-day snapshots, so nothing carries over between days',
+        'Daily links keep one config row plus one row per day of opened-link flags, in the same table',
+        'Card scheduling is a pure function, so the SM-2-style model can be swapped without touching storage',
+        'CORS allows only https://www.quixotry.me',
+        'Provisioned by azure-infrastructure modules/dailyapi.bicep on FC1, because a new Linux Y1 plan is refused in this resource group',
+      ],
+    },
+    techStack: ['Azure Functions (Python v2 model)', 'Python 3.12', 'Azure Table Storage', 'google-auth'],
+    pipeline: [
+      { label: 'git push\nmain' },
+      { label: 'pytest\n(also on PRs)', color: 'blue' },
+      { label: 'func azure functionapp\npublish --python', color: 'orange' },
+      { label: 'Live on\nAzure Functions', color: 'green' },
+    ],
+    dataFlow: [
+      { label: 'User opens /today, signed in with Google', color: 'blue' },
+      { label: 'GET /api/daily/checklist, /links/config, /links/opened, /cards/due — Authorization: Bearer {ID token}', color: 'green' },
+      { label: 'daily-api verifies the token and the ALLOWED_WRITERS allowlist', sublines: ['reads DailyChecklist, DailyLinks, DailyCards (partition = user email)'], color: 'green' },
+      { label: 'User toggles a task, opens a link, or grades a card', color: 'blue' },
+      { label: 'POST to the matching /api/daily/* route; review grades reschedule the card', color: 'green' },
+    ],
+  },
+
   'running-app': {
     title: 'running-app',
     role: 'Personal running tracker — GPS, history, badges',
