@@ -101,3 +101,66 @@ it('saves normally when the token is valid', async () => {
   expect(global.fetch).toHaveBeenCalledTimes(1);
   expect(screen.queryByText(/session expired/i)).not.toBeInTheDocument();
 });
+
+describe('editing an existing entry', () => {
+  const ENTRY = {
+    slug: 'a-day',
+    title: 'A day',
+    date: '2026-10-01',
+    blocks: [
+      { type: 'text', content: 'First paragraph', style: { rotation: 2.5, font: 'serif' } },
+      { type: 'sticker', emoji: '⭐', style: { rotation: -4, background: '#ffeeaa' } },
+    ],
+  };
+
+  function mockApi() {
+    (global.fetch as jest.Mock).mockImplementation(async (_url: string, init?: RequestInit) =>
+      init?.method === 'PUT'
+        ? { ok: true, status: 200, json: async () => ({}) }
+        : { ok: true, status: 200, json: async () => ENTRY });
+  }
+
+  function savedBody() {
+    const put = (global.fetch as jest.Mock).mock.calls.find(([, init]) => init?.method === 'PUT');
+    return JSON.parse(put[1].body);
+  }
+
+  it('offers "+ Paragraph" and no way to add a sticker', async () => {
+    renderEditor('/diary/new', '/diary/new');
+    await waitFor(() => expect(screen.getByPlaceholderText(/title/i)).toBeInTheDocument());
+    expect(screen.getByRole('button', { name: '+ Paragraph' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /sticker/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '+ Text' })).not.toBeInTheDocument();
+  });
+
+  it('still shows an existing sticker block and saves it back unchanged', async () => {
+    mockApi();
+    renderEditor('/diary/:slug/edit', '/diary/a-day/edit');
+    expect(await screen.findByLabelText(/sticker/i)).toHaveValue('⭐');
+
+    fireEvent.change(screen.getByPlaceholderText(/title/i), { target: { value: 'A day, edited' } });
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /^save$/i }));
+    });
+
+    expect(savedBody().blocks).toEqual(ENTRY.blocks);
+  });
+
+  it('keeps a tilted block\'s saved rotation when it is focused for editing', async () => {
+    mockApi();
+    renderEditor('/diary/:slug/edit', '/diary/a-day/edit');
+    const textarea = await screen.findByDisplayValue('First paragraph');
+
+    act(() => { textarea.focus(); });
+    fireEvent.change(textarea, { target: { value: 'First paragraph, longer' } });
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /^save$/i }));
+    });
+
+    expect(savedBody().blocks[0]).toEqual({
+      type: 'text',
+      content: 'First paragraph, longer',
+      style: { rotation: 2.5, font: 'serif' },
+    });
+  });
+});
