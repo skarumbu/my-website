@@ -297,3 +297,8 @@ it('Delete card on a two-sided card does not flip it', () => {
   expect(screen.getByRole('button', { name: /capital of mongolia/i })).toHaveAttribute('aria-pressed', 'false');
   expect(screen.getByText('Delete this card?')).toBeInTheDocument();
 });
+
+it('links to the All cards page', () => {
+  renderPanel();
+  expect(screen.getByRole('link', { name: /all cards/i })).toHaveAttribute('href', '/today/cards');
+});
