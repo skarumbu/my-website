@@ -125,7 +125,10 @@ export default function CardReviewPanel({ token, cards, onReviewed, onAdded, onR
     >
       <div className="cards-head-row">
         <h2 className="daily-panel-title">Review <span className="cards-due-count">({cards.length} due)</span></h2>
-        <button type="button" ref={newCardRef} className="cards-new-pill" onClick={openSheet}>+ New card</button>
+        <div className="cards-head-actions">
+          <a className="cards-all-link" href="/today/cards">All cards</a>
+          <button type="button" ref={newCardRef} className="cards-new-pill" onClick={openSheet}>+ New card</button>
+        </div>
       </div>
       {error && <p className="daily-panel-error">{error}</p>}
       {!current && (

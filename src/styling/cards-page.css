@@ -1,0 +1,307 @@
+@import url('https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&display=swap');
+
+.cp-content {
+  max-width: 1000px;
+}
+
+.cp-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 1.5rem;
+}
+
+.cp-header .today-heading {
+  margin: 0;
+}
+
+.cp-count {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--ink-3);
+  margin-left: 10px;
+}
+
+.cp-new {
+  border: none;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 8px 16px;
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: 0 2px 0 var(--accent-dk);
+}
+
+.cp-new:hover { background: var(--accent-dk); }
+
+.cp-new:focus-visible,
+.cp-tile:focus-visible,
+.cp-toggle button:focus-visible,
+.cp-link:focus-visible,
+.cp-save:focus-visible,
+.cp-cancel:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.cp-empty {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--ink-2);
+}
+
+.cp-empty p {
+  max-width: 420px;
+  margin: 0 auto 1.25rem;
+  line-height: 1.5;
+}
+
+.cp-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 28px 24px;
+  padding: 8px 4px;
+}
+
+/* Shared notecard look: paper, red top rule, blue ruled lines. The 28px line
+   height equals the ruling period so text sits on the lines. */
+.cp-notecard {
+  position: relative;
+  display: block;
+  box-sizing: border-box;
+  background-color: #FFFEF9;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent 27px,
+    #BFD8EE 27px,
+    #BFD8EE 28px
+  );
+  background-origin: content-box;
+  border: 1px solid #E6D9C0;
+  border-radius: 3px;
+  padding: 56px 16px 12px;
+  font-family: 'Kalam', cursive;
+  font-size: 18px;
+  line-height: 28px;
+  color: #2B2A6B;
+  text-align: left;
+  box-shadow: 0 1px 2px rgba(58, 36, 24, 0.12), 0 4px 10px rgba(58, 36, 24, 0.08);
+}
+
+.cp-notecard::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 54px;
+  height: 2px;
+  background: var(--accent);
+  opacity: 0.8;
+  pointer-events: none;
+}
+
+.cp-tile {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  width: 100%;
+  height: 196px;
+  overflow: hidden;
+  cursor: pointer;
+  transform: rotate(var(--tilt, 0deg));
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.cp-tile:hover,
+.cp-tile:focus-visible {
+  transform: rotate(0deg) translateY(-4px);
+  box-shadow: 0 2px 4px rgba(58, 36, 24, 0.14), 0 12px 22px rgba(58, 36, 24, 0.16);
+}
+
+.cp-tile-text {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+/* Editor */
+.cp-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(58, 36, 24, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  overflow-y: auto;
+}
+
+.cp-editor {
+  width: 100%;
+  max-width: 520px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.cp-toggle {
+  align-self: center;
+  display: inline-flex;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 3px;
+}
+
+.cp-toggle button {
+  border: none;
+  background: transparent;
+  color: var(--ink-2);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 6px 20px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.cp-toggle .cp-toggle-on {
+  background: var(--accent);
+  color: #fff;
+}
+
+.cp-stack {
+  position: relative;
+  padding-bottom: 8px;
+}
+
+.cp-layer {
+  position: absolute;
+  inset: 0;
+  background: #FFFEF9;
+  border: 1px solid #E6D9C0;
+  border-radius: 3px;
+  box-shadow: 0 1px 2px rgba(58, 36, 24, 0.1);
+}
+
+.cp-layer-1 { transform: translate(5px, 6px) rotate(1.2deg); }
+.cp-layer-2 { transform: translate(-4px, 10px) rotate(-1.6deg); }
+
+.cp-notecard-large {
+  z-index: 1;
+  box-shadow: 0 6px 24px rgba(58, 36, 24, 0.28);
+}
+
+.cp-textarea {
+  display: block;
+  width: 100%;
+  height: 224px; /* 8 ruled lines */
+  box-sizing: border-box;
+  border: none;
+  outline: none;
+  resize: none;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  line-height: 28px;
+  color: inherit;
+}
+
+.cp-textarea::placeholder {
+  color: rgba(43, 42, 107, 0.4);
+}
+
+.cp-error {
+  margin: 0;
+  color: #fff;
+  background: var(--accent-dk);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 14px;
+}
+
+.cp-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.cp-save {
+  border: none;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  font: inherit;
+  font-weight: 700;
+  padding: 8px 22px;
+  cursor: pointer;
+  box-shadow: 0 2px 0 var(--accent-dk);
+}
+
+.cp-save:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.cp-cancel,
+.cp-link {
+  border: none;
+  background: transparent;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 2px;
+  color: #fff;
+}
+
+.cp-link { text-decoration: underline; }
+
+.cp-delete-link { margin-left: auto; }
+
+.cp-delete-confirm {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: #fff;
+  font-size: 14px;
+}
+
+.cp-delete-yes {
+  border: none;
+  border-radius: 999px;
+  background: var(--accent-dk);
+  color: #fff;
+  font: inherit;
+  font-weight: 700;
+  padding: 5px 14px;
+  cursor: pointer;
+}
+
+@media (max-width: 800px) {
+  .cp-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 520px) {
+  .cp-content { padding-left: 16px; padding-right: 16px; }
+  .cp-grid { grid-template-columns: 1fr; gap: 24px; padding: 8px 0; }
+  .cp-tile { height: 196px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cp-tile { transition: none; }
+}

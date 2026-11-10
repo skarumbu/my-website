@@ -41,3 +41,24 @@ export async function reviewCard(token: string, cardId: string, grade: ReviewGra
   });
   return handle(res);
 }
+
+export async function fetchAllCards(token: string): Promise<IndexCard[]> {
+  const res = await fetch(dailyUrl('cards'), {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const json = await handle(res);
+  return json.items;
+}
+
+export async function updateIndexCard(
+  token: string,
+  cardId: string,
+  fields: { text?: string; back?: string },
+): Promise<IndexCard> {
+  const res = await fetch(dailyUrl(`cards/${cardId}`), {
+    method: 'PATCH',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify(fields),
+  });
+  return handle(res);
+}
