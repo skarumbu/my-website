@@ -16,8 +16,8 @@
   font-family: 'DM Sans', system-ui, sans-serif;
 }
 
-.poligraph-page h1,
-.poligraph-page h2 {
+.poligraph-content h1,
+.poligraph-content h2 {
   font-family: 'Fraunces', Georgia, serif;
   color: var(--ink);
 }
@@ -33,15 +33,16 @@
   font-size: 1.1rem;
 }
 
-.poligraph-page label {
+.poligraph-content label {
   display: block;
   font-weight: 600;
   margin: 1rem 0 0.35rem;
   color: var(--ink-2);
 }
 
-.poligraph-page input[type='search'],
-.poligraph-page select {
+.poligraph-content input[type='search'],
+.poligraph-content input[type='date'],
+.poligraph-content select {
   width: 100%;
   box-sizing: border-box;
   padding: 0.7rem 0.9rem;
@@ -52,7 +53,7 @@
   border-radius: 8px;
 }
 
-.poligraph-page input:disabled {
+.poligraph-content input:disabled {
   opacity: 0.6;
 }
 
@@ -108,6 +109,177 @@
 
 .poligraph-error button:hover {
   background: var(--accent-dk);
+}
+
+.poligraph-profile h1 {
+  margin-bottom: 0.25rem;
+}
+
+.poligraph-profile p {
+  margin: 0.15rem 0;
+  color: var(--ink-2);
+}
+
+.poligraph-counts {
+  font-weight: 600;
+}
+
+.poligraph-freshness p {
+  margin: 0.5rem 0 0;
+  color: var(--ink-3);
+  font-size: 0.9rem;
+}
+
+.poligraph-freshness .poligraph-stale {
+  color: var(--warn);
+  background: #FFF4DC;
+  border: 1px solid var(--warn);
+  border-radius: 8px;
+  padding: 0.6rem 0.8rem;
+  font-weight: 600;
+}
+
+.poligraph-filters {
+  margin: 1.5rem 0 1rem;
+}
+
+.poligraph-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.poligraph-preset {
+  font: inherit;
+  font-size: 0.9rem;
+  padding: 0.4rem 0.85rem;
+  color: var(--ink-2);
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.poligraph-preset[aria-pressed='true'] {
+  color: #fff;
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.poligraph-filter-fields {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0 1rem;
+}
+
+.poligraph-month h2 {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  margin: 1.5rem 0 0.5rem;
+  padding: 0.4rem 0;
+  font-size: 1.15rem;
+  background: var(--bg-1);
+  border-bottom: 1px solid var(--line);
+}
+
+.poligraph-rows {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.poligraph-row {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-areas:
+    'date kind'
+    'item item'
+    'source source';
+  gap: 0.15rem 0.75rem;
+  padding: 0.7rem 0.9rem;
+  margin-bottom: 0.5rem;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.poligraph-row-date {
+  grid-area: date;
+  color: var(--ink-3);
+  font-weight: 600;
+}
+
+.poligraph-row-kind {
+  grid-area: kind;
+  font-weight: 600;
+}
+
+.poligraph-row-item {
+  grid-area: item;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem 0.6rem;
+}
+
+.poligraph-row-number {
+  font-weight: 600;
+  color: var(--ink-2);
+}
+
+.poligraph-row-note {
+  color: var(--ink-3);
+  font-size: 0.85rem;
+}
+
+.poligraph-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.poligraph-chip {
+  font-size: 0.78rem;
+  padding: 0.1rem 0.55rem;
+  color: var(--ink-2);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+}
+
+.poligraph-row-source {
+  grid-area: source;
+  font-size: 0.9rem;
+}
+
+.poligraph-more {
+  font: inherit;
+  margin-top: 1rem;
+  padding: 0.5rem 1.2rem;
+  color: #fff;
+  background: var(--accent);
+  border: 0;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.poligraph-more:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+@media (min-width: 640px) {
+  .poligraph-filter-fields {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .poligraph-row {
+    grid-template-columns: 5rem 1fr auto;
+    grid-template-areas:
+      'date item source'
+      'kind item source';
+    align-items: start;
+  }
 }
 
 @media (max-width: 480px) {

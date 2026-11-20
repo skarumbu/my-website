@@ -6,6 +6,9 @@ import {
   freshnessSummary,
   officeAt,
   isExecutive,
+  shortDate,
+  longDate,
+  sinceYear,
 } from './poligraphFormat.ts';
 import type { Action, ActionKind, IndexRow, Official } from './poligraphTypes.ts';
 
@@ -192,5 +195,40 @@ describe('isExecutive', () => {
   it('is true when the latest term is executive', () => {
     expect(isExecutive(official(['legislator', 'executive']))).toBe(true);
     expect(isExecutive(official(['executive', 'legislator']))).toBe(false);
+  });
+});
+
+describe('shortDate / longDate', () => {
+  it('format from the ISO string parts', () => {
+    expect(shortDate('2026-03-02')).toBe('Mar 2');
+    expect(longDate('2026-04-01')).toBe('Apr 1, 2026');
+  });
+  it('longDate uses only the date part of a datetime', () => {
+    expect(longDate('2026-11-20T07:00:00+00:00')).toBe('Nov 20, 2026');
+    expect(longDate('2026-11-20T23:59:59-08:00')).toBe('Nov 20, 2026');
+  });
+});
+
+describe('sinceYear', () => {
+  const term = (office_id: string, start: string, end: string | null) => ({
+    office_id, title: office_id, kind: 'legislator' as const, jurisdiction: 'or', district: null, start, end,
+  });
+  const off = (terms: ReturnType<typeof term>[]): Official => ({
+    id: 'o', name: 'N', party: null, level: 'federal', photo_url: null, current: true, terms,
+  });
+  it('spans consecutive terms in the same office', () => {
+    const o = off([term('h', '2019-01-03', '2021-01-03'), term('h', '2021-01-03', '2023-01-03'), term('h', '2023-01-03', null)]);
+    expect(sinceYear(o)).toBe('2019');
+  });
+  it('stops at a gap', () => {
+    const o = off([term('h', '2011-01-03', '2013-01-03'), term('h', '2019-01-03', '2021-01-03'), term('h', '2021-01-03', null)]);
+    expect(sinceYear(o)).toBe('2019');
+  });
+  it('stops at a different office', () => {
+    const o = off([term('h', '2011-01-03', '2017-01-03'), term('s', '2017-01-03', null)]);
+    expect(sinceYear(o)).toBe('2017');
+  });
+  it('is null with no terms', () => {
+    expect(sinceYear(off([]))).toBeNull();
   });
 });

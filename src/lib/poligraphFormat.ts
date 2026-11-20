@@ -145,3 +145,45 @@ export function isExecutive(official: Official): boolean {
   );
   return latest?.kind === 'executive';
 }
+
+const MONTH_ABBR = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+function dateParts(iso: string): { year: string; month: number; day: number } {
+  const [year, mm, dd] = iso.slice(0, 10).split('-');
+  return { year, month: Number(mm), day: Number(dd) };
+}
+
+/** "2026-03-02" -> "Mar 2". Built from the string parts so a timezone can't shift the day. */
+export function shortDate(iso: string): string {
+  const { month, day } = dateParts(iso);
+  return `${MONTH_ABBR[month - 1]} ${day}`;
+}
+
+/** "2026-04-01" or "2026-04-01T07:00:00+00:00" -> "Apr 1, 2026" (the date part only). */
+export function longDate(iso: string): string {
+  const { year, month, day } = dateParts(iso);
+  return `${MONTH_ABBR[month - 1]} ${day}, ${year}`;
+}
+
+export function latestTerm(official: Official): Official['terms'][number] | null {
+  return official.terms.reduce<Official['terms'][number] | null>(
+    (acc, t) => (acc === null || t.start >= acc.start ? t : acc),
+    null,
+  );
+}
+
+/**
+ * Start year of the unbroken run of terms in the latest term's office. Congress stores one
+ * term per Congress, so the latest term's own start would understate a long-serving member.
+ */
+export function sinceYear(official: Official): string | null {
+  const sorted = [...official.terms].sort((a, b) => b.start.localeCompare(a.start));
+  if (sorted.length === 0) return null;
+  let earliest = sorted[0];
+  for (const term of sorted.slice(1)) {
+    if (term.office_id !== earliest.office_id) break;
+    if (term.end !== null && term.end < earliest.start) break;
+    earliest = term;
+  }
+  return earliest.start.slice(0, 4);
+}
