@@ -139,11 +139,7 @@ export function officeAt(official: Official, officeId: string): string {
 }
 
 export function isExecutive(official: Official): boolean {
-  const latest = official.terms.reduce<Official['terms'][number] | null>(
-    (acc, t) => (acc === null || t.start >= acc.start ? t : acc),
-    null,
-  );
-  return latest?.kind === 'executive';
+  return latestTerm(official)?.kind === 'executive';
 }
 
 const MONTH_ABBR = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];

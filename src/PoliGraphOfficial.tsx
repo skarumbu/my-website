@@ -28,20 +28,20 @@ function sum(counts: Record<string, number>, keys: string[]): number {
 
 function countsLine(record: OfficialRecord): string {
   const c = record.counts;
-  const parts: [number, string][] = isExecutive(record.official)
+  const parts: [number, string, string][] = isExecutive(record.official)
     ? [
-        [c.signed ?? 0, 'signed'],
-        [sum(c, ['vetoed', 'line_item_veto', 'pocket_veto']), 'vetoed'],
-        [c.executive_order ?? 0, 'executive orders'],
+        [c.signed ?? 0, 'signed', 'signed'],
+        [sum(c, ['vetoed', 'line_item_veto', 'pocket_veto']), 'vetoed', 'vetoed'],
+        [c.executive_order ?? 0, 'executive order', 'executive orders'],
       ]
     : [
-        [c.sponsored ?? 0, 'sponsored'],
-        [c.cosponsored ?? 0, 'co-sponsored'],
-        [sum(c, ['vote_yes', 'vote_no', 'vote_present', 'vote_not_voting']), 'votes'],
+        [c.sponsored ?? 0, 'sponsored', 'sponsored'],
+        [c.cosponsored ?? 0, 'co-sponsored', 'co-sponsored'],
+        [sum(c, ['vote_yes', 'vote_no', 'vote_present', 'vote_not_voting']), 'vote', 'votes'],
       ];
   return parts
     .filter(([n]) => n > 0)
-    .map(([n, label]) => (label === 'votes' ? plural(n, 'vote', 'votes') : `${n} ${label}`))
+    .map(([n, one, many]) => plural(n, one, many))
     .join(' · ');
 }
 
@@ -60,7 +60,8 @@ const PoliGraphOfficial: React.FC = () => {
   const [attempt, setAttempt] = useState(0);
   const [actions, setActions] = useState<Action[]>([]);
   const [cursor, setCursor] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [moreError, setMoreError] = useState(false);
   const requestId = useRef<number>(0);
 
   const filters: FilterState = {
@@ -74,12 +75,13 @@ const PoliGraphOfficial: React.FC = () => {
     let cancelled = false;
     setRecord(null);
     setError(null);
+    setLoading(true);
     fetchOfficial(officialId)
       .then((r) => {
         if (cancelled) return;
         if (r.official.id !== officialId) {
           // The API followed a redirect to the canonical id: show that id in the URL.
-          navigate(`/poligraph/official/${r.official.id}${location.search}`, { replace: true });
+          navigate(`/poligraph/official/${encodeURIComponent(r.official.id)}${location.search}`, { replace: true });
           return;
         }
         setRecord(r);
@@ -103,6 +105,7 @@ const PoliGraphOfficial: React.FC = () => {
     const id = ++requestId.current;
     setActions([]);
     setCursor(null);
+    setMoreError(false);
     setLoading(true);
     fetchActions(official.id, queryFor(official, { preset, topic, from, to }))
       .then((page) => {
@@ -121,6 +124,7 @@ const PoliGraphOfficial: React.FC = () => {
   const loadMore = useCallback(() => {
     if (!official || !cursor) return;
     const id = ++requestId.current;
+    setMoreError(false);
     setLoading(true);
     fetchActions(official.id, queryFor(official, { preset, topic, from, to }), cursor)
       .then((page) => {
@@ -132,7 +136,7 @@ const PoliGraphOfficial: React.FC = () => {
       .catch(() => {
         if (id !== requestId.current) return;
         setLoading(false);
-        setError('failed');
+        setMoreError(true);
       });
   }, [official, cursor, preset, topic, from, to]);
 
@@ -211,6 +215,7 @@ const PoliGraphOfficial: React.FC = () => {
           official={official}
           hasMore={cursor !== null}
           loading={loading}
+          loadMoreError={moreError}
           onLoadMore={loadMore}
         />
       </>

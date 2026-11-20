@@ -15,6 +15,7 @@ interface TimelineProps {
   official: Official;
   hasMore: boolean;
   loading: boolean;
+  loadMoreError?: boolean;
   onLoadMore: () => void;
 }
 
@@ -52,7 +53,7 @@ function Row({ action, latestOfficeId, official }: { action: Action; latestOffic
   );
 }
 
-const Timeline: React.FC<TimelineProps> = ({ actions, official, hasMore, loading, onLoadMore }) => {
+const Timeline: React.FC<TimelineProps> = ({ actions, official, hasMore, loading, loadMoreError = false, onLoadMore }) => {
   // Every row links to its source: an entry without one is never shown.
   const sourced = useMemo(() => actions.filter((a) => a.source_url), [actions]);
   const groups = useMemo(() => groupByMonth(sourced), [sourced]);
@@ -64,13 +65,13 @@ const Timeline: React.FC<TimelineProps> = ({ actions, official, hasMore, loading
 
   useEffect(() => {
     const node = sentinel.current;
-    if (!node || !hasMore || loading || typeof window.IntersectionObserver === 'undefined') return;
+    if (!node || !hasMore || loading || loadMoreError || typeof window.IntersectionObserver === 'undefined') return;
     const observer = new window.IntersectionObserver((entries) => {
       if (entries.some((e) => e.isIntersecting)) loadMore.current();
     });
     observer.observe(node);
     return () => observer.disconnect();
-  }, [hasMore, loading, actions.length]);
+  }, [hasMore, loading, loadMoreError, actions.length]);
 
   return (
     <div className="poligraph-timeline">
@@ -86,6 +87,12 @@ const Timeline: React.FC<TimelineProps> = ({ actions, official, hasMore, loading
       ))}
       {loading && <p role="status" className="poligraph-note">Loading…</p>}
       {!loading && groups.length === 0 && <p className="poligraph-note">No actions match these filters.</p>}
+      {loadMoreError && (
+        <div className="poligraph-error" role="alert">
+          <p>Couldn't load more. Try again.</p>
+          <button type="button" onClick={onLoadMore}>Retry</button>
+        </div>
+      )}
       {hasMore && (
         <>
           <div ref={sentinel} aria-hidden="true" />

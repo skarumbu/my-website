@@ -131,7 +131,7 @@
 }
 
 .poligraph-freshness .poligraph-stale {
-  color: var(--warn);
+  color: var(--ink);
   background: #FFF4DC;
   border: 1px solid var(--warn);
   border-radius: 8px;
@@ -191,11 +191,11 @@
 
 .poligraph-row {
   display: grid;
-  grid-template-columns: auto 1fr;
+  grid-template-columns: auto 1fr auto;
   grid-template-areas:
-    'date kind'
-    'item item'
-    'source source';
+    'date kind kind'
+    'item item source';
+  align-items: baseline;
   gap: 0.15rem 0.75rem;
   padding: 0.7rem 0.9rem;
   margin-bottom: 0.5rem;

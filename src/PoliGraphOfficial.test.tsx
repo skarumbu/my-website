@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
-import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
+import { MemoryRouter, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import PoliGraphOfficial from './PoliGraphOfficial.tsx';
 import { TOPICS } from './lib/poligraphTypes.ts';
 import type { Action, OfficialRecord } from './lib/poligraphTypes.ts';
@@ -110,6 +110,23 @@ describe('header', () => {
     });
     renderPage();
     expect(await screen.findByText('30 signed · 3 vetoed')).toBeInTheDocument();
+  });
+
+  it('uses singular labels for a count of one', async () => {
+    route({
+      official: () =>
+        res(record({
+          terms: [{ office_id: 'us-president', title: 'President', kind: 'executive', jurisdiction: 'us', district: null, start: '2025-01-20', end: null }],
+        }, { counts: { signed: 1, executive_order: 1 } })),
+    });
+    renderPage();
+    expect(await screen.findByText('1 signed · 1 executive order')).toBeInTheDocument();
+  });
+
+  it('uses singular vote for a count of one', async () => {
+    route({ official: () => res(record({}, { counts: { sponsored: 1, vote_yes: 1 } })) });
+    renderPage();
+    expect(await screen.findByText('1 sponsored · 1 vote')).toBeInTheDocument();
   });
 
   it('shows no Since for a non-current official', async () => {
@@ -289,6 +306,39 @@ describe('paging', () => {
   });
 });
 
+describe('load more failure', () => {
+  it('keeps loaded rows, shows an inline error, and retries the same cursor', async () => {
+    let fail = true;
+    route({
+      actions: (url) => {
+        if (url.searchParams.get('cursor') === 'c2') {
+          return fail ? res({}, 500) : res({ actions: [action('2')], cursor: null });
+        }
+        return res({ actions: [action('1')], cursor: 'c2' });
+      },
+    });
+    renderPage();
+    await screen.findByText('Bill 1');
+    fireEvent.click(screen.getByRole('button', { name: 'Load more' }));
+    expect(await screen.findByText("Couldn't load more. Try again.")).toBeInTheDocument();
+    expect(screen.getByText('Bill 1')).toBeInTheDocument();
+    expect(screen.queryByText("Couldn't load this record.")).not.toBeInTheDocument();
+    fail = false;
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+    await screen.findByText('Bill 2');
+    expect(screen.queryByText("Couldn't load more. Try again.")).not.toBeInTheDocument();
+    const cursors = actionCalls().map((u) => u.searchParams.get('cursor'));
+    expect(cursors).toEqual([null, 'c2', 'c2']);
+  });
+
+  it('does not flash the empty message before the first fetch settles', async () => {
+    route({ actions: () => new Promise(() => {}) });
+    renderPage();
+    await screen.findByRole('heading', { level: 1 });
+    expect(screen.queryByText('No actions match these filters.')).not.toBeInTheDocument();
+  });
+});
+
 describe('office switcher', () => {
   const twoOffices = () =>
     res(record({
@@ -342,6 +392,27 @@ describe('errors and redirects', () => {
       .map((c) => new URL(String(c[0])))
       .filter((u) => !u.pathname.endsWith('/actions'));
     expect(officialCalls[0].pathname).toMatch(/\/officials\/o_old$/);
+  });
+
+  it('replaces rather than pushes the redirected URL', async () => {
+    function Back() {
+      const navigate = useNavigate();
+      return <button type="button" onClick={() => navigate(-1)}>test-back</button>;
+    }
+    render(
+      <MemoryRouter initialEntries={['/poligraph', '/poligraph/official/o_old']} initialIndex={1}>
+        <Routes>
+          <Route path="/poligraph/official/:officialId" element={<PoliGraphOfficial />} />
+          <Route path="/poligraph" element={<div>Landing</div>} />
+        </Routes>
+        <LocationDisplay />
+        <Back />
+      </MemoryRouter>,
+    );
+    await waitFor(() => expect(screen.getByTestId('loc')).toHaveTextContent('/poligraph/official/o_h'));
+    await screen.findByText('Bill 1');
+    fireEvent.click(screen.getByRole('button', { name: 'test-back' }));
+    await waitFor(() => expect(screen.getByTestId('loc').textContent).toBe('/poligraph'));
   });
 
   it('shows not found with a link back to search', async () => {
