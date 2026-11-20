@@ -7,6 +7,7 @@ const NAV_LINKS = [
   { href: "/momentum-finder", label: "NBA Games" },
   { href: "/trail-finder", label: "Trail Finder" },
   { href: "/ideas", label: "Ideas" },
+  { href: "/poligraph", label: "PoliGraph" },
   { href: "/learning-plan", label: "Learning Plan" },
   { href: "/write", label: "Write" },
   { href: "/today", label: "Today" },
