@@ -121,6 +121,16 @@ describe('searchOfficials', () => {
     ];
     expect(searchOfficials(idx, 'wy').map((r) => r.id)).toEqual(['b', 'a']);
   });
+  it('treats short tokens as state codes, not substrings of other states or offices', () => {
+    const idx = [
+      row({ id: 'or3', name: 'Ann Lee', office: 'U.S. Representative', state: 'or', district: '3' }),
+      row({ id: 'fl3', name: 'Bo Kim', office: 'U.S. Representative', state: 'fl', district: '3' }),
+      row({ id: 'nd3', name: 'Cy Roe', office: 'U.S. Representative', state: 'nd', district: '3' }),
+      row({ id: 'fls', name: 'Di Poe', office: 'U.S. Senator', state: 'fl' }),
+    ];
+    expect(searchOfficials(idx, 'or-3').map((r) => r.id)).toEqual(['or3']);
+    expect(searchOfficials(idx, 'or').map((r) => r.id)).toEqual(['or3']);
+  });
   it('defaults limit to 10 and honors an explicit limit', () => {
     const many = Array.from({ length: 15 }, (_, i) => row({ id: `i${i}`, name: `Smith ${i}` }));
     expect(searchOfficials(many, 'smith')).toHaveLength(10);

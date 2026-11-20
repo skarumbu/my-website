@@ -82,6 +82,9 @@ it('lookupAddress surfaces lookup_unavailable on 503', async () => {
 
 it('never leaks the address into the error message or console', async () => {
   const spies = (['log', 'error', 'warn'] as const).map((m) => jest.spyOn(console, m).mockImplementation(() => undefined));
+  console.log('positive control');
+  expect(spies[0]).toHaveBeenCalledWith('positive control');
+  spies.forEach((spy) => spy.mockClear());
   fetchMock().mockResolvedValueOnce(fail(404, { error: 'address_not_found', address: '1 Main St' }));
   const err = await lookupAddress('1 Main St').catch((e) => e);
   expect(err).toBeInstanceOf(PoligraphError);
@@ -90,6 +93,23 @@ it('never leaks the address into the error message or console', async () => {
   for (const spy of spies) {
     expect(JSON.stringify(spy.mock.calls)).not.toContain('1 Main St');
   }
+});
+
+it('rejects a 200 with a non-JSON body as bad_response', async () => {
+  fetchMock().mockResolvedValueOnce({ ok: true, status: 200, json: async () => { throw new SyntaxError('Unexpected token <'); } });
+  const err = await fetchSearchIndex().catch((e) => e);
+  expect(err).toBeInstanceOf(PoligraphError);
+  expect(err.code).toBe('bad_response');
+  expect(err.status).toBe(200);
+});
+
+it('rejects with not_configured, without calling fetch, when the API URL is unset', async () => {
+  delete process.env.REACT_APP_POLIGRAPH_API_URL;
+  const err = await fetchSearchIndex().catch((e) => e);
+  expect(err).toBeInstanceOf(PoligraphError);
+  expect(err.code).toBe('not_configured');
+  expect(err.status).toBe(0);
+  expect(fetchMock()).not.toHaveBeenCalled();
 });
 
 it('maps a network failure to PoligraphError status 0 code network', async () => {

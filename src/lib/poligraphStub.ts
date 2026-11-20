@@ -147,7 +147,7 @@ function houseActions(): Action[] {
     let extra: Partial<Action> = { topics };
     if (i % 5 === 4) {
       // Every 5th is a non-key roll call vote, hidden by the default legislator filter.
-      kind = KEY_VOTE_KINDS[(i / 5) % 2 === 0 ? 0 : 1];
+      kind = KEY_VOTE_KINDS[Math.floor(i / 5) % 2 === 0 ? 0 : 1];
       extra = { topics, vote_ref: `house-2026-${100 + i}` };
     } else if (i % 5 === 3) {
       kind = KEY_VOTE_KINDS[i % 4];

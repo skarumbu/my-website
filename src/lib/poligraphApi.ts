@@ -34,6 +34,7 @@ export class PoligraphError extends Error {
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  if (!isApiConfigured()) throw new PoligraphError(0, 'not_configured');
   let res: Response;
   try {
     res = await fetch(poligraphUrl(path), init);
@@ -50,7 +51,11 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     }
     throw new PoligraphError(res.status, code);
   }
-  return (await res.json()) as T;
+  try {
+    return (await res.json()) as T;
+  } catch {
+    throw new PoligraphError(res.status, 'bad_response');
+  }
 }
 
 function orNotFound<T>(value: T | null): T {

@@ -86,9 +86,10 @@ function matchesToken(row: IndexRow, token: string): boolean {
   const district = (row.district ?? '').toLowerCase();
   return (
     row.name.toLowerCase().includes(token) ||
-    (row.office ?? '').toLowerCase().includes(token) ||
     state === token ||
-    (STATE_NAMES[state] ?? '').includes(token) ||
+    // Short tokens ("or", "wa") are state codes: exact match only, never a substring of an office or state name.
+    (token.length >= 3 &&
+      ((row.office ?? '').toLowerCase().includes(token) || (STATE_NAMES[state] ?? '').includes(token))) ||
     district === token ||
     (token.length > 1 && district.includes(token))
   );
