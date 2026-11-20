@@ -246,7 +246,7 @@ export function stubActions(
 
 export function stubLookup(): LookupResult {
   return {
-    federal: OFFICIALS.filter((o) => o.id !== 'o_president'),
+    federal: OFFICIALS.filter((o) => o.level === 'federal'),
     state: [],
   };
 }

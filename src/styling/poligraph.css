@@ -249,6 +249,8 @@
 
 .poligraph-row-source {
   grid-area: source;
+  display: inline-flex;
+  align-items: center;
   font-size: 0.9rem;
 }
 
@@ -286,6 +288,15 @@
   .poligraph-content {
     padding-left: 1rem;
     padding-right: 1rem;
+  }
+
+  /* Tap targets: at least 44px tall on phones. */
+  .poligraph-row-source,
+  .poligraph-more,
+  .poligraph-preset,
+  .poligraph-error button,
+  .poligraph-content .poligraph-address-form button {
+    min-height: 44px;
   }
 }
 
