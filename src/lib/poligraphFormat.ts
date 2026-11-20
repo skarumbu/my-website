@@ -81,6 +81,13 @@ const STATE_NAMES: Record<string, string> = {
   wa: 'washington', wv: 'west virginia', wi: 'wisconsin', wy: 'wyoming',
 };
 
+/** "or" -> "Oregon". Unknown codes fall back to the uppercased code. */
+export function stateName(code: string): string {
+  const name = STATE_NAMES[code.toLowerCase()];
+  if (!name) return code.toUpperCase();
+  return name.replace(/\b[a-z]/g, (c) => c.toUpperCase());
+}
+
 function matchesToken(row: IndexRow, token: string): boolean {
   const state = (row.state ?? '').toLowerCase();
   const district = (row.district ?? '').toLowerCase();

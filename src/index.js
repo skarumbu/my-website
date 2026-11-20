@@ -17,6 +17,7 @@ import DiaryEditor from './DiaryEditor.tsx';
 import DiaryViewer from './DiaryViewer.tsx';
 import TodayPage from './TodayPage.tsx';
 import CardsPage from './CardsPage.tsx';
+import PoliGraph from './PoliGraph.tsx';
 import reportWebVitals from './reportWebVitals';
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { PublicClientApplication } from "@azure/msal-browser";
@@ -97,6 +98,10 @@ const router = createBrowserRouter([
   {
     path: "/today/cards",
     element: <CardsPage />,
+  },
+  {
+    path: "/poligraph",
+    element: <PoliGraph />,
   }
 ]);
 
