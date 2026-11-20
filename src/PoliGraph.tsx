@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import NavBar from './components/nav-bar.tsx';
+import { AddressForm } from './PoliGraphLookup.tsx';
 import { fetchSearchIndex } from './lib/poligraphApi.ts';
 import { searchOfficials, stateName } from './lib/poligraphFormat.ts';
 import type { IndexRow } from './lib/poligraphTypes.ts';
@@ -46,6 +47,7 @@ const PoliGraph: React.FC = () => {
   const [attempt, setAttempt] = useState(0);
   const [query, setQuery] = useState('');
   const [state, setState] = useState('');
+  const navigate = useNavigate();
 
   useEffect(() => {
     let cancelled = false;
@@ -123,7 +125,11 @@ const PoliGraph: React.FC = () => {
             ))}
         </section>
 
-        <section data-testid="find-my-officials" className="poligraph-find" />
+        <section data-testid="find-my-officials" className="poligraph-find">
+          <h2>Find my officials</h2>
+          <AddressForm onResult={(result) => navigate('/poligraph/lookup', { state: { result } })} />
+          <p className="poligraph-note">Your address is used once to find your districts and isn't saved.</p>
+        </section>
 
         {status === 'ready' && !empty && (
           <section className="poligraph-browse">

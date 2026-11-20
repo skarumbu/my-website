@@ -288,3 +288,35 @@
     padding-right: 1rem;
   }
 }
+
+.poligraph-content .poligraph-address-form {
+  display: grid;
+  gap: 0.5rem;
+  max-width: 28rem;
+}
+
+.poligraph-content .poligraph-address-form input {
+  font: inherit;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+
+.poligraph-content .poligraph-address-form button {
+  font: inherit;
+  padding: 0.5rem 0.9rem;
+  color: #fff;
+  background: var(--accent);
+  border: 0;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.poligraph-content .poligraph-address-form button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.poligraph-content .poligraph-lookup-group {
+  margin-bottom: 1.5rem;
+}

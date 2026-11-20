@@ -19,6 +19,7 @@ import TodayPage from './TodayPage.tsx';
 import CardsPage from './CardsPage.tsx';
 import PoliGraph from './PoliGraph.tsx';
 import PoliGraphOfficial from './PoliGraphOfficial.tsx';
+import PoliGraphLookup from './PoliGraphLookup.tsx';
 import reportWebVitals from './reportWebVitals';
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { PublicClientApplication } from "@azure/msal-browser";
@@ -107,6 +108,10 @@ const router = createBrowserRouter([
   {
     path: "/poligraph/official/:officialId",
     element: <PoliGraphOfficial />,
+  },
+  {
+    path: "/poligraph/lookup",
+    element: <PoliGraphLookup />,
   }
 ]);
 

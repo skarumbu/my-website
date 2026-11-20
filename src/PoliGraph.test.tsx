@@ -137,3 +137,14 @@ describe('browse', () => {
     expect(screen.queryByText(/governor/i)).not.toBeInTheDocument();
   });
 });
+
+describe('find my officials', () => {
+  test('shows the heading, form and privacy help text', async () => {
+    renderPage();
+    await loaded();
+    const section = screen.getByTestId('find-my-officials');
+    expect(within(section).getByRole('heading', { name: 'Find my officials' })).toBeInTheDocument();
+    expect(within(section).getByLabelText('Your address')).toBeInTheDocument();
+    expect(within(section).getByText("Your address is used once to find your districts and isn't saved.")).toBeInTheDocument();
+  });
+});
