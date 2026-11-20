@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import NavBar from './components/nav-bar.tsx';
 import { AddressForm } from './PoliGraphLookup.tsx';
 import { fetchSearchIndex } from './lib/poligraphApi.ts';
-import { searchOfficials, stateName } from './lib/poligraphFormat.ts';
+import { officeLabel, searchOfficials, stateName } from './lib/poligraphFormat.ts';
 import type { IndexRow } from './lib/poligraphTypes.ts';
 import './styling/poligraph.css';
 
@@ -35,7 +35,9 @@ function ResultLink({ row }: { row: IndexRow }) {
     <li>
       <Link to={officialPath(row)}>
         <span className="poligraph-result-name">{row.name}</span>
-        {row.office && <span className="poligraph-result-office"> {row.office}</span>}
+        {row.office && (
+          <span className="poligraph-result-office"> {officeLabel(row.office, row.office_id)}</span>
+        )}
       </Link>
     </li>
   );
@@ -112,6 +114,7 @@ const PoliGraph: React.FC = () => {
               <button type="button" onClick={retry}>Retry</button>
             </div>
           )}
+          {status === 'loading' && <p role="status" className="poligraph-note">Loading officials…</p>}
           {empty && <p className="poligraph-note">Officials are still being loaded. Check back soon.</p>}
           {status === 'ready' && !empty && trimmed !== '' &&
             (results.length > 0 ? (

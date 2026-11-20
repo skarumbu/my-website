@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, act, waitFor } from '@testing-library/react';
 import { MemoryRouter, RouterProvider, createBrowserRouter, createMemoryRouter } from 'react-router-dom';
 import PoliGraph from './PoliGraph.tsx';
 import PoliGraphLookup from './PoliGraphLookup.tsx';
@@ -7,22 +7,22 @@ import type { LookupResult, Official } from './lib/poligraphTypes.ts';
 
 const ADDRESS = '1600 Pennsylvania Ave NW, Washington, DC';
 
-function official(id: string, name: string, party: string, title: string, start = '2025-01-03'): Official {
+function official(id: string, name: string, party: string, title: string, officeId = 'x', start = '2025-01-03'): Official {
   return {
     id, name, party, level: 'federal', photo_url: null, current: true,
     terms: [
       { office_id: 'x', title: 'Older title', kind: 'legislator', jurisdiction: 'us', district: null, start: '2015-01-03', end: '2017-01-03' },
-      { office_id: 'x', title, kind: 'legislator', jurisdiction: 'us', district: null, start, end: null },
+      { office_id: officeId, title, kind: 'legislator', jurisdiction: 'us', district: null, start, end: null },
     ],
   };
 }
 
 const RESULT: LookupResult = {
   federal: [
-    official('o_p', 'Pat President', 'Independent', 'President of the United States'),
-    official('o_s1', 'Sam Senator', 'Democratic', 'U.S. Senator, Oregon'),
-    official('o_s2', 'Sue Senator', 'Republican', 'U.S. Senator, Oregon'),
-    official('o_h', 'Hal House', 'Democratic', 'U.S. Representative, Oregon 3rd'),
+    official('o_p', 'Pat President', 'Independent', 'President of the United States', 'us-president'),
+    official('o_s1', 'Sam Senator', 'Democratic', 'U.S. Senator', 'us-senate-or'),
+    official('o_s2', 'Sue Senator', 'Republican', 'U.S. Senator', 'us-senate-or'),
+    official('o_h', 'Hal House', 'Democratic', 'U.S. Representative', 'us-house-or-3'),
   ],
   state: [],
 };
@@ -157,7 +157,7 @@ describe('results', () => {
   test('another lookup replaces the shown results', async () => {
     renderLookup({ result: RESULT });
     global.fetch = jest.fn().mockResolvedValue(res({
-      federal: [official('o_new', 'New Person', 'Green', 'U.S. Senator, Maine')],
+      federal: [official('o_new', 'New Person', 'Green', 'U.S. Senator', 'us-senate-me')],
       state: [],
     }));
     submit('2 Other St, Augusta, ME');
@@ -170,7 +170,7 @@ describe('results', () => {
       [{ path: '/poligraph/lookup', element: <PoliGraphLookup /> }],
       { initialEntries: [{ pathname: '/poligraph/lookup', state: { result: RESULT } }] },
     );
-    const second = { federal: [official('o_new', 'New Person', 'Green', 'U.S. Senator, Maine')], state: [] };
+    const second = { federal: [official('o_new', 'New Person', 'Green', 'U.S. Senator', 'us-senate-me')], state: [] };
     global.fetch = jest.fn().mockResolvedValue(res(second));
     render(<RouterProvider router={router} />);
     submit('2 Other St, Augusta, ME');
@@ -178,7 +178,35 @@ describe('results', () => {
     expect(router.state.location.state.result).toEqual(second);
     expect(JSON.stringify(router.state.location)).not.toContain('Other St');
     expect(router.state.historyAction).toBe('REPLACE');
-    expect(screen.getByRole('heading', { name: 'Federal' })).toHaveFocus();
+    await waitFor(() => expect(screen.getByRole('heading', { name: 'Federal' })).toHaveFocus());
+  });
+
+  test('a lookup that resolves after the user left does not navigate', async () => {
+    let release: (v: any) => void = () => {};
+    global.fetch = jest.fn().mockImplementation(
+      () => new Promise((r) => { release = r; }),
+    );
+    const router = createMemoryRouter(
+      [
+        { path: '/poligraph', element: <PoliGraph /> },
+        { path: '/poligraph/lookup', element: <PoliGraphLookup /> },
+        { path: '/elsewhere', element: <div>Elsewhere</div> },
+      ],
+      { initialEntries: ['/poligraph'] },
+    );
+    render(<RouterProvider router={router} />);
+    submit('2 Other St, Augusta, ME');
+    await waitFor(() =>
+      expect((global.fetch as jest.Mock).mock.calls.some(([, init]) => init?.method === 'POST')).toBe(true),
+    );
+    await act(async () => { await router.navigate('/elsewhere'); });
+    expect(await screen.findByText('Elsewhere')).toBeInTheDocument();
+    await act(async () => {
+      release(res(RESULT));
+      await new Promise((r) => setTimeout(r, 20));
+    });
+    expect(router.state.location.pathname).toBe('/elsewhere');
+    expect(screen.getByText('Elsewhere')).toBeInTheDocument();
   });
 
   test('a direct visit shows only the form', () => {

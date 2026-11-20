@@ -6,8 +6,8 @@ import type { Action, Official } from '../../lib/poligraphTypes.ts';
 const OFFICIAL: Official = {
   id: 'o_s', name: 'Sen Example', party: 'D', level: 'federal', photo_url: null, current: true,
   terms: [
-    { office_id: 'us-house-or-1', title: 'U.S. Representative', kind: 'legislator', jurisdiction: 'or', district: '1', start: '2015-01-03', end: '2021-01-03' },
-    { office_id: 'us-senate-or', title: 'U.S. Senator', kind: 'legislator', jurisdiction: 'or', district: null, start: '2021-01-03', end: null },
+    { office_id: 'us-house-or-1', title: 'U.S. Representative', kind: 'legislator', jurisdiction: 'us', district: '1', start: '2015-01-03', end: '2021-01-03' },
+    { office_id: 'us-senate-or', title: 'U.S. Senator', kind: 'legislator', jurisdiction: 'us', district: null, start: '2021-01-03', end: null },
   ],
 };
 
@@ -61,6 +61,20 @@ describe('Timeline', () => {
     expect(screen.getByText('Sourced')).toBeInTheDocument();
   });
 
+  it('renders a Source link only for http(s) urls', () => {
+    renderTimeline([
+      action({ item_title: 'Js', source_url: 'javascript:alert(1)' }),
+      action({ item_id: 'us-119-s-6', item_title: 'Ftp', source_url: 'ftp://x.gov/a' }),
+      action({ item_id: 'us-119-s-7', item_title: 'Plain', source_url: 'http://example.gov/p' }),
+      action({ item_id: 'us-119-s-8', item_title: 'Secure', source_url: 'https://example.gov/s' }),
+    ]);
+    expect(screen.queryByText('Js')).not.toBeInTheDocument();
+    expect(screen.queryByText('Ftp')).not.toBeInTheDocument();
+    expect(screen.getByText('Plain')).toBeInTheDocument();
+    expect(screen.getByText('Secure')).toBeInTheDocument();
+    expect(screen.getAllByRole('link', { name: 'Source' })).toHaveLength(2);
+  });
+
   it('shows when a veto was overridden', () => {
     renderTimeline([action({ kind: 'vetoed', overridden_on: '2026-04-01' })]);
     expect(screen.getByText('Overridden Apr 1, 2026')).toBeInTheDocument();
@@ -71,8 +85,8 @@ describe('Timeline', () => {
       action({ item_title: 'House one', office_id: 'us-house-or-1' }),
       action({ item_id: 'us-119-s-5', item_title: 'Senate one' }),
     ]);
-    expect(screen.getAllByText('as U.S. Representative')).toHaveLength(1);
-    expect(screen.queryByText('as U.S. Senator')).not.toBeInTheDocument();
+    expect(screen.getAllByText('as U.S. Representative, Oregon 1st')).toHaveLength(1);
+    expect(screen.queryByText(/as U.S. Senator/)).not.toBeInTheDocument();
   });
 
   it('calls onLoadMore from the Load more button', () => {

@@ -54,8 +54,8 @@ function Row({ action, latestOfficeId, official }: { action: Action; latestOffic
 }
 
 const Timeline: React.FC<TimelineProps> = ({ actions, official, hasMore, loading, loadMoreError = false, onLoadMore }) => {
-  // Every row links to its source: an entry without one is never shown.
-  const sourced = useMemo(() => actions.filter((a) => a.source_url), [actions]);
+  // Every row links to its source: an entry without an http(s) one is never shown.
+  const sourced = useMemo(() => actions.filter((a) => /^https?:\/\//i.test(a.source_url)), [actions]);
   const groups = useMemo(() => groupByMonth(sourced), [sourced]);
   const latestOfficeId = latestTerm(official)?.office_id;
 

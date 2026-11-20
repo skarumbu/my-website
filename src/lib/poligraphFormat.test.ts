@@ -5,6 +5,8 @@ import {
   searchOfficials,
   freshnessSummary,
   officeAt,
+  officeLabel,
+  stateName,
   isExecutive,
   shortDate,
   longDate,
@@ -211,7 +213,7 @@ describe('shortDate / longDate', () => {
 
 describe('sinceYear', () => {
   const term = (office_id: string, start: string, end: string | null) => ({
-    office_id, title: office_id, kind: 'legislator' as const, jurisdiction: 'or', district: null, start, end,
+    office_id, title: office_id, kind: 'legislator' as const, jurisdiction: 'us', district: null, start, end,
   });
   const off = (terms: ReturnType<typeof term>[]): Official => ({
     id: 'o', name: 'N', party: null, level: 'federal', photo_url: null, current: true, terms,
@@ -230,5 +232,64 @@ describe('sinceYear', () => {
   });
   it('is null with no terms', () => {
     expect(sinceYear(off([]))).toBeNull();
+  });
+});
+
+describe('officeLabel', () => {
+  it('adds the state for senators', () => {
+    expect(officeLabel('U.S. Senator', 'us-senate-or')).toBe('U.S. Senator, Oregon');
+  });
+  it('adds state and ordinal district for representatives', () => {
+    const cases: [string, string][] = [
+      ['1', '1st'], ['2', '2nd'], ['3', '3rd'], ['4', '4th'], ['11', '11th'], ['12', '12th'],
+      ['13', '13th'], ['21', '21st'], ['22', '22nd'], ['23', '23rd'],
+    ];
+    for (const [n, ord] of cases) {
+      expect(officeLabel('U.S. Representative', `us-house-or-${n}`)).toBe(`U.S. Representative, Oregon ${ord}`);
+    }
+  });
+  it('handles at-large districts', () => {
+    expect(officeLabel('U.S. Representative', 'us-house-ak-at-large')).toBe('U.S. Representative, Alaska at-large');
+  });
+  it('leaves non-congress offices unchanged', () => {
+    expect(officeLabel('President', 'us-president')).toBe('President');
+    expect(officeLabel('Governor', 'or-governor')).toBe('Governor');
+    expect(officeLabel('Whatever', null)).toBe('Whatever');
+  });
+  it('makes officeAt distinguish districts', () => {
+    const o = {
+      id: 'o', name: 'N', party: null, level: 'federal', photo_url: null, current: true,
+      terms: [{ office_id: 'us-house-or-1', title: 'U.S. Representative', kind: 'legislator' as const, jurisdiction: 'us', district: '1', start: '2015-01-03', end: null }],
+    };
+    expect(officeAt(o, 'us-house-or-1')).toBe('U.S. Representative, Oregon 1st');
+  });
+});
+
+describe('stateName', () => {
+  it('names states, DC and territories', () => {
+    expect(stateName('or')).toBe('Oregon');
+    expect(stateName('NH')).toBe('New Hampshire');
+    expect(stateName('dc')).toBe('District of Columbia');
+    expect(stateName('as')).toBe('American Samoa');
+    expect(stateName('gu')).toBe('Guam');
+    expect(stateName('mp')).toBe('Northern Mariana Islands');
+    expect(stateName('pr')).toBe('Puerto Rico');
+    expect(stateName('vi')).toBe('U.S. Virgin Islands');
+    expect(stateName('zz')).toBe('ZZ');
+  });
+});
+
+describe('searchOfficials state-code ranking', () => {
+  const idx: IndexRow[] = [
+    row({ id: 'n1', name: 'Dorothy Smith', state: 'wa', office: 'U.S. Senator' }),
+    row({ id: 'n2', name: 'Orson Jones', state: 'tx', office: 'U.S. Senator' }),
+    row({ id: 'n3', name: 'Cory Booker', state: 'nj', office: 'U.S. Senator' }),
+    row({ id: 'or1', name: 'Zed One', state: 'or', office: 'U.S. Senator' }),
+    row({ id: 'or2', name: 'Yan Two', state: 'or', office: 'U.S. Senator' }),
+    row({ id: 'or3', name: 'Xi Three', state: 'or', office: 'U.S. Representative', district: '1' }),
+  ];
+  it('ranks an exact state-code match above name substrings, within the limit', () => {
+    expect(searchOfficials(idx, 'or', 3).map((r) => r.id)).toEqual(['or1', 'or2', 'or3']);
+    expect(searchOfficials(idx, 'or').map((r) => r.id).slice(0, 3)).toEqual(['or1', 'or2', 'or3']);
   });
 });

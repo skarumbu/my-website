@@ -1,5 +1,5 @@
 import React from 'react';
-import { isExecutive } from '../../lib/poligraphFormat.ts';
+import { isExecutive, officeLabel } from '../../lib/poligraphFormat.ts';
 import { TOPICS } from '../../lib/poligraphTypes.ts';
 import type { ActionQuery, Official, Term } from '../../lib/poligraphTypes.ts';
 
@@ -64,7 +64,7 @@ export function officeSpans(official: Official): OfficeSpan[] {
     const to = current ? '' : terms.map((t) => t.end as string).sort().reverse()[0];
     const latest = terms.reduce((a, t) => (t.start >= a.start ? t : a), terms[0]);
     const years = `${from.slice(0, 4)}–${current ? 'present' : to.slice(0, 4)}`;
-    return { officeId, title: latest.title, from, to, label: `${latest.title} (${years})` };
+    return { officeId, title: latest.title, from, to, label: `${officeLabel(latest.title, latest.office_id)} (${years})` };
   });
   return spans.sort((a, b) => a.from.localeCompare(b.from));
 }

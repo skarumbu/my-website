@@ -45,7 +45,7 @@ const OFFICIALS: Official[] = [
         office_id: 'us-senate-or',
         title: 'U.S. Senator',
         kind: 'legislator',
-        jurisdiction: 'or',
+        jurisdiction: 'us',
         district: null,
         start: '2019-01-03',
         end: null,
@@ -64,7 +64,7 @@ const OFFICIALS: Official[] = [
         office_id: 'us-senate-or',
         title: 'U.S. Senator',
         kind: 'legislator',
-        jurisdiction: 'or',
+        jurisdiction: 'us',
         district: null,
         start: '2021-01-03',
         end: null,
@@ -83,7 +83,7 @@ const OFFICIALS: Official[] = [
         office_id: 'us-house-or-3',
         title: 'U.S. Representative',
         kind: 'legislator',
-        jurisdiction: 'or',
+        jurisdiction: 'us',
         district: '3',
         start: '2023-01-03',
         end: null,
@@ -183,14 +183,14 @@ const ACTIONS: Record<string, Action[]> = {
 export function stubIndex(): IndexRow[] {
   return OFFICIALS.map((o) => {
     const term = o.terms[o.terms.length - 1];
-    const legislator = term.kind === 'legislator';
+    const location = /^us-(?:senate|house)-([a-z]{2})/.exec(term.office_id);
     return {
       id: o.id,
       name: o.name,
       office: term.title,
       jurisdiction: term.jurisdiction,
       office_id: term.office_id,
-      state: legislator ? term.jurisdiction : null,
+      state: location ? location[1] : null,
       district: term.district,
       level: o.level,
       party: o.party,

@@ -10,9 +10,11 @@ import {
   isExecutive,
   latestTerm,
   longDate,
+  officeLabel,
   sinceYear,
   stateName,
 } from './lib/poligraphFormat.ts';
+import { TOPICS } from './lib/poligraphTypes.ts';
 import type { Action, OfficialRecord } from './lib/poligraphTypes.ts';
 import './styling/poligraph.css';
 
@@ -49,6 +51,16 @@ function jurisdictionName(code: string): string {
   return code.toLowerCase() === 'us' ? 'United States' : stateName(code);
 }
 
+function validDate(value: string | null): string {
+  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return '';
+  const d = new Date(`${value}T00:00:00Z`);
+  return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === value ? value : '';
+}
+
+function validTopic(value: string | null): string {
+  return value && TOPICS.includes(value) ? value : '';
+}
+
 const PoliGraphOfficial: React.FC = () => {
   const { officialId = '' } = useParams();
   const navigate = useNavigate();
@@ -62,13 +74,15 @@ const PoliGraphOfficial: React.FC = () => {
   const [cursor, setCursor] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [moreError, setMoreError] = useState(false);
+  const [actionsError, setActionsError] = useState(false);
+  const [actionsAttempt, setActionsAttempt] = useState(0);
   const requestId = useRef<number>(0);
 
   const filters: FilterState = {
     preset: searchParams.get('preset') || DEFAULT_FILTERS.preset,
-    topic: searchParams.get('topic') ?? '',
-    from: searchParams.get('from') ?? '',
-    to: searchParams.get('to') ?? '',
+    topic: validTopic(searchParams.get('topic')),
+    from: validDate(searchParams.get('from')),
+    to: validDate(searchParams.get('to')),
   };
 
   useEffect(() => {
@@ -106,6 +120,7 @@ const PoliGraphOfficial: React.FC = () => {
     setActions([]);
     setCursor(null);
     setMoreError(false);
+    setActionsError(false);
     setLoading(true);
     fetchActions(official.id, queryFor(official, { preset, topic, from, to }))
       .then((page) => {
@@ -117,9 +132,11 @@ const PoliGraphOfficial: React.FC = () => {
       .catch(() => {
         if (id !== requestId.current) return;
         setLoading(false);
-        setError('failed');
+        setActionsError(true);
       });
-  }, [official, preset, topic, from, to]);
+  }, [official, preset, topic, from, to, actionsAttempt]);
+
+  const retryActions = useCallback(() => setActionsAttempt((n) => n + 1), []);
 
   const loadMore = useCallback(() => {
     if (!official || !cursor) return;
@@ -141,7 +158,12 @@ const PoliGraphOfficial: React.FC = () => {
   }, [official, cursor, preset, topic, from, to]);
 
   useEffect(() => {
-    document.title = official ? `${official.name} · PoliGraph` : 'PoliGraph';
+    if (!official) return;
+    const previous = document.title;
+    document.title = `${official.name} · PoliGraph`;
+    return () => {
+      document.title = previous;
+    };
   }, [official]);
 
   const onFiltersChange = useCallback(
@@ -151,7 +173,7 @@ const PoliGraphOfficial: React.FC = () => {
       if (next.topic) params.set('topic', next.topic);
       if (next.from) params.set('from', next.from);
       if (next.to) params.set('to', next.to);
-      setSearchParams(params);
+      setSearchParams(params, { replace: true });
     },
     [setSearchParams],
   );
@@ -188,7 +210,13 @@ const PoliGraphOfficial: React.FC = () => {
           {official.party && <p className="poligraph-party">{official.party}</p>}
           {term && (
             <p className="poligraph-term">
-              <span>{term.title}</span> · <span>{jurisdictionName(term.jurisdiction)}</span>
+              {officeLabel(term.title, term.office_id) !== term.title ? (
+                <span>{officeLabel(term.title, term.office_id)}</span>
+              ) : (
+                <>
+                  <span>{term.title}</span> · <span>{jurisdictionName(term.jurisdiction)}</span>
+                </>
+              )}
             </p>
           )}
           {since && <p className="poligraph-since">Since {since}</p>}
@@ -210,14 +238,21 @@ const PoliGraphOfficial: React.FC = () => {
         </div>
 
         <RecordFilters official={official} value={filters} onChange={onFiltersChange} />
-        <Timeline
-          actions={actions}
-          official={official}
-          hasMore={cursor !== null}
-          loading={loading}
-          loadMoreError={moreError}
-          onLoadMore={loadMore}
-        />
+        {actionsError ? (
+          <div className="poligraph-error" role="alert">
+            <p>Couldn't load actions.</p>
+            <button type="button" onClick={retryActions}>Retry</button>
+          </div>
+        ) : (
+          <Timeline
+            actions={actions}
+            official={official}
+            hasMore={cursor !== null}
+            loading={loading}
+            loadMoreError={moreError}
+            onLoadMore={loadMore}
+          />
+        )}
       </>
     );
   }

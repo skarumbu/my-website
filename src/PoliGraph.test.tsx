@@ -14,11 +14,11 @@ function row(overrides: Partial<IndexRow>): IndexRow {
 
 const INDEX: IndexRow[] = [
   row({ id: 'o_p', name: 'Pat Example', office: 'President of the United States', office_id: 'us-president', jurisdiction: 'us' }),
-  row({ id: 'o_w', name: 'Ron Wyden', office: 'U.S. Senator, Oregon', office_id: 'us-senate-or', state: 'or', jurisdiction: 'or' }),
-  row({ id: 'o_m', name: 'Jeff Merkley', office: 'U.S. Senator, Oregon', office_id: 'us-senate-or', state: 'or', jurisdiction: 'or' }),
-  row({ id: 'o_h3', name: 'Maxine Three', office: 'U.S. Representative, Oregon 3rd', office_id: 'us-house-or-3', state: 'or', district: '3', jurisdiction: 'or' }),
-  row({ id: 'o_h1', name: 'Zed One', office: 'U.S. Representative, Oregon 1st', office_id: 'us-house-or-1', state: 'or', district: '1', jurisdiction: 'or' }),
-  row({ id: 'o_wa', name: 'Wash Member', office: 'U.S. Representative, Washington 2nd', office_id: 'us-house-wa-2', state: 'wa', district: '2', jurisdiction: 'wa' }),
+  row({ id: 'o_w', name: 'Ron Wyden', office: 'U.S. Senator', office_id: 'us-senate-or', state: 'or', jurisdiction: 'us' }),
+  row({ id: 'o_m', name: 'Jeff Merkley', office: 'U.S. Senator', office_id: 'us-senate-or', state: 'or', jurisdiction: 'us' }),
+  row({ id: 'o_h3', name: 'Maxine Three', office: 'U.S. Representative', office_id: 'us-house-or-3', state: 'or', district: '3', jurisdiction: 'us' }),
+  row({ id: 'o_h1', name: 'Zed One', office: 'U.S. Representative', office_id: 'us-house-or-1', state: 'or', district: '1', jurisdiction: 'us' }),
+  row({ id: 'o_wa', name: 'Wash Member', office: 'U.S. Representative', office_id: 'us-house-wa-2', state: 'wa', district: '2', jurisdiction: 'us' }),
   row({ id: 'o_old', name: 'Old Pres', office: 'President of the United States', office_id: 'us-president', current: false }),
 ];
 
@@ -68,6 +68,28 @@ test('typing filters the index and links to the official', async () => {
   const link = screen.getByRole('link', { name: /Ron Wyden/ });
   expect(link).toHaveAttribute('href', '/poligraph/official/o_w');
   expect(link).toHaveTextContent('U.S. Senator, Oregon');
+});
+
+test('shows a loading status while the index loads', async () => {
+  let release: (v: any) => void = () => {};
+  global.fetch = jest.fn().mockReturnValue(new Promise((r) => { release = r; }));
+  renderPage();
+  expect(screen.getByRole('status')).toHaveTextContent('Loading officials…');
+  release(res(INDEX));
+  await loaded();
+  expect(screen.queryByText('Loading officials…')).not.toBeInTheDocument();
+});
+
+test('browse list and results show state and district', async () => {
+  renderPage();
+  const box = await loaded();
+  fireEvent.change(box, { target: { value: 'maxine' } });
+  expect(screen.getByRole('link', { name: /Maxine Three/ })).toHaveTextContent('U.S. Representative, Oregon 3rd');
+  fireEvent.change(box, { target: { value: '' } });
+  fireEvent.change(screen.getByLabelText('State'), { target: { value: 'or' } });
+  const list = screen.getByRole('list', { name: 'Oregon members of Congress' });
+  expect(list).toHaveTextContent('U.S. Senator, Oregon');
+  expect(list).toHaveTextContent('U.S. Representative, Oregon 1st');
 });
 
 test('fetches the index once, not per keystroke', async () => {

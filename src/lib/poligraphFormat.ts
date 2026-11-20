@@ -79,13 +79,41 @@ const STATE_NAMES: Record<string, string> = {
   pa: 'pennsylvania', ri: 'rhode island', sc: 'south carolina', sd: 'south dakota',
   tn: 'tennessee', tx: 'texas', ut: 'utah', vt: 'vermont', va: 'virginia',
   wa: 'washington', wv: 'west virginia', wi: 'wisconsin', wy: 'wyoming',
+  as: 'american samoa', gu: 'guam', mp: 'northern mariana islands', pr: 'puerto rico',
+  vi: 'u.s. virgin islands',
 };
 
 /** "or" -> "Oregon". Unknown codes fall back to the uppercased code. */
 export function stateName(code: string): string {
   const name = STATE_NAMES[code.toLowerCase()];
   if (!name) return code.toUpperCase();
-  return name.replace(/\b[a-z]/g, (c) => c.toUpperCase());
+  return name
+    .split(' ')
+    .map((w) => (w === 'of' ? w : w === 'u.s.' ? 'U.S.' : w.charAt(0).toUpperCase() + w.slice(1)))
+    .join(' ');
+}
+
+function ordinal(n: number): string {
+  const mod100 = n % 100;
+  if (mod100 >= 11 && mod100 <= 13) return `${n}th`;
+  const suffix = ({ 1: 'st', 2: 'nd', 3: 'rd' } as Record<number, string>)[n % 10] ?? 'th';
+  return `${n}${suffix}`;
+}
+
+/**
+ * Title plus location for a congressional office, from its office_id:
+ * ("U.S. Senator", "us-senate-or") -> "U.S. Senator, Oregon";
+ * ("U.S. Representative", "us-house-or-3") -> "U.S. Representative, Oregon 3rd";
+ * "us-house-ak-at-large" -> "U.S. Representative, Alaska at-large". Other offices are unchanged.
+ */
+export function officeLabel(title: string, officeId: string | null | undefined): string {
+  const m = /^us-(senate|house)-([a-z]{2})(?:-(.+))?$/i.exec(officeId ?? '');
+  if (!m) return title;
+  const state = stateName(m[2]);
+  const district = m[1].toLowerCase() === 'house' ? m[3] : undefined;
+  if (!district) return `${title}, ${state}`;
+  const n = Number(district);
+  return `${title}, ${state} ${Number.isInteger(n) && n > 0 ? ordinal(n) : district}`;
 }
 
 function matchesToken(row: IndexRow, token: string): boolean {
@@ -106,8 +134,10 @@ export function searchOfficials(index: IndexRow[], query: string, limit = 10): I
   const q = query.trim().toLowerCase();
   if (!q) return [];
   const tokens = q.split(/[\s-]+/).filter(Boolean);
+  // An exact state-code token ("or") outranks a name that merely contains it.
+  const stateCode = (row: IndexRow) => tokens.some((t) => t.length === 2 && (row.state ?? '').toLowerCase() === t);
   const rank = (row: IndexRow) =>
-    (row.current ? 0 : 2) + (row.name.toLowerCase().startsWith(q) ? 0 : 1);
+    (row.current ? 0 : 4) + (stateCode(row) ? 0 : 2) + (row.name.toLowerCase().startsWith(q) ? 0 : 1);
   return index
     .filter((row) => tokens.every((t) => matchesToken(row, t)))
     .map((row, i) => ({ row, i, rank: rank(row) }))
@@ -135,7 +165,8 @@ export function freshnessSummary(f: Freshness[]): { updated: string | null; stal
 }
 
 export function officeAt(official: Official, officeId: string): string {
-  return official.terms.find((t) => t.office_id === officeId)?.title ?? officeId;
+  const term = official.terms.find((t) => t.office_id === officeId);
+  return term ? officeLabel(term.title, term.office_id) : officeId;
 }
 
 export function isExecutive(official: Official): boolean {

@@ -9,7 +9,7 @@
   --line: #F0D7B6;
   --accent: #E5533C;
   --accent-dk: #B83D2A;
-  --warn: #B7791F;
+  --warn: #8A5A12;
   min-height: 100vh;
   background: var(--bg-1);
   color: var(--ink);
@@ -86,11 +86,11 @@
 }
 
 .poligraph-result-office {
-  color: var(--ink-3);
+  color: var(--ink-2);
 }
 
 .poligraph-note {
-  color: var(--ink-3);
+  color: var(--ink-2);
 }
 
 .poligraph-error {
@@ -101,7 +101,7 @@
   font: inherit;
   padding: 0.4rem 0.9rem;
   color: #fff;
-  background: var(--accent);
+  background: var(--accent-dk);
   border: 0;
   border-radius: 6px;
   cursor: pointer;
@@ -126,7 +126,7 @@
 
 .poligraph-freshness p {
   margin: 0.5rem 0 0;
-  color: var(--ink-3);
+  color: var(--ink-2);
   font-size: 0.9rem;
 }
 
@@ -162,8 +162,8 @@
 
 .poligraph-preset[aria-pressed='true'] {
   color: #fff;
-  background: var(--accent);
-  border-color: var(--accent);
+  background: var(--accent-dk);
+  border-color: var(--accent-dk);
 }
 
 .poligraph-filter-fields {
@@ -206,7 +206,7 @@
 
 .poligraph-row-date {
   grid-area: date;
-  color: var(--ink-3);
+  color: var(--ink-2);
   font-weight: 600;
 }
 
@@ -229,7 +229,7 @@
 }
 
 .poligraph-row-note {
-  color: var(--ink-3);
+  color: var(--ink-2);
   font-size: 0.85rem;
 }
 
@@ -259,7 +259,7 @@
   margin-top: 1rem;
   padding: 0.5rem 1.2rem;
   color: #fff;
-  background: var(--accent);
+  background: var(--accent-dk);
   border: 0;
   border-radius: 6px;
   cursor: pointer;
@@ -318,7 +318,7 @@
   font: inherit;
   padding: 0.5rem 0.9rem;
   color: #fff;
-  background: var(--accent);
+  background: var(--accent-dk);
   border: 0;
   border-radius: 6px;
   cursor: pointer;

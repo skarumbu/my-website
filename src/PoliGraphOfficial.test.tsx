@@ -14,8 +14,8 @@ function record(overrides: Partial<OfficialRecord['official']> = {}, extra: Part
     official: {
       id: 'o_h', name: 'Maxine Three', party: 'D', level: 'federal', photo_url: null, current: true,
       terms: [
-        { office_id: 'us-house-or-3', title: 'U.S. Representative', kind: 'legislator', jurisdiction: 'or', district: '3', start: '2019-01-03', end: '2021-01-03' },
-        { office_id: 'us-house-or-3', title: 'U.S. Representative', kind: 'legislator', jurisdiction: 'or', district: '3', start: '2021-01-03', end: null },
+        { office_id: 'us-house-or-3', title: 'U.S. Representative', kind: 'legislator', jurisdiction: 'us', district: '3', start: '2019-01-03', end: '2021-01-03' },
+        { office_id: 'us-house-or-3', title: 'U.S. Representative', kind: 'legislator', jurisdiction: 'us', district: '3', start: '2021-01-03', end: null },
       ],
       ...overrides,
     },
@@ -88,8 +88,8 @@ describe('header', () => {
     renderPage();
     expect(await screen.findByRole('heading', { level: 1, name: 'Maxine Three' })).toBeInTheDocument();
     expect(screen.getByText('D')).toBeInTheDocument();
-    expect(screen.getByText('U.S. Representative')).toBeInTheDocument();
-    expect(screen.getByText('Oregon')).toBeInTheDocument();
+    expect(screen.getByText('U.S. Representative, Oregon 3rd')).toBeInTheDocument();
+    expect(screen.queryByText('United States')).not.toBeInTheDocument();
     expect(screen.getByText('Since 2019')).toBeInTheDocument();
     expect(screen.getByText('12 sponsored · 40 co-sponsored · 300 votes')).toBeInTheDocument();
   });
@@ -258,7 +258,7 @@ describe('filters', () => {
     route({
       official: () =>
         res(record({
-          terms: [{ office_id: 'or-governor', title: 'Governor', kind: 'executive', jurisdiction: 'or', district: null, start: '2023-01-09', end: null }],
+          terms: [{ office_id: 'or-governor', title: 'Governor', kind: 'executive', jurisdiction: 'us', district: null, start: '2023-01-09', end: null }],
         }, { counts: { signed: 3 } })),
     });
     renderPage();
@@ -281,10 +281,71 @@ describe('filters', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Sponsored' }));
     fireEvent.click(screen.getByRole('button', { name: 'Co-sponsored' }));
     await screen.findByText('Bill co');
+    expect(actionCalls().some((u) => u.searchParams.get('kind') === 'sponsored')).toBe(true);
     releaseSponsored(res({ actions: [action('sp')], cursor: null }));
     await new Promise((r) => setTimeout(r, 20));
     expect(screen.getByText('Bill co')).toBeInTheDocument();
     expect(screen.queryByText('Bill sp')).not.toBeInTheDocument();
+  });
+});
+
+describe('url filters and resilience', () => {
+  it('drops unknown topics and invalid dates before calling the API', async () => {
+    renderPage('/poligraph/official/o_h?topic=Bogus&from=2026-13-45&to=yesterday');
+    await screen.findByText('Bill 1');
+    const q = actionCalls()[0].searchParams;
+    expect(q.get('topic')).toBeNull();
+    expect(q.get('from')).toBeNull();
+    expect(q.get('to')).toBeNull();
+    expect(screen.getByLabelText('From')).toHaveValue('');
+  });
+
+  it('keeps valid url filters', async () => {
+    renderPage('/poligraph/official/o_h?topic=Health&from=2026-01-01');
+    await screen.findByText('Bill 1');
+    const q = actionCalls()[0].searchParams;
+    expect(q.get('topic')).toBe('Health');
+    expect(q.get('from')).toBe('2026-01-01');
+  });
+
+  it('shows an inline retryable timeline error and keeps the profile when the first actions page fails', async () => {
+    route({ actions: () => res({}, 500) });
+    renderPage();
+    expect(await screen.findByText("Couldn't load actions.")).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: 'Maxine Three' })).toBeInTheDocument();
+    route();
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+    expect(await screen.findByText('Bill 1')).toBeInTheDocument();
+    expect(screen.queryByText("Couldn't load actions.")).not.toBeInTheDocument();
+  });
+
+  it('changing a date replaces the history entry', async () => {
+    function Back() {
+      const navigate = useNavigate();
+      return <button onClick={() => navigate(-1)}>back</button>;
+    }
+    render(
+      <MemoryRouter initialEntries={['/start', '/poligraph/official/o_h']} initialIndex={1}>
+        <Routes>
+          <Route path="/poligraph/official/:officialId" element={<PoliGraphOfficial />} />
+          <Route path="/start" element={<div>Start</div>} />
+        </Routes>
+        <Back />
+      </MemoryRouter>,
+    );
+    await screen.findByText('Bill 1');
+    fireEvent.change(screen.getByLabelText('From'), { target: { value: '2026-01-01' } });
+    await waitFor(() => expect(actionCalls().length).toBeGreaterThan(1));
+    fireEvent.click(screen.getByRole('button', { name: 'back' }));
+    expect(await screen.findByText('Start')).toBeInTheDocument();
+  });
+
+  it('restores the document title on unmount', async () => {
+    document.title = 'Before';
+    const { unmount } = renderPage();
+    await waitFor(() => expect(document.title).toBe('Maxine Three · PoliGraph'));
+    unmount();
+    expect(document.title).toBe('Before');
   });
 });
 
@@ -343,9 +404,9 @@ describe('office switcher', () => {
   const twoOffices = () =>
     res(record({
       terms: [
-        { office_id: 'us-house-or-1', title: 'U.S. Representative', kind: 'legislator', jurisdiction: 'or', district: '1', start: '2015-01-03', end: '2017-01-03' },
-        { office_id: 'us-house-or-1', title: 'U.S. Representative', kind: 'legislator', jurisdiction: 'or', district: '1', start: '2017-01-03', end: '2021-01-03' },
-        { office_id: 'us-senate-or', title: 'U.S. Senator', kind: 'legislator', jurisdiction: 'or', district: null, start: '2021-01-03', end: null },
+        { office_id: 'us-house-or-1', title: 'U.S. Representative', kind: 'legislator', jurisdiction: 'us', district: '1', start: '2015-01-03', end: '2017-01-03' },
+        { office_id: 'us-house-or-1', title: 'U.S. Representative', kind: 'legislator', jurisdiction: 'us', district: '1', start: '2017-01-03', end: '2021-01-03' },
+        { office_id: 'us-senate-or', title: 'U.S. Senator', kind: 'legislator', jurisdiction: 'us', district: null, start: '2021-01-03', end: null },
       ],
     }));
 
@@ -362,8 +423,8 @@ describe('office switcher', () => {
     const select = screen.getByLabelText('Office') as HTMLSelectElement;
     expect(within(select).getAllByRole('option').map((o) => o.textContent)).toEqual([
       'All offices',
-      'U.S. Representative (2015–2021)',
-      'U.S. Senator (2021–present)',
+      'U.S. Representative, Oregon 1st (2015–2021)',
+      'U.S. Senator, Oregon (2021–present)',
     ]);
     fireEvent.change(select, { target: { value: 'us-house-or-1' } });
     await waitFor(() => {

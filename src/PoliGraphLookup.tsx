@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import NavBar from './components/nav-bar.tsx';
 import { lookupAddress, PoligraphError } from './lib/poligraphApi.ts';
-import { latestTerm } from './lib/poligraphFormat.ts';
+import { latestTerm, officeLabel } from './lib/poligraphFormat.ts';
 import type { LookupResult, Official } from './lib/poligraphTypes.ts';
 import './styling/poligraph.css';
 
@@ -29,6 +29,14 @@ export function AddressForm({ onResult }: AddressFormProps) {
   const [address, setAddress] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const mounted = useRef(true);
+
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,10 +50,12 @@ export function AddressForm({ onResult }: AddressFormProps) {
     setBusy(true);
     try {
       const result = await lookupAddress(trimmed);
+      if (!mounted.current) return;
       setAddress('');
       setBusy(false);
       onResult(result);
     } catch (err) {
+      if (!mounted.current) return;
       setError(messageFor(err));
       setBusy(false);
     }
@@ -81,7 +91,7 @@ function OfficialItem({ official }: { official: Official }) {
       <Link to={`/poligraph/official/${official.id}`}>
         <span className="poligraph-result-name">{official.name}</span>
         {official.party && <span className="poligraph-result-office"> {official.party}</span>}
-        {term && <span className="poligraph-result-office"> {term.title}</span>}
+        {term && <span className="poligraph-result-office"> {officeLabel(term.title, term.office_id)}</span>}
       </Link>
     </li>
   );
