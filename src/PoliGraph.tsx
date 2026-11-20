@@ -128,7 +128,6 @@ const PoliGraph: React.FC = () => {
         <section data-testid="find-my-officials" className="poligraph-find">
           <h2>Find my officials</h2>
           <AddressForm onResult={(result) => navigate('/poligraph/lookup', { state: { result } })} />
-          <p className="poligraph-note">Your address is used once to find your districts and isn't saved.</p>
         </section>
 
         {status === 'ready' && !empty && (

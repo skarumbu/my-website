@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import React, { useEffect, useRef, useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import NavBar from './components/nav-bar.tsx';
 import { lookupAddress, PoligraphError } from './lib/poligraphApi.ts';
 import { latestTerm } from './lib/poligraphFormat.ts';
@@ -12,6 +12,7 @@ const UNAVAILABLE_MESSAGE = 'Address lookup is unavailable right now. Try again 
 const NETWORK_MESSAGE = "Couldn't reach PoliGraph. Check your connection and try again.";
 
 function messageFor(err: unknown): string {
+  if (err instanceof PoligraphError && err.status === 400) return BLANK_MESSAGE;
   const code = err instanceof PoligraphError ? err.code : '';
   if (code === 'address_not_found') return NOT_FOUND_MESSAGE;
   if (code === 'bad_parameter') return BLANK_MESSAGE;
@@ -59,11 +60,16 @@ export function AddressForm({ onResult }: AddressFormProps) {
         name="address"
         autoComplete="street-address"
         maxLength={200}
+        aria-describedby={error ? 'poligraph-address-help poligraph-address-error' : 'poligraph-address-help'}
+        aria-invalid={error ? true : undefined}
         value={address}
         onChange={(e) => setAddress(e.target.value)}
       />
       <button type="submit" disabled={busy}>{busy ? 'Looking up…' : 'Find my officials'}</button>
-      {error && <p className="poligraph-error" role="alert">{error}</p>}
+      {error && <p id="poligraph-address-error" className="poligraph-error" role="alert">{error}</p>}
+      <p id="poligraph-address-help" className="poligraph-note">
+        Your address is used once to find your districts and isn't saved.
+      </p>
     </form>
   );
 }
@@ -83,9 +89,23 @@ function OfficialItem({ official }: { official: Official }) {
 
 const PoliGraphLookup: React.FC = () => {
   const location = useLocation();
-  const [result, setResult] = useState<LookupResult | null>(
-    (location.state as { result?: LookupResult } | null)?.result ?? null,
-  );
+  const navigate = useNavigate();
+  const result = (location.state as { result?: LookupResult } | null)?.result ?? null;
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  const focusResults = useRef(false);
+
+  useEffect(() => {
+    if (focusResults.current && result) {
+      focusResults.current = false;
+      headingRef.current?.focus();
+    }
+  }, [result]);
+
+  // Replace the history entry so back/reload never shows a previous lookup. State holds results only.
+  const showResult = (next: LookupResult) => {
+    focusResults.current = true;
+    navigate(location.pathname, { replace: true, state: { result: next } });
+  };
 
   return (
     <div className="poligraph-page">
@@ -95,7 +115,7 @@ const PoliGraphLookup: React.FC = () => {
         {result && (
           <>
             <section className="poligraph-lookup-group">
-              <h2>Federal</h2>
+              <h2 ref={headingRef} tabIndex={-1}>Federal</h2>
               <ul className="poligraph-results">
                 {result.federal.map((o) => <OfficialItem key={o.id} official={o} />)}
               </ul>
@@ -114,8 +134,7 @@ const PoliGraphLookup: React.FC = () => {
         )}
         <section className="poligraph-find">
           <h2>{result ? 'Look up another address' : 'Find my officials'}</h2>
-          <AddressForm onResult={setResult} />
-          <p className="poligraph-note">Your address is used once to find your districts and isn't saved.</p>
+          <AddressForm onResult={showResult} />
         </section>
       </main>
     </div>

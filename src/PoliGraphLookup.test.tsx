@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { MemoryRouter, RouterProvider, createMemoryRouter } from 'react-router-dom';
+import { MemoryRouter, RouterProvider, createBrowserRouter, createMemoryRouter } from 'react-router-dom';
 import PoliGraph from './PoliGraph.tsx';
 import PoliGraphLookup from './PoliGraphLookup.tsx';
 import type { LookupResult, Official } from './lib/poligraphTypes.ts';
@@ -98,6 +98,25 @@ describe('address form', () => {
     expect(screen.getByRole('button', { name: 'Find my officials' })).toBeEnabled();
   });
 
+  test('a 400 with an empty body still shows the blank-address message', async () => {
+    global.fetch = jest.fn().mockResolvedValue({ ok: false, status: 400, json: async () => { throw new Error('empty'); } });
+    renderLookup();
+    submit(ADDRESS);
+    expect(await screen.findByRole('alert')).toHaveTextContent('Enter a street address.');
+  });
+
+  test('help text and error are linked to the input', async () => {
+    global.fetch = jest.fn().mockResolvedValue(res({ error: 'address_not_found' }, 404));
+    renderLookup();
+    const input = screen.getByLabelText('Your address');
+    expect(input).not.toHaveAttribute('aria-invalid');
+    expect(input).toHaveAccessibleDescription("Your address is used once to find your districts and isn't saved.");
+    submit(ADDRESS);
+    await screen.findByRole('alert');
+    expect(input).toHaveAttribute('aria-invalid', 'true');
+    expect(input).toHaveAccessibleDescription(/isn't saved\..*couldn't find that address/);
+  });
+
   test('a network error shows the connection message', async () => {
     global.fetch = jest.fn().mockRejectedValue(new TypeError('fail'));
     renderLookup();
@@ -144,6 +163,22 @@ describe('results', () => {
     submit('2 Other St, Augusta, ME');
     expect(await screen.findByRole('link', { name: /New Person/ })).toBeInTheDocument();
     expect(screen.queryByText('Pat President')).not.toBeInTheDocument();
+  });
+
+  test('a second lookup replaces history state with the new results only and moves focus', async () => {
+    const router = createMemoryRouter(
+      [{ path: '/poligraph/lookup', element: <PoliGraphLookup /> }],
+      { initialEntries: [{ pathname: '/poligraph/lookup', state: { result: RESULT } }] },
+    );
+    const second = { federal: [official('o_new', 'New Person', 'Green', 'U.S. Senator, Maine')], state: [] };
+    global.fetch = jest.fn().mockResolvedValue(res(second));
+    render(<RouterProvider router={router} />);
+    submit('2 Other St, Augusta, ME');
+    await screen.findByRole('link', { name: /New Person/ });
+    expect(router.state.location.state.result).toEqual(second);
+    expect(JSON.stringify(router.state.location)).not.toContain('Other St');
+    expect(router.state.historyAction).toBe('REPLACE');
+    expect(screen.getByRole('heading', { name: 'Federal' })).toHaveFocus();
   });
 
   test('a direct visit shows only the form', () => {
@@ -198,5 +233,29 @@ describe('privacy', () => {
 
     expect(screen.getByLabelText('Your address')).toHaveValue('');
     expect(document.body.innerHTML).not.toContain('Pennsylvania');
+  });
+
+  test('with a browser router the address is absent from window.location and history.state', async () => {
+    window.history.replaceState(null, '', '/poligraph');
+    const router = createBrowserRouter([
+      { path: '/poligraph', element: <PoliGraph /> },
+      { path: '/poligraph/lookup', element: <PoliGraphLookup /> },
+    ]);
+    global.fetch = jest.fn().mockImplementation(async (url: string) =>
+      String(url).endsWith('/search-index') ? res([]) : res(RESULT),
+    );
+    render(<RouterProvider router={router} />);
+    fireEvent.change(screen.getByLabelText('Your address'), { target: { value: ADDRESS } });
+    fireEvent.click(screen.getByRole('button', { name: 'Find my officials' }));
+    await screen.findByRole('heading', { name: 'Federal' });
+
+    expect(window.location.pathname).toBe('/poligraph/lookup');
+    expect(window.location.search).not.toContain('Pennsylvania');
+    expect(window.location.hash).not.toContain('Pennsylvania');
+    const historyState = JSON.stringify(window.history.state);
+    expect(historyState).toContain('o_p');
+    expect(historyState).not.toContain('Pennsylvania');
+    router.dispose();
+    window.history.replaceState(null, '', '/');
   });
 });
